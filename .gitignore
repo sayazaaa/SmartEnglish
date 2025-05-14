@@ -22,3 +22,101 @@
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
 replay_pid*
+
+# 通用忽略规则
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+.DS_Store
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+Thumbs.db
+.env
+.env.local
+*.orig
+
+# 安卓端忽略规则
+## Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+## 本地属性文件
+local.properties
+
+## 构建输出
+*.apk
+*.aar
+*.ap_
+output.json
+
+## Android Studio
+captures/
+.navigation/
+*.keystore
+
+# Vue3
+## 依赖目录
+node_modules/
+.vite/
+.pnp.*
+
+## dist
+dist/
+dist-ssr/
+*.tsbuildinfo
+
+## cache
+.cache/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+## env
+.env
+.env.*.local
+
+# Java Spring
+## Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+
+## IDE
+.classpath
+.project
+.settings/
+.factorypath
+
+## log
+*.log.*
+!spring-boot-projects/spring-boot-starters/*.log
+spring-boot-devtools.log
+
+## test
+test-output/
+
+# SQL
+## MySQL
+*.ibd
+*.frm
+*.myd
+*.myi
+*.dump
+/mysql-data/
+
+## Redis
+dump.rdb
+appendonly.aof
+
+
+.idea
+.vscode
