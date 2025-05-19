@@ -13,9 +13,9 @@ import java.sql.Date;
 public class Account {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
-    @Column(name="wordbook_id")
-    private int wordbookId;
+    private Integer id;
+    @Column(name="wordbook_id", nullable = true)
+    private Integer wordbookId;
     @Column(name="createdate")
     private Date createDate;
     @Column(length = 45)
@@ -26,6 +26,6 @@ public class Account {
     private String avatar;
     @Column(length = 45)
     private String nickname;
-    @Column(columnDefinition = "TEXT")
+    @Column(name="`describe`",columnDefinition = "TEXT")
     private String describe;
 }
