@@ -2,10 +2,13 @@ package site.smartenglish.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple80 = Color(0xFFD0BCFF)
-val PurpleGrey80 = Color(0xFFCCC2DC)
-val Pink80 = Color(0xFFEFB8C8)
+val DarkGrey = Color(0xFF212531)
+val Grey = Color(0xFF292F45)
+val Orange = Color(0xFFF4A100)
 
-val Purple40 = Color(0xFF6650a4)
-val PurpleGrey40 = Color(0xFF625b71)
-val Pink40 = Color(0xFF7D5260)
+//白色字体
+val White = Color(0xFFE3E4E8)
+//灰色字体
+val LightGrey = Color(0x73E3E4E8)
+//橙色字体
+val LightOrange = Color(0xFFE9A217)
