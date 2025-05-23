@@ -1,6 +1,6 @@
-package com.example.smartenglishbackend.jparepo;
+package com.smartenglishbackend.jparepo;
 
-import com.example.smartenglishbackend.entity.Account;
+import com.smartenglishbackend.jpaentity.Account;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface AccountReposity extends JpaRepository<Account, Long> {

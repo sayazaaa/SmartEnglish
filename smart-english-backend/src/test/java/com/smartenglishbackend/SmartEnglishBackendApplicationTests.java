@@ -1,4 +1,4 @@
-package com.example.smartenglishbackend;
+package com.smartenglishbackend;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

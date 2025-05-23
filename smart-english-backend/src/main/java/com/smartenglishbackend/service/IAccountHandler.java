@@ -1,7 +1,7 @@
-package com.example.smartenglishbackend.service;
+package com.smartenglishbackend.service;
 
-import com.example.smartenglishbackend.dto.request.DTOAccount;
-import com.example.smartenglishbackend.dto.response.PDTOAccount;
+import com.smartenglishbackend.dto.request.DTOAccount;
+import com.smartenglishbackend.dto.response.PDTOAccount;
 import org.springframework.http.ResponseEntity;
 
 public interface IAccountHandler {
