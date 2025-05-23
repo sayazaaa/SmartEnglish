@@ -100,7 +100,7 @@ pom.xml.next
 *.log.*
 !spring-boot-projects/spring-boot-starters/*.log
 spring-boot-devtools.log
-application.properties
+**/application.properties
 ## test
 test-output/
 
