@@ -1,4 +1,4 @@
-package com.example.smartenglishbackend.config;
+package com.smartenglishbackend.config;
 
 import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Bean;

@@ -1,4 +1,4 @@
-package com.example.smartenglishbackend.dto.response;
+package com.smartenglishbackend.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
