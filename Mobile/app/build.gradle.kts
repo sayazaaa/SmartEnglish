@@ -1,3 +1,6 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -19,6 +22,15 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        val localProperties = Properties()
+        localProperties.load(FileInputStream(rootProject.file("local.properties")))
+        buildConfigField(
+            "String",
+            "IP",
+            "\"${localProperties.getProperty("IP")}\""
+        )
+
     }
 
     buildTypes {
@@ -39,6 +51,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.15"
@@ -71,5 +84,15 @@ dependencies {
     //hilt
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
+    //retrofit
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+    //okhttp
+    implementation(libs.okhttp)
+    //协程
+    implementation(libs.kotlinx.coroutines.android)
+    //datastore
+    implementation(libs.androidx.datastore.preferences)
 
 }
