@@ -1,4 +1,4 @@
-package site.smartenglish.ui.home
+package site.smartenglish.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -33,7 +33,7 @@ import site.smartenglish.ui.compose.GlassButton
 
 
 @Composable
-fun HomeLayout(
+fun HomeScreen(
     learnNum: Int = 0, reviewNum: Int = 0, bg: String
 ) {
     Box(
@@ -137,11 +137,4 @@ fun HomeLayout(
             )
         }
     }
-}
-
-
-@Preview(showBackground = false)
-@Composable
-fun HomeLayoutPreview() {
-    HomeLayout(bg = "https://images.pexels.com/photos/3490963/pexels-photo-3490963.jpeg")
 }
