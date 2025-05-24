@@ -1,27 +1,24 @@
 package com.smartenglishbackend.service;
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
 import com.smartenglishbackend.customexceptions.AccountException;
 import com.smartenglishbackend.customexceptions.RequestFormatException;
 import com.smartenglishbackend.dto.request.DTOAccount;
 import com.smartenglishbackend.dto.response.PDTOAccount;
 import com.smartenglishbackend.jpaentity.Account;
-import com.smartenglishbackend.jparepo.AccountReposity;
+import com.smartenglishbackend.jparepo.AccountRepository;
+import com.smartenglishbackend.utils.JWTUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-
 @Service
 public class AccountpwdLoginHandler implements IAccountHandler{
 
     @Autowired
-    private AccountReposity accountReposity;
+    private AccountRepository accountRepository;
     @Autowired
-    private Algorithm jwtAlgorithm;
+    private JWTUtils jwtUtils;
     @Override
     public boolean accept(DTOAccount dtoAccount, String method) {
         return (method.equals("GET")
@@ -34,7 +31,7 @@ public class AccountpwdLoginHandler implements IAccountHandler{
     @Override
     public ResponseEntity<PDTOAccount> Handle(DTOAccount dtoAccount) {
         if(accept(dtoAccount, "GET")){
-            Account account = accountReposity.findByPhone(dtoAccount.getPhone());
+            Account account = accountRepository.findByPhone(dtoAccount.getPhone());
             if(account == null){
                 throw new AccountException("Account not found");
             }
@@ -46,10 +43,7 @@ public class AccountpwdLoginHandler implements IAccountHandler{
                 throw new AccountException("Wrong password");
             }
             //返回token
-            String token = JWT.create()
-                    .withSubject(String.valueOf(account.getId()))
-                    .withExpiresAt(new Date(System.currentTimeMillis() + 3600*1000*24*7))
-                    .sign(jwtAlgorithm);
+            String token = jwtUtils.generateToken(account.getId());
             ResponseEntity<PDTOAccount> response = ResponseEntity.ok()
                     .header("Authorization",token)
                     .body(new PDTOAccount("Login succeed"));

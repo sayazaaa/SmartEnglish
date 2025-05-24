@@ -5,7 +5,7 @@ import com.smartenglishbackend.customexceptions.RequestFormatException;
 import com.smartenglishbackend.dto.request.DTOAccount;
 import com.smartenglishbackend.dto.response.PDTOAccount;
 import com.smartenglishbackend.jpaentity.Account;
-import com.smartenglishbackend.jparepo.AccountReposity;
+import com.smartenglishbackend.jparepo.AccountRepository;
 import com.github.benmanes.caffeine.cache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -19,7 +19,7 @@ import java.util.Random;
 @Service
 public class AccountRegisterHandler implements IAccountHandler{
     @Autowired
-    private AccountReposity accountReposity;
+    private AccountRepository accountRepository;
     @Autowired
     private Cache<String, Object> cache;
     @Autowired
@@ -33,25 +33,27 @@ public class AccountRegisterHandler implements IAccountHandler{
         if(dtoAccount.getPhone() == null || dtoAccount.getPhone().isEmpty()){
             throw new RequestFormatException("Phone number is empty");
         }
-        if(accountReposity.findByPhone(dtoAccount.getPhone()) != null){
-            throw new AccountException("Account already exists");
-        }
         if(dtoAccount.getVerification() != null){//第二次带验证码
             String veri = (String)cache.getIfPresent(dtoAccount.getPhone());
+            if(veri == null){
+                throw new RuntimeException("The verification code has expired or is no longer valid. Please request a new one.");
+            }
             Account account = new Account();
-            if(veri!=null && veri.equals(dtoAccount.getVerification())){
+            if(accountRepository.findByPhone(dtoAccount.getPhone()) != null){
+                throw new AccountException("Account already exists");
+            }
+            if(veri.equals(dtoAccount.getVerification())){
                 account.setPhone(dtoAccount.getPhone());
-                account.setAvatar("");
                 account.setNickname(dtoAccount.getPhone());
                 account.setPassword(new BCryptPasswordEncoder().encode(dtoAccount.getPassword()));
                 account.setCreateDate(java.sql.Date.valueOf(LocalDate.now()));
                 try{
-                    accountReposity.save(account);
+                    accountRepository.save(account);
                 }catch(DataIntegrityViolationException e){
                     throw new RuntimeException("Database Error: Data integrity violation");
                 }
             }else{
-                throw new AccountException("Verification Failed");
+                throw new AccountException("Verification code incorrect");
             }
             return ResponseEntity.ok(new PDTOAccount("Account created"));
         }else{//第一次请求验证码

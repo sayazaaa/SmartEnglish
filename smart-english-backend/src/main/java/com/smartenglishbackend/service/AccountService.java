@@ -1,7 +1,7 @@
 package com.smartenglishbackend.service;
 
 import com.smartenglishbackend.dto.request.DTOAccount;
-import com.smartenglishbackend.jparepo.AccountReposity;
+import com.smartenglishbackend.jparepo.AccountRepository;
 import com.github.benmanes.caffeine.cache.Cache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -11,7 +11,7 @@ import java.util.List;
 @Service
 public class AccountService {
     @Autowired
-    private AccountReposity accountReposity;
+    private AccountRepository accountRepository;
     @Autowired
     private Cache<String, Object> cache;
     @Autowired
