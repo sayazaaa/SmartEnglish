@@ -11,11 +11,19 @@ class AccountRepository @Inject constructor(
     private val api: ApiService,
     private val dataStoreManager: DataStoreManager
 ) {
-    suspend fun login(phone: String,verification:String, password: String): Boolean {
+    suspend fun login(phone: String,verification:String, password: String) {
         val response = api.login(LoginRequest(phone, verification, password))
+        if (response.isSuccessful) {
+            val token = response.headers()["Authorization"]
+            val tokenValue = token?.substring(7)
 
-        dataStoreManager.saveToken(response.token)
-        return true
+            tokenValue?.let {
+                dataStoreManager.saveToken(it)
+            }
+        }
+        else {
+            throw Exception("Login failed: ${response.errorBody()?.string()}")
+        }
     }
 
 }

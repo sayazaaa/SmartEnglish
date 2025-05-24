@@ -1,5 +1,6 @@
 package site.smartenglish.remote
 
+import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -17,17 +18,17 @@ interface ApiService {
     @POST("account")
     suspend fun register(
         @Body registerRequest: RegisterRequest
-    ): RegisterResponse
+    ): Response<RegisterResponse>
 
     @GET("account")
     suspend fun login(
         @Body loginRequest: LoginRequest
-    ): LoginResponse
+    ): Response<LoginResponse>
 
     @PUT("account")
     suspend fun changePassword(
         @Body changePasswordRequest: ChangePasswordRequest
-    ): ChangePasswordResponse
+    ): Response<ChangePasswordResponse>
 
 
 
