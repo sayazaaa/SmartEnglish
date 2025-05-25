@@ -1,14 +1,15 @@
 package site.smartenglish.remote
 
+import android.util.Log
 import okhttp3.Interceptor
 import okhttp3.Response
 import site.smartenglish.data.DataStoreManager
 import javax.inject.Inject
 
 /**
- * 一个 OkHttp 拦截器，为每个请求添加带有 Bearer 令牌的 Authorization 头。
+ * 一个 OkHttp 拦截器，为每个请求添加令牌的 Authorization 头。
  *
- * @param tokenProvider 提供要添加到请求头中的令牌的 lambda 函数。
+ * @param dataStoreManager 用于获取存储的令牌。
  */
 class AuthInterceptor@Inject constructor(
     private val dataStoreManager: DataStoreManager
@@ -18,10 +19,12 @@ class AuthInterceptor@Inject constructor(
 
         val token = dataStoreManager.getTokenSync()
         val request = if (!token.isNullOrEmpty()) {
+            Log.d("AuthInterceptor", "Token found, adding Authorization header")
             requestBuilder
-                .addHeader("Authorization", "Bearer $token")
+                .addHeader("Authorization", "$token")
                 .build()
         } else {
+            Log.d("AuthInterceptor", "No token found, proceeding without Authorization header")
             requestBuilder.build()
         }
 

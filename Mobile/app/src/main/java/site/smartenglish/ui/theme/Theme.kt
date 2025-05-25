@@ -3,6 +3,7 @@ package site.smartenglish.ui.theme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 
 //private val DarkColorScheme = darkColorScheme(
 //    primary = Purple80,
@@ -20,6 +21,7 @@ private val LightColorScheme = lightColorScheme(
     onPrimary = White,
     onSecondary = LightGrey,
     onTertiary = LightGrey,
+    onSurfaceVariant = Color(0xFF878278)
 //    onBackground = Color(0xFF1C1B1F),
 //    onSurface = Color(0xFF1C1B1F),
 

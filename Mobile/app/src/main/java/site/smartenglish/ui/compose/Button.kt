@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
@@ -26,17 +27,22 @@ import site.smartenglish.ui.theme.White
 fun WideButton(
     text: String,
     onClick: () -> Unit,
+    width: Int = 356,
+    height: Int = 56,
+    fontsize: Int = 19,
+    color: Color =  Color.Unspecified
 ) {
     androidx.compose.material3.Button(
         onClick = onClick,
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier
-            .width(342.dp)
-            .height(53.dp),
+            .width(width.dp)
+            .height(height.dp),
         content = {
             Text(
                 text,
-                fontSize = 19.sp,
+                fontSize = fontsize.sp,
+                color = color
             )
         }
     )

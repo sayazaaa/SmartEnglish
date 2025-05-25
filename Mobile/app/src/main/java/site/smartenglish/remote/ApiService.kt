@@ -3,6 +3,7 @@ package site.smartenglish.remote
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.HTTP
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import site.smartenglish.remote.data.ChangePasswordRequest
@@ -20,7 +21,7 @@ interface ApiService {
         @Body registerRequest: RegisterRequest
     ): Response<RegisterResponse>
 
-    @GET("account")
+    @POST("account/login")
     suspend fun login(
         @Body loginRequest: LoginRequest
     ): Response<LoginResponse>
