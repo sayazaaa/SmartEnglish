@@ -3,8 +3,10 @@ package site.smartenglish.ui
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -42,6 +44,9 @@ import kotlinx.coroutines.delay
 import site.smartenglish.R
 import site.smartenglish.ui.compose.WideButton
 import site.smartenglish.ui.viewmodel.AccountViewmodel
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 
 @Composable
 fun RegisterScreen(
@@ -58,11 +63,42 @@ fun RegisterScreen(
     var phoneInput by remember { mutableStateOf("") }
     var verificationInput by remember { mutableStateOf("") }
     var passwordInput by remember { mutableStateOf("") }
-    val isPasswordVisible by remember { mutableStateOf(false) }
+    var isPasswordVisible by remember { mutableStateOf(false) }
+
+    // 错误状态
+    var phoneError by remember { mutableStateOf<String?>(null) }
+    var codeError by remember { mutableStateOf<String?>(null) }
+    var passwordError by remember { mutableStateOf<String?>(null) }
+
 
     // 验证码倒计时
     var canRequestCode by remember { mutableStateOf(true) }
     var countdown by remember { mutableIntStateOf(0) }
+
+    // 验证函数
+    fun validatePhone(phone: String): String? {
+        return when {
+            phone.isEmpty() -> "手机号不能为空"
+            !phone.matches(Regex("^\\d{11}$")) -> "请输入11位手机号码"
+            else -> null
+        }
+    }
+
+    fun validateCode(code: String): String? {
+        return when {
+            code.isEmpty() -> "验证码不能为空"
+            !code.matches(Regex("^\\d{4}$")) -> "请输入4位验证码"
+            else -> null
+        }
+    }
+
+    fun validatePassword(password: String): String? {
+        return when {
+            password.isEmpty() -> "密码不能为空"
+            password.length < 6 -> "密码长度至少6位"
+            else -> null
+        }
+    }
 
     // 监听注册状态变化
     LaunchedEffect(uiState.registerSuccess, uiState.error) {
@@ -120,18 +156,22 @@ fun RegisterScreen(
             Box(Modifier.height(64.dp)) {
                 OutlinedTextField(
                     value = phoneInput,
-                    onValueChange = { phoneInput = it },
+                    onValueChange = {
+                        phoneInput = it.take(11).filter { it.isDigit() }
+                    },
                     label = { Text("手机号") },
                     placeholder = { Text("请输入手机号") },
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier
                         .width(356.dp)
                         .height(64.dp),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                    isError = phoneError != null,
                 )
                 TextButton(
                     onClick = {
-                        if (phoneInput.isNotEmpty() && canRequestCode) {
+                        phoneError = validatePhone(phoneInput)
+                        if (phoneError == null && canRequestCode) {
                             viewModel.sendRegisterVerificationCode(phoneInput)
                             canRequestCode = false
                             countdown = 60
@@ -153,18 +193,22 @@ fun RegisterScreen(
 
             Spacer(Modifier.height(with(density) { 22.dp - 8.sp.toDp() }))
 
-            // 验证码输入框和发送按钮
+            // 验证码输入框
 
             OutlinedTextField(
                 value = verificationInput,
-                onValueChange = { verificationInput = it },
+                onValueChange = {
+                    verificationInput = it.take(4).filter { it.isDigit() }
+//                    codeError = validateCode(verificationInput)
+                },
                 label = { Text("验证码") },
                 placeholder = { Text("请输入验证码") },
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier
                     .width(356.dp)
                     .height(64.dp),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                isError = codeError != null,
             )
 
             Spacer(Modifier.height(with(density) { 22.dp - 8.sp.toDp() }))
@@ -172,7 +216,10 @@ fun RegisterScreen(
             // 密码输入框
             OutlinedTextField(
                 value = passwordInput,
-                onValueChange = { passwordInput = it },
+                onValueChange = {
+                    passwordInput = it
+                    passwordError = validatePassword(passwordInput)
+                },
                 label = { Text("密码") },
                 placeholder = { Text("请输入密码") },
                 shape = RoundedCornerShape(12.dp),
@@ -180,16 +227,67 @@ fun RegisterScreen(
                     .width(356.dp)
                     .height(64.dp),
                 visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                isError = passwordError != null,
+                trailingIcon = {
+                    androidx.compose.material3.IconButton(
+                        onClick = { isPasswordVisible = !isPasswordVisible }
+                    ) {
+                        androidx.compose.material3.Icon(
+                            imageVector = if (isPasswordVisible)
+                                Icons.Default.Visibility
+                            else
+                                Icons.Default.VisibilityOff,
+                            contentDescription = if (isPasswordVisible) "隐藏密码" else "显示密码"
+                        )
+                    }
+                }
             )
+            Spacer(Modifier.height(with(density) { 10.dp}))
+            Row(modifier = Modifier.height(with(density) { 30.dp }), horizontalArrangement = Arrangement.Center) {
+                // 错误提示
+                phoneError?.let {
+                    Text(
+                        text = it,
+                        color = Color.Red,
+                        fontSize = 12.sp,
+                    )
+                }
+                codeError?.let {
+                    phoneError?.let {
+                        Spacer(Modifier.width(10.dp))
+                    }
+                    Text(
+                        text = it,
+                        color = Color.Red,
+                        fontSize = 12.sp,
+                    )
+                }
+                passwordError?.let {
+                    if (phoneError != null || codeError != null) {
+                        Spacer(Modifier.width(10.dp))
+                    }
+                    Text(
+                        text = it,
+                        color = Color.Red,
+                        fontSize = 12.sp
+                    )
+                }
+            }
 
-            Spacer(Modifier.height(with(density) { 80.dp - 8.sp.toDp() }))
+            Spacer(Modifier.height(with(density) { 40.dp - 8.sp.toDp() }))
 
             // 注册按钮
             WideButton(
                 text = if (uiState.isLoading) "注册中..." else "注册",
                 onClick = {
-                    if (phoneInput.isNotEmpty() && verificationInput.isNotEmpty() && passwordInput.isNotEmpty()) {
+                    // 验证所有输入
+                    phoneError = validatePhone(phoneInput)
+                    codeError = validateCode(verificationInput)
+                    passwordError = validatePassword(passwordInput)
+
+                    // 只有全部验证通过才提交
+                    if (phoneError == null && codeError == null && passwordError == null) {
                         viewModel.register(phoneInput, verificationInput, passwordInput)
                     }
                 },
