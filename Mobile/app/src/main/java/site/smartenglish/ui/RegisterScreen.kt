@@ -30,7 +30,10 @@ import site.smartenglish.ui.viewmodel.AccountViewmodel
 import site.smartenglish.ui.viewmodel.LoginUiState
 
 @Composable
-fun RegisterScreen(viewModel: AccountViewmodel = hiltViewModel()) {
+fun RegisterScreen(
+    navigateToLogin: () -> Unit = {},
+    viewModel: AccountViewmodel = hiltViewModel()
+) {
     val density = LocalDensity.current
     // 获取UI状态
     val uiState by viewModel.registerUiState.collectAsState()
@@ -38,7 +41,6 @@ fun RegisterScreen(viewModel: AccountViewmodel = hiltViewModel()) {
     // Snackbar状态管理
     val snackbarHostState = remember { SnackbarHostState() }
 
-    var currentState by remember { mutableStateOf("InputsVisible") }
     var phoneInput by remember { mutableStateOf("") }
     var verificationInput by remember { mutableStateOf("") }
     var passwordInput by remember { mutableStateOf("") }
@@ -46,22 +48,19 @@ fun RegisterScreen(viewModel: AccountViewmodel = hiltViewModel()) {
 
     // 验证码倒计时
     var canRequestCode by remember { mutableStateOf(true) }
-    var countdown by remember { mutableStateOf(0) }
-
-    //spacer
-    val spacerHeight = with(density) { 22.dp - 8.sp.toDp() }
+    var countdown by remember { mutableIntStateOf(0) }
 
     // 监听注册状态变化
     LaunchedEffect(uiState.registerSuccess, uiState.error) {
         when {
             uiState.registerSuccess -> {
                 snackbarHostState.showSnackbar("注册成功！")
-                // TODO 在这里添加导航到登录页面的逻辑
+                navigateToLogin()
             }
             uiState.error != null -> {
                 snackbarHostState.showSnackbar(uiState.error ?: "注册失败，请重试")
                 Log.e("RegisterScreen",uiState.error!!)
-                viewModel.clearRegisterError() // 需要在ViewModel中添加此方法
+                viewModel.clearRegisterError()
             }
         }
     }
@@ -75,34 +74,8 @@ fun RegisterScreen(viewModel: AccountViewmodel = hiltViewModel()) {
         }
     }
 
-    LaunchedEffect(Unit) {
-        delay(2000) // 2秒延迟
-        currentState = "InputsVisible"
-    }
-
-    // 动画相关代码
-    val transition = updateTransition(targetState = currentState, label = "")
-
-    val logoOffsetY by transition.animateFloat(
-        transitionSpec = {
-            tween(durationMillis = 800, easing = LinearEasing)
-        }
-    ) {
-        when (it) {
-            "LogoOnly" -> 323f
-            "InputsVisible" -> 123f
-            else -> 0f
-        }
-    }
-
-    val inputAlpha by transition.animateFloat(
-        transitionSpec = {
-            tween(durationMillis = 800, delayMillis = 800, easing = LinearEasing)
-        }
-    ) {
-        if (it == "InputsVisible") 1f else 0f
-    }
     Scaffold(
+        modifier = Modifier.background(Color(0xFFFFFCF8)),
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) {  i ->
     Box(
@@ -111,14 +84,14 @@ fun RegisterScreen(viewModel: AccountViewmodel = hiltViewModel()) {
             .fillMaxSize()
             .padding(i)
     ) {
-        // 图标
+        //logo
         Image(
             painter = painterResource(id = R.drawable.logo),
             contentDescription = "App Logo",
             modifier = Modifier
                 .width(70.dp)
                 .height(240.dp)
-                .offset(y = logoOffsetY.dp)
+                .offset(y = 123.dp)
                 .align(Alignment.TopCenter),
         )
 
@@ -126,8 +99,7 @@ fun RegisterScreen(viewModel: AccountViewmodel = hiltViewModel()) {
         Column(
             modifier = Modifier
                 .padding(horizontal = 36.dp)
-                .offset(y = with(density) { 464.dp - 8.sp.toDp() })
-                .alpha(inputAlpha),
+                .offset(y = with(density) { 464.dp - 8.sp.toDp() }),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             // 手机号输入框
@@ -165,7 +137,7 @@ fun RegisterScreen(viewModel: AccountViewmodel = hiltViewModel()) {
                 }
             }
 
-            Spacer(Modifier.height(spacerHeight))
+            Spacer(Modifier.height(with(density) { 22.dp - 8.sp.toDp() }))
 
             // 验证码输入框和发送按钮
 
@@ -181,7 +153,7 @@ fun RegisterScreen(viewModel: AccountViewmodel = hiltViewModel()) {
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
 
-            Spacer(Modifier.height(spacerHeight))
+            Spacer(Modifier.height(with(density) { 22.dp - 8.sp.toDp() }))
 
             // 密码输入框
             OutlinedTextField(
@@ -197,7 +169,7 @@ fun RegisterScreen(viewModel: AccountViewmodel = hiltViewModel()) {
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
             )
 
-            Spacer(Modifier.height(spacerHeight + 52.dp))
+            Spacer(Modifier.height(with(density) { 80.dp - 8.sp.toDp() }))
 
             // 注册按钮
             WideButton(
@@ -212,7 +184,7 @@ fun RegisterScreen(viewModel: AccountViewmodel = hiltViewModel()) {
             )
             // 登录按钮
             TextButton(
-                onClick = {/*TODO*/ },
+                onClick = { navigateToLogin() },
                 modifier = Modifier.padding(0.dp)
             ) {
                 Text(
