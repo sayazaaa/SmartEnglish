@@ -5,7 +5,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import kotlinx.serialization.Serializable
-import site.smartenglish.ui.RegisterScreen
 
 
 @Serializable
@@ -18,7 +17,7 @@ fun MainNav() {
     val navController = rememberNavController()
     NavHost(
         navController = navController,
-        startDestination = "register"
+        startDestination = Register
     ) {
         composable<Login>{}
         composable<Register> { RegisterScreen() }

@@ -98,5 +98,8 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     //序列化
     implementation(libs.androidx.navigation.compose)
+    //Splash Screen
+    implementation(libs.androidx.core.splashscreen)
+
 
 }
