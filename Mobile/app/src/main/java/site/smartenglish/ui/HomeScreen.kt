@@ -49,15 +49,15 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import site.smartenglish.ui.compose.BlurButton
 import site.smartenglish.ui.theme.LightOrange
+import site.smartenglish.ui.viewmodel.BackgroundImageViewmodel
 import site.smartenglish.ui.viewmodel.HomeViewmodel
 
 @Composable
 fun HomeScreen(
-    viewmodel: HomeViewmodel = hiltViewModel()
+    viewmodel: BackgroundImageViewmodel = hiltViewModel()
 ) {
     val learnNum = 500
     val reviewNum = 100
-    val imageUrl = "https://images.pexels.com/photos/32241306/pexels-photo-32241306.jpeg"
     val titleWord = "English"
 
     val bitmap = viewmodel.backgroundBitmap.collectAsState().value
@@ -69,9 +69,6 @@ fun HomeScreen(
     val leftOffsetX = (screenWidth - 190.dp - 190.dp - 23.dp) / 2
     val rightOffsetX = leftOffsetX + 190.dp + 23.dp
 
-    LaunchedEffect(Unit) {
-        viewmodel.loadBackgroundImage(imageUrl)
-    }
 
     val buttonContent: @Composable (text: String, num: Int) -> Unit = { t: String, n: Int ->
         Column(
@@ -218,97 +215,3 @@ fun HomeScreen(
     }
 
 }
-//        // 半透明遮罩层
-//        Box(
-//            modifier = Modifier
-//                .fillMaxSize()
-//                .background(Color(0x60000000))
-//        )
-//
-////        // 模糊按钮背景区域
-////        Row(
-////            modifier = Modifier
-////                .align(Alignment.BottomCenter)
-////                .offset(y = 650.dp)
-////                .fillMaxWidth(),
-////            horizontalArrangement = Arrangement.SpaceEvenly
-////        ) {
-////            // Learn按钮区域模糊
-////            site.smartenglish.ui.compose.PartBlurBox(
-////                modifier = Modifier
-////                    .width(190.dp)
-////                    .height(77.dp),
-////                partProvider = { w, h -> Rect(0, 0, w, h) },
-////                radius = 20
-////            ) { reporter ->
-////                Box(
-////                    modifier = Modifier
-////                        .fillMaxSize()
-////                        .background(Color.White.copy(alpha = 0.15f))
-////                ){
-////                    BlurButton(
-////                        modifier = Modifier
-////                            .width(190.dp)
-////                            .height(77.dp),
-////                        onClick = {},
-////                        text = "Learn",
-////                        number = learnNum.toString(),
-////                    )
-////                }
-////                LaunchedEffect(Unit) {
-////                    reporter.onContentUpdate()
-////                }
-////            }
-////
-////            // Review按钮区域模糊
-////            site.smartenglish.ui.compose.PartBlurBox(
-////                modifier = Modifier
-////                    .width(190.dp)
-////                    .height(77.dp),
-////                partProvider = { w, h -> Rect(0, 0, w, h) },
-////                radius = 20
-////            ) { reporter ->
-////                Box(
-////                    modifier = Modifier
-////                        .fillMaxSize()
-////                        .background(Color.White.copy(alpha = 0.15f))
-////                ){
-////                    BlurButton(
-////                        modifier = Modifier
-////                            .width(190.dp)
-////                            .height(77.dp),
-////                        onClick = {},
-////                        text = "Review",
-////                        number = reviewNum.toString(),
-////                    )
-////                }
-////                LaunchedEffect(Unit) {
-////                    reporter.onContentUpdate()
-////                }
-////            }
-////        }
-//        Scaffold(
-//            modifier = Modifier.fillMaxSize().background(Color.Transparent),
-//            contentColor = Color.Transparent,
-//            containerColor = Color.Transparent,
-//            bottomBar = {
-//                Row{
-//
-//                }
-//            }
-//        ) { innerPadding ->
-//            Box(Modifier.padding(innerPadding).background(Color.Transparent)) {
-//
-//
-//                // Learn  Review
-//                Row(
-//                    modifier = Modifier
-//                        .align(Alignment.BottomCenter)
-//                        .offset(y = 650.dp)
-//                        .fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly
-//                ) {
-//
-//                }
-//            }
-//        }
-
