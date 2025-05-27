@@ -10,6 +10,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.HiltAndroidApp
 import site.smartenglish.ui.HomeScreen
+import site.smartenglish.ui.RegisterScreen
 import site.smartenglish.ui.theme.SmartEnglishTheme
 
 @AndroidEntryPoint

@@ -49,15 +49,16 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import site.smartenglish.ui.compose.BlurButton
 import site.smartenglish.ui.theme.LightOrange
+import site.smartenglish.ui.viewmodel.BackgroundImageViewmodel
 import site.smartenglish.ui.viewmodel.HomeViewmodel
 
 @Composable
 fun HomeScreen(
-    viewmodel: HomeViewmodel = hiltViewModel()
+    viewmodel: BackgroundImageViewmodel = hiltViewModel()
 ) {
     val learnNum = 500
     val reviewNum = 100
-    val imageUrl = "https://images.pexels.com/photos/32241306/pexels-photo-32241306.jpeg"
+    val imageUrl = viewmodel.imageUrl.collectAsState().value
     val titleWord = "English"
 
     val bitmap = viewmodel.backgroundBitmap.collectAsState().value
@@ -69,7 +70,7 @@ fun HomeScreen(
     val leftOffsetX = (screenWidth - 190.dp - 190.dp - 23.dp) / 2
     val rightOffsetX = leftOffsetX + 190.dp + 23.dp
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(imageUrl) {
         viewmodel.loadBackgroundImage(imageUrl)
     }
 
