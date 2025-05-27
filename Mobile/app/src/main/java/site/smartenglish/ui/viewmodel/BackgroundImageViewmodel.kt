@@ -40,6 +40,10 @@ class BackgroundImageViewmodel @Inject constructor(
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
+    init{
+        loadBackgroundImage(_imageUrl.value)
+    }
+
 
     fun loadBackgroundImage(imageUrl: String) {
         viewModelScope.launch {

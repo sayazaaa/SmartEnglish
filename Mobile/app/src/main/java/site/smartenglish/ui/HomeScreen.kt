@@ -58,7 +58,6 @@ fun HomeScreen(
 ) {
     val learnNum = 500
     val reviewNum = 100
-    val imageUrl = viewmodel.imageUrl.collectAsState().value
     val titleWord = "English"
 
     val bitmap = viewmodel.backgroundBitmap.collectAsState().value
@@ -70,9 +69,6 @@ fun HomeScreen(
     val leftOffsetX = (screenWidth - 190.dp - 190.dp - 23.dp) / 2
     val rightOffsetX = leftOffsetX + 190.dp + 23.dp
 
-    LaunchedEffect(imageUrl) {
-        viewmodel.loadBackgroundImage(imageUrl)
-    }
 
     val buttonContent: @Composable (text: String, num: Int) -> Unit = { t: String, n: Int ->
         Column(
