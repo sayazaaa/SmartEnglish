@@ -9,7 +9,7 @@ import androidx.compose.material3.Surface
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.HiltAndroidApp
-import site.smartenglish.ui.HomeScreen
+import site.smartenglish.ui.LoginScreen
 import site.smartenglish.ui.theme.SmartEnglishTheme
 
 @AndroidEntryPoint
@@ -22,7 +22,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             SmartEnglishTheme {
                 Surface {
-                    HomeScreen()
+                    LoginScreen()
                 }
             }
         }

@@ -17,7 +17,8 @@ data class LoginUiState(
     val isLoading: Boolean = false,
     val verificationSent: Boolean = false,
     val loginSuccess: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val byPassword: Boolean = true
 )
 
 //注册页面状态
@@ -37,6 +38,23 @@ class AccountViewmodel @Inject constructor(
     val loginUiState: StateFlow<LoginUiState> = _loginUiState.asStateFlow()
     private val _registerUiState = MutableStateFlow(RegisterUiState())
     val registerUiState: StateFlow<RegisterUiState> = _registerUiState.asStateFlow()
+
+    // 切换登录方式
+    fun changeWayOfLogin(){
+        viewModelScope.launch {
+            try {
+                _loginUiState.update {
+                    it.copy(byPassword = !it.byPassword)
+                }
+            } catch (e: Exception) {
+                _loginUiState.update {
+                    it.copy(
+                        error = e.message
+                    )
+                }
+            }
+        }
+    }
 
     // 发送验证码
     fun sendLoginVerificationCode(phone: String) {
