@@ -71,6 +71,8 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.ui)
+    implementation(libs.androidx.appcompat)
+    implementation(libs.androidx.ui.android.stubs)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -102,6 +104,8 @@ dependencies {
     implementation(libs.androidx.core.splashscreen)
     //ICON
     implementation(libs.androidx.material.icons.extended)
+
+    androidTestImplementation(libs.mockwebserver)
 
 
 }

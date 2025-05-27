@@ -15,6 +15,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -44,9 +47,6 @@ import kotlinx.coroutines.delay
 import site.smartenglish.R
 import site.smartenglish.ui.compose.WideButton
 import site.smartenglish.ui.viewmodel.AccountViewmodel
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 
 @Composable
 fun RegisterScreen(
@@ -107,9 +107,10 @@ fun RegisterScreen(
                 snackbarHostState.showSnackbar("注册成功！")
                 navigateToLogin()
             }
+
             uiState.error != null -> {
                 snackbarHostState.showSnackbar(uiState.error ?: "注册失败，请重试")
-                Log.e("RegisterScreen",uiState.error!!)
+                Log.e("RegisterScreen", uiState.error!!)
                 viewModel.clearRegisterError()
             }
         }
@@ -125,185 +126,188 @@ fun RegisterScreen(
     }
 
     Scaffold(
-        modifier = Modifier.background(Color(0xFFFFFCF8)),
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-    ) {  i ->
-    Box(
         modifier = Modifier
-            .background(Color(0xFFFFFCF8))
-            .fillMaxSize()
-            .padding(i)
-    ) {
-        //logo
-        Image(
-            painter = painterResource(id = R.drawable.logo),
-            contentDescription = "App Logo",
+            .background(Color(0xFFFFFCF8)),
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        contentColor = Color(0xFFFFFCF8),
+    ) { i ->
+        Box(
             modifier = Modifier
-                .width(70.dp)
-                .height(240.dp)
-                .offset(y = 123.dp)
-                .align(Alignment.TopCenter),
-        )
-
-        // 输入框
-        Column(
-            modifier = Modifier
-                .padding(horizontal = 36.dp)
-                .offset(y = with(density) { 464.dp - 8.sp.toDp() }),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .background(Color(0xFFFFFCF8))
+                .fillMaxSize()
+                .padding(i)
         ) {
-            // 手机号输入框
-            Box(Modifier.height(64.dp)) {
+            //logo
+            Image(
+                painter = painterResource(id = R.drawable.logo),
+                contentDescription = "App Logo",
+                modifier = Modifier
+                    .width(70.dp)
+                    .height(240.dp)
+                    .offset(y = 123.dp)
+                    .align(Alignment.TopCenter),
+            )
+
+            // 输入框
+            Column(
+                modifier = Modifier
+                    .padding(horizontal = 36.dp)
+                    .offset(y = with(density) { 464.dp - 8.sp.toDp() }),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // 手机号输入框
+                Box(Modifier.height(64.dp)) {
+                    OutlinedTextField(
+                        value = phoneInput,
+                        onValueChange = { s ->
+                            phoneInput = s.take(11).filter { it.isDigit() }
+                        },
+                        label = { Text("手机号") },
+                        placeholder = { Text("请输入手机号") },
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .width(356.dp)
+                            .height(64.dp),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                        isError = phoneError != null,
+                    )
+                    TextButton(
+                        onClick = {
+                            phoneError = validatePhone(phoneInput)
+                            if (phoneError == null && canRequestCode) {
+                                viewModel.sendRegisterVerificationCode(phoneInput)
+                                canRequestCode = false
+                                countdown = 60
+                            }
+                        },
+                        enabled = phoneInput.isNotEmpty() && canRequestCode && !uiState.isLoading,
+                        modifier = Modifier
+                            .padding(top = with(density) { 8.sp.toDp() })
+                            .height(64.dp)
+                            .align(Alignment.CenterEnd)
+                    ) {
+                        Text(
+                            if (countdown > 0) "${countdown}s" else "获取验证码",
+                            modifier = Modifier.align(Alignment.CenterVertically),
+                            fontSize = 14.sp,
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(with(density) { 22.dp - 8.sp.toDp() }))
+
+                // 验证码输入框
+
                 OutlinedTextField(
-                    value = phoneInput,
-                    onValueChange = {
-                        phoneInput = it.take(11).filter { it.isDigit() }
+                    value = verificationInput,
+                    onValueChange = { s ->
+                        verificationInput = s.take(4).filter { it.isDigit() }
+//                    codeError = validateCode(verificationInput)
                     },
-                    label = { Text("手机号") },
-                    placeholder = { Text("请输入手机号") },
+                    label = { Text("验证码") },
+                    placeholder = { Text("请输入验证码") },
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier
                         .width(356.dp)
                         .height(64.dp),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-                    isError = phoneError != null,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    isError = codeError != null,
                 )
-                TextButton(
+
+                Spacer(Modifier.height(with(density) { 22.dp - 8.sp.toDp() }))
+
+                // 密码输入框
+                OutlinedTextField(
+                    value = passwordInput,
+                    onValueChange = {
+                        passwordInput = it
+                        passwordError = validatePassword(passwordInput)
+                    },
+                    label = { Text("密码") },
+                    placeholder = { Text("请输入密码") },
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .width(356.dp)
+                        .height(64.dp),
+                    visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    isError = passwordError != null,
+                    trailingIcon = {
+                        androidx.compose.material3.IconButton(
+                            onClick = { isPasswordVisible = !isPasswordVisible }
+                        ) {
+                            androidx.compose.material3.Icon(
+                                imageVector = if (isPasswordVisible)
+                                    Icons.Default.Visibility
+                                else
+                                    Icons.Default.VisibilityOff,
+                                contentDescription = if (isPasswordVisible) "隐藏密码" else "显示密码"
+                            )
+                        }
+                    }
+                )
+                Spacer(Modifier.height(10.dp))
+                Row(modifier = Modifier.height(30.dp), horizontalArrangement = Arrangement.Center) {
+                    // 错误提示
+                    phoneError?.let {
+                        Text(
+                            text = it,
+                            color = Color.Red,
+                            fontSize = 12.sp,
+                        )
+                    }
+                    codeError?.let {
+                        phoneError?.let {
+                            Spacer(Modifier.width(10.dp))
+                        }
+                        Text(
+                            text = it,
+                            color = Color.Red,
+                            fontSize = 12.sp,
+                        )
+                    }
+                    passwordError?.let {
+                        if (phoneError != null || codeError != null) {
+                            Spacer(Modifier.width(10.dp))
+                        }
+                        Text(
+                            text = it,
+                            color = Color.Red,
+                            fontSize = 12.sp
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(with(density) { 40.dp - 8.sp.toDp() }))
+
+                // 注册按钮
+                WideButton(
+                    text = if (uiState.isLoading) "注册中..." else "注册",
                     onClick = {
+                        // 验证所有输入
                         phoneError = validatePhone(phoneInput)
-                        if (phoneError == null && canRequestCode) {
-                            viewModel.sendRegisterVerificationCode(phoneInput)
-                            canRequestCode = false
-                            countdown = 60
+                        codeError = validateCode(verificationInput)
+                        passwordError = validatePassword(passwordInput)
+
+                        // 只有全部验证通过才提交
+                        if (phoneError == null && codeError == null && passwordError == null) {
+                            viewModel.register(phoneInput, verificationInput, passwordInput)
                         }
                     },
-                    enabled = phoneInput.isNotEmpty() && canRequestCode && !uiState.isLoading,
-                    modifier = Modifier
-                        .padding(top = with(density) { 8.sp.toDp() })
-                        .height(64.dp)
-                        .align(Alignment.CenterEnd)
+                    fontsize = 16,
+                    color = Color(0xFFFFFEFD)
+                )
+                // 登录按钮
+                TextButton(
+                    onClick = { navigateToLogin() },
+                    modifier = Modifier.padding(0.dp)
                 ) {
                     Text(
-                        if (countdown > 0) "${countdown}s" else "获取验证码",
-                        modifier = Modifier.align(Alignment.CenterVertically),
+                        "登录",
                         fontSize = 14.sp,
                     )
                 }
             }
-
-            Spacer(Modifier.height(with(density) { 22.dp - 8.sp.toDp() }))
-
-            // 验证码输入框
-
-            OutlinedTextField(
-                value = verificationInput,
-                onValueChange = {
-                    verificationInput = it.take(4).filter { it.isDigit() }
-//                    codeError = validateCode(verificationInput)
-                },
-                label = { Text("验证码") },
-                placeholder = { Text("请输入验证码") },
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier
-                    .width(356.dp)
-                    .height(64.dp),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                isError = codeError != null,
-            )
-
-            Spacer(Modifier.height(with(density) { 22.dp - 8.sp.toDp() }))
-
-            // 密码输入框
-            OutlinedTextField(
-                value = passwordInput,
-                onValueChange = {
-                    passwordInput = it
-                    passwordError = validatePassword(passwordInput)
-                },
-                label = { Text("密码") },
-                placeholder = { Text("请输入密码") },
-                shape = RoundedCornerShape(12.dp),
-                modifier = Modifier
-                    .width(356.dp)
-                    .height(64.dp),
-                visualTransformation = if (isPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                isError = passwordError != null,
-                trailingIcon = {
-                    androidx.compose.material3.IconButton(
-                        onClick = { isPasswordVisible = !isPasswordVisible }
-                    ) {
-                        androidx.compose.material3.Icon(
-                            imageVector = if (isPasswordVisible)
-                                Icons.Default.Visibility
-                            else
-                                Icons.Default.VisibilityOff,
-                            contentDescription = if (isPasswordVisible) "隐藏密码" else "显示密码"
-                        )
-                    }
-                }
-            )
-            Spacer(Modifier.height(with(density) { 10.dp}))
-            Row(modifier = Modifier.height(with(density) { 30.dp }), horizontalArrangement = Arrangement.Center) {
-                // 错误提示
-                phoneError?.let {
-                    Text(
-                        text = it,
-                        color = Color.Red,
-                        fontSize = 12.sp,
-                    )
-                }
-                codeError?.let {
-                    phoneError?.let {
-                        Spacer(Modifier.width(10.dp))
-                    }
-                    Text(
-                        text = it,
-                        color = Color.Red,
-                        fontSize = 12.sp,
-                    )
-                }
-                passwordError?.let {
-                    if (phoneError != null || codeError != null) {
-                        Spacer(Modifier.width(10.dp))
-                    }
-                    Text(
-                        text = it,
-                        color = Color.Red,
-                        fontSize = 12.sp
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(with(density) { 40.dp - 8.sp.toDp() }))
-
-            // 注册按钮
-            WideButton(
-                text = if (uiState.isLoading) "注册中..." else "注册",
-                onClick = {
-                    // 验证所有输入
-                    phoneError = validatePhone(phoneInput)
-                    codeError = validateCode(verificationInput)
-                    passwordError = validatePassword(passwordInput)
-
-                    // 只有全部验证通过才提交
-                    if (phoneError == null && codeError == null && passwordError == null) {
-                        viewModel.register(phoneInput, verificationInput, passwordInput)
-                    }
-                },
-                fontsize = 16,
-                color = Color(0xFFFFFEFD)
-            )
-            // 登录按钮
-            TextButton(
-                onClick = { navigateToLogin() },
-                modifier = Modifier.padding(0.dp)
-            ) {
-                Text(
-                    "登录",
-                    fontSize = 14.sp,
-                )
-            }
         }
-    }}
+    }
 }

@@ -9,20 +9,20 @@ import androidx.compose.material3.Surface
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.HiltAndroidApp
-import site.smartenglish.ui.MainScreen
+import site.smartenglish.ui.HomeScreen
 import site.smartenglish.ui.theme.SmartEnglishTheme
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         // 初始化启动画面
-        val splashScreen = installSplashScreen()
+        installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             SmartEnglishTheme {
                 Surface {
-                    MainScreen()
+                    HomeScreen()
                 }
             }
         }
@@ -30,4 +30,4 @@ class MainActivity : ComponentActivity() {
 }
 
 @HiltAndroidApp
-class MainApp:Application()
+class MainApp : Application()

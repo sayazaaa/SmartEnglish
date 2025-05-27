@@ -1,7 +1,6 @@
 package site.smartenglish.remote.data
 
 
-
 data class RegisterRequest(
     val phone: String,
     val verification: String? = null,
@@ -9,7 +8,7 @@ data class RegisterRequest(
 )
 
 data class RegisterResponse(
-    val message:String
+    val message: String
 )
 
 data class LoginRequest(

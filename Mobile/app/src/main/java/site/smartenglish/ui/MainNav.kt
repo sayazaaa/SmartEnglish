@@ -9,6 +9,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 object Login
+
 @Serializable
 object Register
 
@@ -19,9 +20,8 @@ fun MainNav() {
         navController = navController,
         startDestination = Register
     ) {
-        composable<Login>{}
+        composable<Login> {}
         composable<Register> { RegisterScreen() }
-
 
 
     }

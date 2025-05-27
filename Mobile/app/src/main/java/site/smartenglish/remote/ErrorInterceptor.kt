@@ -6,7 +6,7 @@ import okhttp3.Response
 import site.smartenglish.data.DataStoreManager
 import javax.inject.Inject
 
-class ErrorInterceptor@Inject constructor(
+class ErrorInterceptor @Inject constructor(
     private val dataStoreManager: DataStoreManager
 ) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {

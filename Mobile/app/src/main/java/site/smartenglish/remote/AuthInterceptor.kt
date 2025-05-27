@@ -11,7 +11,7 @@ import javax.inject.Inject
  *
  * @param dataStoreManager 用于获取存储的令牌。
  */
-class AuthInterceptor@Inject constructor(
+class AuthInterceptor @Inject constructor(
     private val dataStoreManager: DataStoreManager
 ) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {

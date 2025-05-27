@@ -31,7 +31,7 @@ data class RegisterUiState(
 @HiltViewModel
 class AccountViewmodel @Inject constructor(
     private val accountRepository: AccountRepository
-):ViewModel(){
+) : ViewModel() {
     // UI状态
     private val _loginUiState = MutableStateFlow(LoginUiState())
     val loginUiState: StateFlow<LoginUiState> = _loginUiState.asStateFlow()

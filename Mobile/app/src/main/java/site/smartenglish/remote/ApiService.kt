@@ -3,11 +3,13 @@ package site.smartenglish.remote
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
-import retrofit2.http.HTTP
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import site.smartenglish.remote.data.ChangePasswordRequest
 import site.smartenglish.remote.data.ChangePasswordResponse
+import site.smartenglish.remote.data.ChangeProfileRequest
+import site.smartenglish.remote.data.ChangeProfileResponse
+import site.smartenglish.remote.data.GetProfileResponse
 import site.smartenglish.remote.data.LoginRequest
 import site.smartenglish.remote.data.LoginResponse
 import site.smartenglish.remote.data.RegisterRequest
@@ -31,6 +33,13 @@ interface ApiService {
         @Body changePasswordRequest: ChangePasswordRequest
     ): Response<ChangePasswordResponse>
 
+    @PUT("user")
+    suspend fun changeProfile(
+        @Body changeProfileRequest: ChangeProfileRequest
+    ): Response<ChangeProfileResponse>
+
+    @GET("user")
+    suspend fun getProfile(): Response<GetProfileResponse>
 
 
 }

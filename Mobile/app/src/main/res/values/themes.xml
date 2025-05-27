@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.SmartEnglish" parent="android:Theme.Material.Light.NoActionBar" />
+
+    <style name="Theme.SmartEnglish" parent="android:Theme.Material.Light.NoActionBar">
+
+    </style>
 
     <!-- 添加启动画面主题 -->
     <style name="Theme.SmartEnglish.Starting" parent="Theme.SplashScreen">
@@ -9,7 +12,6 @@
 
         <!-- 启动图标 -->
         <item name="windowSplashScreenAnimatedIcon">@drawable/logo_wide</item>
-<!--        <item name="splashScreenIconSize">200dp</item>-->
         <!-- 动画持续时间 -->
         <item name="windowSplashScreenAnimationDuration">1000</item>
 
