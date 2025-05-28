@@ -7,7 +7,7 @@ val Grey = Color(0xFF292F45)
 val Orange = Color(0xFFF4A100)
 
 //白色字体
-val White = Color(0xFFE3E4E8)
+val White = Color(0xFFE1E3E5)
 
 //灰色字体
 val LightGrey = Color(0x73E3E4E8)

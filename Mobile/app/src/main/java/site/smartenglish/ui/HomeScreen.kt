@@ -1,8 +1,17 @@
 package site.smartenglish.ui
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,29 +27,40 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -48,9 +68,12 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import site.smartenglish.ui.compose.BlurButton
+import site.smartenglish.ui.compose.WordSearchItem
+import site.smartenglish.ui.compose.WordSearchItemData
 import site.smartenglish.ui.theme.LightOrange
+import site.smartenglish.ui.theme.Orange
 import site.smartenglish.ui.viewmodel.BackgroundImageViewmodel
-import site.smartenglish.ui.viewmodel.HomeViewmodel
+
 
 @Composable
 fun HomeScreen(
@@ -68,6 +91,40 @@ fun HomeScreen(
     val screenWidth = with(density) { windowInfo.containerSize.width.toDp() }
     val leftOffsetX = (screenWidth - 190.dp - 190.dp - 23.dp) / 2
     val rightOffsetX = leftOffsetX + 190.dp + 23.dp
+
+    val focusManager = LocalFocusManager.current
+    var isSearchActive by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
+    val focusRequester = remember { FocusRequester() }
+    val interactionSource = remember { MutableInteractionSource() }
+
+    // 搜索模糊背景动画
+    val blurRadiusAnim by animateFloatAsState(
+        targetValue = if (isSearchActive) 100f else 0f,
+        animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
+        label = "blurAnim"
+    )
+    val backgroundAlphaAnim by animateFloatAsState(
+        targetValue = if (isSearchActive) 0.5f else 0f,
+        animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
+        label = "alphaAnim"
+    )
+
+    val searchItemList = listOf<WordSearchItemData>(
+        WordSearchItemData("Hello", "A greeting", isFav = false),
+        WordSearchItemData(
+            "World",
+            "The earth, together with all of its countries and peoples",
+            isFav = true
+        ),
+        WordSearchItemData("Compose", "A modern toolkit for building native UI", isFav = false),
+        WordSearchItemData(
+            "Android",
+            "A mobile operating system developed by Google",
+            isFav = true
+        ),
+        WordSearchItemData("Jetpack", "A suite of libraries for Android development", isFav = false)
+    )
 
 
     val buttonContent: @Composable (text: String, num: Int) -> Unit = { t: String, n: Int ->
@@ -92,6 +149,7 @@ fun HomeScreen(
             )
         }
     }
+
     // 绘制背景图片
     Box {
         Image(
@@ -100,55 +158,7 @@ fun HomeScreen(
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
         )
-        // 顶部图标 + 搜索框
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier
-                .statusBarsPadding()
-                .padding(top = 5.dp, start = 5.dp, end = 29.dp)
-        ) {
-            IconButton(
-                modifier = Modifier
-                    .size(51.dp)
-                    .background(
-                        Color.White.copy(alpha = 0.5f),
-                        shape = CircleShape
-                    ),
-                onClick = { }) {
-                AsyncImage(
-                    model = "https://temp.im/50x50/?text=head",
-                    contentDescription = "Profile",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(47.dp)
-                        .clip(CircleShape)  // 确保图片为圆形
-                )
-            }
-            Spacer(Modifier.width(17.dp))
-            Box {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(38.dp)
-                        .clickable { /* 这里添加导航到搜索页面的逻辑 */ },
-                    shape = RoundedCornerShape(8.dp),
-                    color = Color.White.copy(alpha = 0.9f)
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 12.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = "搜索",
-                            tint = Color.Gray,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-            }
-        }
+
         BlurButton(
             buttonWidth = 190.dp,
             buttonHeight = 77.dp,
@@ -211,6 +221,154 @@ fun HomeScreen(
             barItem(Icons.Default.Check, "首页") { /* 处理点击 */ }
             barItem(Icons.Default.Image, "练习") { /* 处理点击 */ }
             barItem(Icons.Default.Mic, "我的") { /* 处理点击 */ }
+        }
+        // 搜索时模糊背景
+        AnimatedVisibility(
+            visible = isSearchActive,
+            enter = fadeIn(tween(500)),
+            exit = fadeOut(tween(500))
+        ) {
+            Image(
+                bitmap = bitmap.asImageBitmap(),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .blur(blurRadiusAnim.dp)
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = backgroundAlphaAnim))
+                    .clickable(
+                        enabled = isSearchActive,
+                        interactionSource = interactionSource,
+                        indication = null,
+                        onClick = {
+                            isSearchActive = false
+                            searchQuery = ""
+                            focusManager.clearFocus() // 清除焦点
+                        }
+                    )
+            )
+        }
+
+        // 顶部图标 + 搜索框
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween,
+            modifier = Modifier
+                .statusBarsPadding()
+                .padding(top = 5.dp, start = 5.dp, end = 29.dp)
+        ) {
+            AnimatedContent(
+                targetState = isSearchActive,
+                transitionSpec = {
+                    // 定义一个平滑的转场效果
+                    (fadeIn(animationSpec = tween(200)) togetherWith
+                            (fadeOut(animationSpec = tween(200))))
+                },
+                label = "HeaderButtonAnimation"
+            ) { isActive ->
+                if (isActive) {
+                    // 返回按钮
+                    IconButton(
+                        onClick = {
+                            isSearchActive = false
+                            searchQuery = ""
+                            focusManager.clearFocus() // 清除焦点
+                        },
+                        modifier = Modifier.size(51.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                            contentDescription = "Back",
+                            modifier = Modifier.size(24.dp),
+                            tint = Color.White.copy(alpha = 0.7f)
+                        )
+                    }
+                } else {
+                    // 个人头像按钮
+                    IconButton(
+                        modifier = Modifier
+                            .size(51.dp)
+                            .background(
+                                Color.White.copy(alpha = 0.5f),
+                                shape = CircleShape
+                            ),
+                        onClick = { }) {
+                        AsyncImage(
+                            model = "https://temp.im/50x50/?text=head",
+                            contentDescription = "Profile",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .size(47.dp)
+                                .clip(CircleShape)  // 确保图片为圆形
+                        )
+                    }
+                }
+            }
+            Spacer(Modifier.width(17.dp))
+            Box {
+                BasicTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(38.dp)
+                        .background(Color(0xFFFFFEFD), RoundedCornerShape(8.dp))
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                        .focusRequester(focusRequester)
+                        .onFocusChanged {
+                            isSearchActive = it.isFocused
+                        },
+                    textStyle = LocalTextStyle.current.copy(
+                        color = Color.DarkGray,
+                        fontSize = 16.sp
+                    ),
+                    cursorBrush = SolidColor(Orange),
+                    decorationBox = { innerTextField ->
+                        // 搜索图标
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Start,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .align(Alignment.Center)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Search",
+                                modifier = Modifier.size(20.dp),
+                                tint = Color.Black.copy(alpha = 0.3f)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            // 显示输入框内容
+                            innerTextField()
+                        }
+                    }
+                )
+            }
+        }
+        // 搜索结果内容
+        AnimatedVisibility(
+            visible = isSearchActive,
+            enter = fadeIn(tween(500)),
+            exit = fadeOut(tween(500))
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(top = 114.dp)
+                    .background(Color.Transparent),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                searchItemList.forEach {
+                    val (title, description, isFav) = it
+                    WordSearchItem(title, description, {}, {}, isFav)
+                }
+            }
         }
     }
 
