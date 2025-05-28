@@ -21,7 +21,7 @@ public class AccountpwdLoginHandler implements IAccountHandler{
     private JWTUtils jwtUtils;
     @Override
     public boolean accept(DTOAccount dtoAccount, String method) {
-        return (method.equals("GET")
+        return (method.equals("LOGIN")
                 && dtoAccount.getPassword() != null
                 && dtoAccount.getPhone() != null
                 && (!dtoAccount.getPhone().isEmpty())
@@ -30,7 +30,7 @@ public class AccountpwdLoginHandler implements IAccountHandler{
 
     @Override
     public ResponseEntity<PDTOAccount> Handle(DTOAccount dtoAccount) {
-        if(accept(dtoAccount, "GET")){
+        if(accept(dtoAccount, "LOGIN")){
             Account account = accountRepository.findByPhone(dtoAccount.getPhone());
             if(account == null){
                 throw new AccountException("Account not found");

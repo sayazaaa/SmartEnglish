@@ -26,7 +26,7 @@ public class AccountVerificationLoginHandler implements IAccountHandler{
     private Cache<String, Object> cache;
     @Override
     public boolean accept(DTOAccount dtoAccount, String method){
-        return dtoAccount.getPhone() != null && (!dtoAccount.getPhone().isEmpty()) && method.equals("GET")
+        return dtoAccount.getPhone() != null && (!dtoAccount.getPhone().isEmpty()) && method.equals("LOGIN")
                 &&dtoAccount.getPassword() == null;
     }
 

@@ -46,10 +46,10 @@ public class AccountController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new PDTOAccount(e.getMessage()));
         }
     }
-    @RequestMapping(method = RequestMethod.GET, consumes = "application/json;charset=UTF-8")
+    @RequestMapping(path="/login", method = RequestMethod.POST, consumes = "application/json;charset=UTF-8")
     public ResponseEntity<PDTOAccount> Login(@RequestBody DTOAccount account) {
         try{
-            IAccountHandler handler = accountService.getAccountHandler(account,"GET");
+            IAccountHandler handler = accountService.getAccountHandler(account,"LOGIN");
             if(handler == null){
                 throw new RequestFormatException("invalid request");
             }

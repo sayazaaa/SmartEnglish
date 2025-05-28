@@ -46,7 +46,7 @@ public class AccountRegisterHandler implements IAccountHandler{
                 account.setPhone(dtoAccount.getPhone());
                 account.setNickname(dtoAccount.getPhone());
                 account.setPassword(new BCryptPasswordEncoder().encode(dtoAccount.getPassword()));
-                account.setCreateDate(java.sql.Date.valueOf(LocalDate.now()));
+                account.setCreateDate(LocalDate.now());
                 try{
                     accountRepository.save(account);
                 }catch(DataIntegrityViolationException e){

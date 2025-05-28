@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.sql.Date;
+import java.time.LocalDate;
 
 @Data
 @Entity
@@ -15,8 +16,7 @@ public class Account {
     @Column(name="wordbook_id", nullable = true, columnDefinition = "INT")
     private Integer wordbookId;
     @Column(name="createdate",columnDefinition = "DATE")
-    @Temporal(TemporalType.DATE)
-    private Date createDate;
+    private LocalDate createDate;
     @Column(length = 45, columnDefinition = "VARCHAR(45)")
     private String phone;
     @Column(length = 128)
