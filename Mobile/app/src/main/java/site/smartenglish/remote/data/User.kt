@@ -8,16 +8,16 @@ data class ChangeProfileRequest(
 )
 
 data class ChangeProfileResponse(
-    val name: String,
-    val description: String,
-    val avatar: String,
-    val wordbook: WordBook
+    val name: String? = null,
+    val description: String? = null,
+    val avatar: String? = null,
+    val wordbook: WordBook? = null
 )
 
 data class GetProfileResponse(
-    val name: String,
-    val description: String,
-    val avatar: String,
-    val wordbook: WordBook
+    val name: String? = null,
+    val description: String? = null,
+    val avatar: String? = null,
+    val wordbook: WordBook? = null
 )
 
