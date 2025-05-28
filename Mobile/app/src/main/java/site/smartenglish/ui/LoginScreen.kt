@@ -178,7 +178,7 @@ fun LoginScreen(
                             onClick = {
                                 phoneError = validatePhone(phoneInput)
                                 if (phoneError == null && canRequestCode) {
-                                    viewModel.sendRegisterVerificationCode(phoneInput)
+                                    viewModel.sendLoginVerificationCode(phoneInput)
                                     canRequestCode = false
                                     countdown = 60
                                 }
@@ -237,7 +237,7 @@ fun LoginScreen(
                 //切换按钮
                 Row(modifier = Modifier.height(30.dp).width(300.dp), horizontalArrangement = Arrangement.Start) {
                     Text(
-                        text = if(uiState.byPassword) "注册" else "登录",
+                        text = if(uiState.byPassword) "验证码登录" else "密码登录",
                         modifier = Modifier
                             .width(70.dp)
                             .height(20.dp)
