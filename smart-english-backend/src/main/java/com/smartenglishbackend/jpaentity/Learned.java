@@ -1,9 +1,6 @@
 package com.smartenglishbackend.jpaentity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.IdClass;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Data;
 
 import java.sql.Date;
@@ -14,8 +11,11 @@ import java.sql.Date;
 @IdClass(LearnedId.class)
 public class Learned {
     @Id
+    @Column(length=45)
     private String word;
     @Id
     private Integer account_id;
+    @Column(columnDefinition = "DATE")
     private Date review_date;
+
 }

@@ -28,8 +28,7 @@ public class UserService {
         if(account.getWordbookId() != null){
             WordBook wordBook = wordBookRepository.findById(account.getWordbookId());
             if(wordBook != null){
-                List<Object> list = wordBook.getContent();
-
+                List<String> list = wordBook.getContent();
                 PDTOWordBookBasic wordBookBasic = new PDTOWordBookBasic(wordBook.getId(), wordBook.getName(), wordBook.getCover(), list.size());
                 System.out.println(wordBook);
                 return ResponseEntity.ok(new PDTOUser(account.getNickname(), account.getDescribe(), account.getAvatar(), wordBookBasic));

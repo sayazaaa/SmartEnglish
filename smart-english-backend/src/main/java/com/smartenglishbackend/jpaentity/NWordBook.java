@@ -1,27 +1,26 @@
 package com.smartenglishbackend.jpaentity;
 
-import com.smartenglishbackend.utils.JsonArrayConverter;
 import com.smartenglishbackend.utils.JsonStringArrayConverter;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.checkerframework.checker.units.qual.C;
 
 import java.util.List;
-import java.util.Map;
 
-@Data
 @Entity
-@Table(name="wordbook")
-public class WordBook {
+@Data
+@Table(name="nwordbook")
+public class NWordBook {
     @Id
-    private Integer id;
-    @Column(length=45)
+    @Column(columnDefinition = "INT")
+    private int id;
+    @Column(columnDefinition = "INT")
+    private int account_id;
+    @Column(length = 45)
     private String name;
-    @Column(name="`describe`", columnDefinition = "TEXT")
-    private String describe;
-    @Column(length=128)
+    @Column(length = 128)
     private String cover;
-    @Column(columnDefinition = "json")
+    @Column(columnDefinition = "JSON")
     @Convert(converter = JsonStringArrayConverter.class)
     private List<String> content;
 }
