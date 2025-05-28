@@ -264,7 +264,6 @@ fun HomeScreen(
             AnimatedContent(
                 targetState = isSearchActive,
                 transitionSpec = {
-                    // 定义一个平滑的转场效果
                     (fadeIn(animationSpec = tween(200)) togetherWith
                             (fadeOut(animationSpec = tween(200))))
                 },
