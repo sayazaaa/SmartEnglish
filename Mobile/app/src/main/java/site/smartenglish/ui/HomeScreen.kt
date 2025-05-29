@@ -57,16 +57,19 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
+import site.smartenglish.R
 import site.smartenglish.ui.compose.BlurButton
 import site.smartenglish.ui.compose.WordSearchItem
 import site.smartenglish.ui.compose.WordSearchItemData
@@ -193,18 +196,26 @@ fun HomeScreen(
         ) {
             // 首页图标
             val barItem: @Composable (
-                imageVector: ImageVector,
+                imageVector: Any,
                 contentDescription: String,
                 onClick: () -> Unit,
-            ) -> Unit = { image: ImageVector, desc: String, onClick: () -> Unit ->
+            ) -> Unit = { image: Any, desc: String, onClick: () -> Unit ->
                 NavigationBarItem(
                     modifier = Modifier.background(Color.Transparent),
                     icon = {
-                        Icon(
-                            image,
-                            contentDescription = desc,
-                            modifier = Modifier.size(30.dp)
-                        )
+                        when (image) {
+                            is ImageVector -> Icon(
+                                imageVector = image,
+                                contentDescription = desc,
+                                modifier = Modifier.size(30.dp)
+                            )
+                            is Painter -> Icon(
+                                painter = image,
+                                contentDescription = desc,
+                                modifier = Modifier.size(30.dp)
+                            )
+                            else -> throw IllegalArgumentException("Unsupported image type")
+                        }
                     },
                     selected = false,
                     onClick = onClick,
@@ -218,9 +229,9 @@ fun HomeScreen(
                         )
                 )
             }
-            barItem(Icons.Default.Check, "首页") { /* 处理点击 */ }
-            barItem(Icons.Default.Image, "练习") { /* 处理点击 */ }
-            barItem(Icons.Default.Mic, "我的") { /* 处理点击 */ }
+            barItem(painterResource(R.drawable.dictionary), "外文阅读") { /* 处理点击 */ }
+            barItem(painterResource(R.drawable.chart), "仪表盘") { /* 处理点击 */ }
+            barItem(painterResource(R.drawable.edit_note), "单词听写") { /* 处理点击 */ }
         }
         // 搜索时模糊背景
         AnimatedVisibility(
