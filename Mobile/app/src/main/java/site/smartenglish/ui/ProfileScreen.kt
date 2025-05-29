@@ -33,6 +33,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import site.smartenglish.ui.compose.CenterAlignedBackArrowTopAppBar
 import site.smartenglish.ui.theme.Grey
 import site.smartenglish.ui.theme.White
 
@@ -43,25 +44,8 @@ fun ProfileScreen(
 ) {
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    Text(
-                        text = "个人信息",
-                        color = White,
-                        fontSize = 17.sp
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = {
-
-                    }) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "返回",
-                            tint = White
-                        )
-                    }
-                }
+            CenterAlignedBackArrowTopAppBar(
+                "个人信息",
             )
         },
         content = { paddingValues ->
