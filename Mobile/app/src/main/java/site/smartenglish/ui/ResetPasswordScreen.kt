@@ -3,7 +3,6 @@ package site.smartenglish.ui
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,13 +49,13 @@ import site.smartenglish.ui.compose.WideButton
 import site.smartenglish.ui.viewmodel.AccountViewmodel
 
 @Composable
-fun LoginScreen(
+fun ResetPasswordScreen(
     navigateToLogin: () -> Unit = {},
     viewModel: AccountViewmodel = hiltViewModel()
 ) {
     val density = LocalDensity.current
-    // 获取UI状态
-    val uiState by viewModel.loginUiState.collectAsState()
+    // 获取UI状态 应该用别的状态，不过好像这个也能用
+    val uiState by viewModel.registerUiState.collectAsState()
 
     // Snackbar状态管理
     val snackbarHostState = remember { SnackbarHostState() }
@@ -64,7 +63,9 @@ fun LoginScreen(
     var phoneInput by remember { mutableStateOf("") }
     var verificationInput by remember { mutableStateOf("") }
     var passwordInput by remember { mutableStateOf("") }
-    var isPasswordVisible by remember { mutableStateOf(false) }
+    var rePasswordInput by remember { mutableStateOf("") }
+    var isPasswordVisible0 by remember { mutableStateOf(false) }
+    var isPasswordVisible1 by remember { mutableStateOf(false) }
 
     // 错误状态
     var phoneError by remember { mutableStateOf<String?>(null) }
@@ -93,26 +94,27 @@ fun LoginScreen(
         }
     }
 
-    fun validatePassword(password: String): String? {
+    fun validatePassword(password: String,rePassword: String): String? {
         return when {
             password.isEmpty() -> "密码不能为空"
             password.length < 6 -> "密码长度至少6位"
+            !rePassword.equals(password) -> "两次输入的密码不一致"
             else -> null
         }
     }
 
     // 监听注册状态变化
-    LaunchedEffect(uiState.loginSuccess, uiState.error) {
+    LaunchedEffect(uiState.registerSuccess, uiState.error) {
         when {
-            uiState.loginSuccess -> {
-                snackbarHostState.showSnackbar("登录成功！")
+            uiState.registerSuccess -> {
+                snackbarHostState.showSnackbar("注册成功！")
                 navigateToLogin()
             }
 
             uiState.error != null -> {
-                snackbarHostState.showSnackbar(uiState.error ?: "登录失败，请重试")
-                Log.e("LoginScreen", uiState.error!!)
-                viewModel.clearLoginError()
+                snackbarHostState.showSnackbar(uiState.error ?: "注册失败，请重试")
+                Log.e("RegisterScreen", uiState.error!!)
+                viewModel.clearRegisterError()
             }
         }
     }
@@ -172,83 +174,113 @@ fun LoginScreen(
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                         isError = phoneError != null,
                     )
-
-                    if(!uiState.byPassword){
-                        TextButton(
-                            onClick = {
-                                phoneError = validatePhone(phoneInput)
-                                if (phoneError == null && canRequestCode) {
-                                    viewModel.sendLoginVerificationCode(phoneInput)
-                                    canRequestCode = false
-                                    countdown = 60
-                                }
-                            },
-                            enabled = phoneInput.isNotEmpty() && canRequestCode && !uiState.isLoading,
-                            modifier = Modifier
-                                .padding(top = with(density) { 8.sp.toDp() })
-                                .height(64.dp)
-                                .align(Alignment.CenterEnd)
-                        ) {
-                            Text(
-                                if (countdown > 0) "${countdown}s" else "获取验证码",
-                                modifier = Modifier.align(Alignment.CenterVertically),
-                                fontSize = 14.sp,
-                            )
-                        }
+                    TextButton(
+                        onClick = {
+                            phoneError = validatePhone(phoneInput)
+                            if (phoneError == null && canRequestCode) {
+                                viewModel.sendRegisterVerificationCode(phoneInput)
+                                canRequestCode = false
+                                countdown = 60
+                            }
+                        },
+                        enabled = phoneInput.isNotEmpty() && canRequestCode && !uiState.isLoading,
+                        modifier = Modifier
+                            .padding(top = with(density) { 8.sp.toDp() })
+                            .height(64.dp)
+                            .align(Alignment.CenterEnd)
+                    ) {
+                        Text(
+                            if (countdown > 0) "${countdown}s" else "获取验证码",
+                            modifier = Modifier.align(Alignment.CenterVertically),
+                            fontSize = 14.sp,
+                        )
                     }
                 }
 
                 Spacer(Modifier.height(with(density) { 22.dp - 8.sp.toDp() }))
 
-                // 密码输入框
+                // 验证码输入框
+
                 OutlinedTextField(
-                    value = if(uiState.byPassword) passwordInput else verificationInput,
-                    onValueChange = {
-                        passwordInput = if(uiState.byPassword) it else passwordInput
-                        verificationInput = if(!uiState.byPassword) it else verificationInput
-                        passwordError =if(uiState.byPassword) validatePassword(passwordInput) else validateCode(passwordInput)
+                    value = verificationInput,
+                    onValueChange = { s ->
+                        verificationInput = s.take(4).filter { it.isDigit() }
+//                    codeError = validateCode(verificationInput)
                     },
-                    label = { Text(if(uiState.byPassword)"密码" else "验证码") },
-                    placeholder = { Text(if(uiState.byPassword)"请输入密码" else "请输入验证码") },
+                    label = { Text("验证码") },
+                    placeholder = { Text("请输入验证码") },
                     shape = RoundedCornerShape(12.dp),
                     modifier = Modifier
                         .width(356.dp)
                         .height(64.dp),
-                    visualTransformation = if (isPasswordVisible||!uiState.byPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    isError = codeError != null,
+                )
+
+                Spacer(Modifier.height(with(density) { 22.dp - 8.sp.toDp() }))
+
+                OutlinedTextField(
+                    value = passwordInput,
+                    onValueChange = {
+                        passwordInput = it
+                        rePasswordInput = ""
+                        passwordError = ""
+                    },
+                    label = { Text("密码") },
+                    placeholder = { Text("请输入密码") },
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .width(356.dp)
+                        .height(64.dp),
+                    visualTransformation = if (isPasswordVisible1) VisualTransformation.None else PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     isError = passwordError != null,
                     trailingIcon = {
-                        if(uiState.byPassword){
-                            androidx.compose.material3.IconButton(
-                                onClick = { isPasswordVisible = !isPasswordVisible }
-                            ) {
-                                androidx.compose.material3.Icon(
-                                    imageVector = if (isPasswordVisible)
-                                        Icons.Default.Visibility
-                                    else
-                                        Icons.Default.VisibilityOff,
-                                    contentDescription = if (isPasswordVisible) "隐藏密码" else "显示密码"
-                                )
-                            }
+                        androidx.compose.material3.IconButton(
+                            onClick = { isPasswordVisible1 = !isPasswordVisible1 }
+                        ) {
+                            androidx.compose.material3.Icon(
+                                imageVector = if (isPasswordVisible1)
+                                    Icons.Default.Visibility
+                                else
+                                    Icons.Default.VisibilityOff,
+                                contentDescription = if (isPasswordVisible1) "隐藏密码" else "显示密码"
+                            )
                         }
                     }
                 )
-                Spacer(Modifier.height(10.dp))
-                //切换按钮
-                Row(modifier = Modifier.height(30.dp).width(300.dp), horizontalArrangement = Arrangement.Start) {
-                    Text(
-                        text = if(uiState.byPassword) "验证码登录" else "密码登录",
-                        modifier = Modifier
-                            .width(70.dp)
-                            .height(20.dp)
-                            .clickable {
-                                isPasswordVisible = false
-                                viewModel.changeWayOfLogin()
-                            },
-                        color = Color.Black,
-                        fontSize = 12.sp
-                    )
-                }
+                Spacer(Modifier.height(with(density) { 22.dp - 8.sp.toDp() }))
+                // 重复密码输入框
+                OutlinedTextField(
+                    value = rePasswordInput,
+                    onValueChange = {
+                        rePasswordInput = it
+                        passwordError = validatePassword(passwordInput,rePasswordInput)
+                    },
+                    label = { Text("重复密码") },
+                    placeholder = { Text("请再次输入密码") },
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier
+                        .width(356.dp)
+                        .height(64.dp),
+                    visualTransformation = if (isPasswordVisible0) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    isError = passwordError != null,
+                    trailingIcon = {
+                        androidx.compose.material3.IconButton(
+                            onClick = { isPasswordVisible0 = !isPasswordVisible0 }
+                        ) {
+                            androidx.compose.material3.Icon(
+                                imageVector = if (isPasswordVisible0)
+                                    Icons.Default.Visibility
+                                else
+                                    Icons.Default.VisibilityOff,
+                                contentDescription = if (isPasswordVisible0) "隐藏密码" else "显示密码"
+                            )
+                        }
+                    }
+                )
+
                 Spacer(Modifier.height(10.dp))
                 Row(modifier = Modifier.height(30.dp), horizontalArrangement = Arrangement.Center) {
                     // 错误提示
@@ -283,16 +315,17 @@ fun LoginScreen(
 
                 Spacer(Modifier.height(with(density) { 40.dp - 8.sp.toDp() }))
 
-                // 登录按钮
+                // 注册按钮
                 WideButton(
                     text = if (uiState.isLoading) "登录中..." else "登录",
                     onClick = {
                         // 验证所有输入
                         phoneError = validatePhone(phoneInput)
                         codeError = validateCode(verificationInput)
-                        passwordError = validatePassword(passwordInput)
+                        passwordError = validatePassword(passwordInput,rePasswordInput)
 
-                        // TODO login logics
+                        // 只有全部验证通过才提交
+                        //TODO reset logics
 //                        if (phoneError == null && codeError == null && passwordError == null) {
 //                            viewModel.register(phoneInput, verificationInput, passwordInput)
 //                        }
@@ -300,16 +333,6 @@ fun LoginScreen(
                     fontsize = 16,
                     color = Color(0xFFFFFEFD)
                 )
-                // 注册按钮
-                TextButton(
-                    onClick = { navigateToLogin() },
-                    modifier = Modifier.padding(0.dp)
-                ) {
-                    Text(
-                        "注册",
-                        fontSize = 14.sp,
-                    )
-                }
             }
         }
     }
