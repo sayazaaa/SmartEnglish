@@ -1,9 +1,6 @@
 package com.smartenglishbackend.jpaentity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Data;
 
 @Entity
@@ -11,10 +8,11 @@ import lombok.Data;
 @Table(name="favorites_set")
 public class FavoritesSet {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(columnDefinition = "INT")
-    private int id;
-    @Column(columnDefinition = "INT")
-    private int account_id;
+    private Integer id;
+    @Column(columnDefinition = "INT", name = "account_id")
+    private Integer accountId;
     @Column(length = 64)
     private String name;
     @Column(length = 128)
