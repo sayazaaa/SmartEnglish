@@ -9,6 +9,7 @@ import androidx.compose.material3.Surface
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.HiltAndroidApp
+import site.smartenglish.ui.ArticleScreen
 import site.smartenglish.ui.ResetPasswordScreen
 import site.smartenglish.ui.theme.SmartEnglishTheme
 
@@ -22,7 +23,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             SmartEnglishTheme {
                 Surface {
-                    ResetPasswordScreen()
+                    ArticleScreen()
                 }
             }
         }
