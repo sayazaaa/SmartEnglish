@@ -231,7 +231,7 @@ interface ApiService {
 
     /**
      * 提交新单词组接口
-     *
+     * @param type "learn"/"review"对应不同的单词组
      * @param wordSet
      * [
      *     {
@@ -243,6 +243,7 @@ interface ApiService {
      */
     @PUT("wordset")
     suspend fun putWordSet(
+        @Query("type") type: String,
         @Body wordSet: PutWordSetRequest
     ): Response<Unit>
 
