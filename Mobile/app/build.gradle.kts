@@ -104,8 +104,7 @@ dependencies {
     implementation(libs.androidx.core.splashscreen)
     //ICON
     implementation(libs.androidx.material.icons.extended)
-
-    androidTestImplementation(libs.mockwebserver)
-
+    //JSoup
+    implementation(libs.jsoup)
 
 }
