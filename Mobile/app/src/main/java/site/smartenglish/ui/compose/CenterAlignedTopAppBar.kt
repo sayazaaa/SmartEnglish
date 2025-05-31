@@ -1,7 +1,8 @@
 package site.smartenglish.ui.compose
 
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBackIos
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -15,7 +16,8 @@ import site.smartenglish.ui.theme.White
 @Composable
 fun CenterAlignedBackArrowTopAppBar(
     title: String,
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    actions: @Composable() (RowScope.() -> Unit) = {}
 ) {
     CenterAlignedTopAppBar(
         title = {
@@ -28,11 +30,12 @@ fun CenterAlignedBackArrowTopAppBar(
         navigationIcon = {
             IconButton(onClick = onBackClick) {
                 Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBackIos,
                     contentDescription = "返回",
                     tint = White
                 )
             }
-        }
+        },
+        actions = actions,
     )
 }
