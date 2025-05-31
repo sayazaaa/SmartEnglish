@@ -24,6 +24,8 @@ public class AccountRegisterHandler implements IAccountHandler{
     private Cache<String, Object> cache;
     @Autowired
     VerificationSender verificationSender;
+    @Autowired
+    AccountInitializer accountInitializer;
     @Override
     public boolean accept(DTOAccount dtoAccount, String method) {
         return (method.equals("POST") && dtoAccount.getPhone() != null);
@@ -44,14 +46,10 @@ public class AccountRegisterHandler implements IAccountHandler{
             }
             if(veri.equals(dtoAccount.getVerification())){
                 account.setPhone(dtoAccount.getPhone());
-                account.setNickname(dtoAccount.getPhone());
+                account.setName(dtoAccount.getPhone());
                 account.setPassword(new BCryptPasswordEncoder().encode(dtoAccount.getPassword()));
                 account.setCreateDate(LocalDate.now());
-                try{
-                    accountRepository.save(account);
-                }catch(DataIntegrityViolationException e){
-                    throw new RuntimeException("Database Error: Data integrity violation");
-                }
+                accountInitializer.AccountInit(account);
             }else{
                 throw new AccountException("Verification code incorrect");
             }

@@ -15,9 +15,9 @@ import java.util.Date;
 public class Feedback {
     @Id
     @Column(columnDefinition = "INT")
-    private int id;
-    @Column(columnDefinition = "INT")
-    private int account_id;
+    private Integer id;
+    @Column(columnDefinition = "INT",name = "account_id")
+    private Integer accountId;
     @Column(columnDefinition = "DATE", name="`date`")
     private LocalDate date;
     @Column(columnDefinition = "TEXT")

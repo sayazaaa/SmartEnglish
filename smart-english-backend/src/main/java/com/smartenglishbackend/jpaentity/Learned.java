@@ -14,7 +14,8 @@ public class Learned {
     @Column(length=45)
     private String word;
     @Id
-    private Integer account_id;
+    @Column(columnDefinition = "INT",name = "account_id")
+    private Integer accountId;
     @Column(columnDefinition = "DATE")
     private Date review_date;
 

@@ -9,17 +9,17 @@ import java.util.Objects;
 @NoArgsConstructor
 @AllArgsConstructor
 public class FavoritesId implements Serializable {
-    private int setid;
-    private String articleid;
+    private Integer setId;
+    private String articleId;
     @Override
     public boolean equals(Object obj) {
         if(this == obj)return true;
         if(obj == null || getClass() != obj.getClass())return false;
         FavoritesId other = (FavoritesId)obj;
-        return setid == other.setid && articleid.equals(other.articleid);
+        return setId.equals(other.setId) && articleId.equals(other.articleId);
     }
     @Override
     public int hashCode() {
-        return Objects.hash(setid,articleid);
+        return Objects.hash(setId,articleId);
     }
 }
