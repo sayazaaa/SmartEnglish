@@ -3,7 +3,7 @@ package site.smartenglish.remote
 import android.util.Log
 import okhttp3.Interceptor
 import okhttp3.Response
-import site.smartenglish.data.DataStoreManager
+import site.smartenglish.manager.DataStoreManager
 import javax.inject.Inject
 
 /**

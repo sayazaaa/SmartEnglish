@@ -1,4 +1,4 @@
-package site.smartenglish.data
+package site.smartenglish.manager
 
 import android.content.Context
 import androidx.datastore.core.DataStore
