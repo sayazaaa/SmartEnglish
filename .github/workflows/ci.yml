@@ -1,34 +1,52 @@
-# .github/workflows/android-ci.yml
-name: Android CI
+name: Android CI/CD - Automated Testing
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main  
   pull_request:
-    branches: [ main ]
+    branches:
+      - main  
 
 jobs:
   test:
+    name: Run Automated Tests
     runs-on: ubuntu-latest
-
+    
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
 
-    - name: Set up JDK 11
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+  
+    - name: Set up JDK
       uses: actions/setup-java@v3
       with:
-        java-version: 11
-        distribution: 'temurin'
-
-    - name: Grant gradlew permission
-      run: chmod +x gradlew
-
-    - name: Run unit tests
-      run: ./gradlew testDebugUnitTest
-
-    - name: Run instrumented tests
+        distribution: 'temurin'  
+        java-version: '21'       
+    
+   
+    - name: Cache Gradle dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+        key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-gradle-
+    
+   
+    - name: Run Unit Tests
+      run: |
+        chmod +x gradlew
+        ./gradlew testDebugUnitTest  
+    
+   
+    - name: Run Instrumented Tests
       uses: reactivecircus/android-emulator-runner@v2
       with:
-        api-level: 29
-        script: ./gradlew connectedDebugAndroidTest
+        api-level: 34             
+        arch: x86_64
+        profile: Nexus 6
+        script: ./gradlew connectedDebugAndroidTest  
