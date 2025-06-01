@@ -1,5 +1,6 @@
 package site.smartenglish.ui
 
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -19,11 +20,16 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Error
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,14 +40,18 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.ViewModelStoreOwner
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import coil3.compose.AsyncImage
+import coil3.util.Logger
+import kotlinx.coroutines.delay
 import site.smartenglish.R
 import site.smartenglish.ui.compose.CenterAlignedBackArrowTopAppBar
 import site.smartenglish.ui.theme.Grey
 import site.smartenglish.ui.theme.White
+import site.smartenglish.ui.viewmodel.SnackBarViewmodel
 import site.smartenglish.ui.viewmodel.UserViewmodel
 
 
@@ -96,7 +106,8 @@ fun ProfileContent(
     navigateModifyName: () -> Unit = {},
     navigateModifyDescription: () -> Unit = {},
     navigateFeedback: () -> Unit = {},
-    navigateBack: () -> Unit = {}, viewmodel: UserViewmodel = hiltViewModel()
+    navigateBack: () -> Unit = {}, viewmodel: UserViewmodel = hiltViewModel(),
+    snackBarViewmodel: SnackBarViewmodel = hiltViewModel(LocalActivity.current as ViewModelStoreOwner)
 ) {
     val userProfile = viewmodel.userProfile.collectAsState().value
 
@@ -104,13 +115,26 @@ fun ProfileContent(
     val username = userProfile?.name ?: ""
     val description = userProfile?.description ?: "暂无描述"
 
+    val uploadState = viewmodel.uploadState.collectAsState().value
+
+    // 监听上传状态变化
+    LaunchedEffect(uploadState) {
+        when (uploadState) {
+            is UserViewmodel.UploadState.Success, is UserViewmodel.UploadState.Error -> {
+                delay(3000)
+                viewmodel.resetUploadState()
+            }
+
+            else -> {}
+        }
+    }
+
     // 图片选择器
     val imagePicker = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
         uri?.let {
-            // 上传图片并更新头像
-            viewmodel.changeAvatar(it.toString())
+            viewmodel.uploadImage(it)
         }
     }
 
@@ -135,43 +159,72 @@ fun ProfileContent(
                         .height(147.dp)
                         .background(Grey),
                     contentAlignment = Alignment.Center,
-
-                    ) {
-                    IconButton(
+                ) {
+                    // 头像显示区域
+                    AsyncImage(
+                        model = avatarUrl,
+                        contentDescription = "头像",
+                        contentScale = ContentScale.Crop,
                         modifier = Modifier
                             .size(96.dp)
-                            .background(
-                                Color.White.copy(alpha = 0.1f), shape = CircleShape
-                            ),
-                        onClick = { }) {
-                        AsyncImage(
-                            model = avatarUrl,
-                            contentDescription = "Profile",
-                            error = painterResource(R.drawable.outline_person_24),
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .size(87.dp)
-                                .clip(CircleShape)
-                                .background(White)
-                        )
-                    }
-                    // 更换头像按钮
-                    IconButton(
-                        onClick = {
-                            imagePicker.launch("image/*")
-                        },
-                        modifier = Modifier
-                            .align(Alignment.BottomCenter)
-                            .offset(y = (-10).dp)
-                            .background(Grey, CircleShape)
-                            .size(33.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.CameraAlt,
-                            contentDescription = "更换头像",
-                            tint = White,
-                            modifier = Modifier.size(20.dp)
-                        )
+                            .clip(CircleShape)
+                            .background(White),
+                        error = painterResource(R.drawable.outline_person_24)
+                    )
+
+                    // 上传状态指示器
+                    when (uploadState) {
+                        is UserViewmodel.UploadState.Progress -> {
+                            CircularProgressIndicator(
+                                modifier = Modifier
+                                    .align(Alignment.Center)
+                                    .size(48.dp),
+                                strokeWidth = 4.dp,
+                                color = Color.White
+                            )
+                        }
+
+                        is UserViewmodel.UploadState.Success -> {
+                            snackBarViewmodel.showSnackbar(
+                                message = "上传成功",
+                                actionLabel = "确定",
+                                duration = SnackbarDuration.Short,
+                            )
+                            viewmodel.resetUploadState()
+                        }
+
+                        is UserViewmodel.UploadState.Error -> {
+                            snackBarViewmodel.showSnackbar(
+                                message = "上传失败 $uploadState.message",
+                                actionLabel = "重试",
+                                duration = SnackbarDuration.Indefinite,
+                                withDismissAction = true,
+                                onAction = {
+                                    // 重试上传
+                                    imagePicker.launch("image/*")
+                                },
+                            )
+                            viewmodel.resetUploadState()
+                        }
+
+                        else -> {
+                            // 更换头像按钮 (仅在非上传状态显示)
+                            IconButton(
+                                onClick = { imagePicker.launch("image/*") },
+                                modifier = Modifier
+                                    .align(Alignment.BottomCenter)
+                                    .offset(y = (-10).dp)
+                                    .background(Grey, CircleShape)
+                                    .size(40.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.CameraAlt,
+                                    contentDescription = "更换头像",
+                                    tint = White,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
                     }
                 }
                 // 昵称区域

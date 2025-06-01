@@ -16,8 +16,6 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven { url = uri("https://maven.scijava.org/content/repositories/public/") }
-
     }
 }
 
