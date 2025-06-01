@@ -1,12 +1,12 @@
 package com.smartenglishbackend.controller;
 
 import com.smartenglishbackend.customexceptions.AccountException;
+import com.smartenglishbackend.customexceptions.MyResourceNotFoundException;
 import com.smartenglishbackend.customexceptions.RequestFormatException;
 import com.smartenglishbackend.jpaentity.SWord;
 import com.smartenglishbackend.service.WordSetService;
 import com.smartenglishbackend.utils.JWTUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.elasticsearch.ResourceNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -34,7 +34,7 @@ public class WordSetController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }catch (RequestFormatException e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }catch (ResourceNotFoundException e){
+        }catch (MyResourceNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }catch (RuntimeException e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -55,7 +55,7 @@ public class WordSetController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }catch (RequestFormatException e){
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }catch (ResourceNotFoundException e){
+        }catch (MyResourceNotFoundException e){
             return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }catch (RuntimeException e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

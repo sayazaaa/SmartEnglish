@@ -15,8 +15,6 @@ public class WordBook {
     private Integer id;
     @Column(length=45)
     private String name;
-    @Column(name="`describe`", columnDefinition = "TEXT")
-    private String describe;
     @Column(length=128)
     private String cover;
     @Column(columnDefinition = "json")
