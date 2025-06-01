@@ -76,9 +76,12 @@ fun MainNav(
             navigateToLogin = { navController.navigate(Login) { popUpTo(0) { inclusive = true } } }
         ) }
         composable<Home> { HomeScreen(
+            navigateToProfile = { navController.navigate(Profile) },
 
         ) }
-        composable<Profile> { ProfileScreen() }
+        composable<Profile> { ProfileScreen(
+            navigateBack = { navController.navigate(Home)},
+        ) }
 
 
 

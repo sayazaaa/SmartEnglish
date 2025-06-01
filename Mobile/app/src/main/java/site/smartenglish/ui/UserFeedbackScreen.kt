@@ -28,20 +28,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import site.smartenglish.ui.compose.CenterAlignedBackArrowTopAppBar
 import site.smartenglish.ui.compose.WideButton
 import site.smartenglish.ui.theme.Orange
 import site.smartenglish.ui.theme.White
+import site.smartenglish.ui.viewmodel.UserViewmodel
 
 @Composable
 fun UserFeedbackScreen(
-    onBackClick: () -> Unit = {}
+    navigateBack: () -> Unit = {},
+    viewmodel: UserViewmodel = hiltViewModel()
 ) {
-    // 传入原昵称
     var feedback by remember { mutableStateOf("") }
     Scaffold(topBar = {
         CenterAlignedBackArrowTopAppBar(
             title = "用户反馈",
+            onBackClick = navigateBack
         )
     }, content = { paddingValues ->
         Column(
@@ -94,7 +97,10 @@ fun UserFeedbackScreen(
             Spacer(modifier = Modifier.height(35.dp))
             WideButton(
                 text = "提交反馈", onClick = {
-                    //TODO
+                    if (feedback.isNotBlank()) {
+                        //toDO 提交反馈逻辑
+                        navigateBack()
+                    }
                 }, width = 342, height = 53, fontsize = 19
             )
         }

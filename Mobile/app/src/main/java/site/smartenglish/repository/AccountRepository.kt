@@ -63,12 +63,13 @@ class AccountRepository @Inject constructor(
 
     suspend fun register(phone: String, verification: String, password: String): Boolean {
         return api.register(RegisterRequest(phone, verification, password))
-            .handleResponse("注册失败")
+            .handleResponse("注册失败").let { it == null }
     }
 
 
     suspend fun getVerificationCode(phone: String): Boolean {
         return api.register(RegisterRequest(phone)).handleResponse("获取验证码失败")
+            .let { it == null }
     }
 
     suspend fun resetPassword(phone: String, verification: String, newPassword: String): Boolean {
@@ -76,7 +77,7 @@ class AccountRepository @Inject constructor(
             ChangePasswordRequest(
                 phone, verification, newPassword
             )
-        ).handleResponse("重置密码失败")
+        ).handleResponse("重置密码失败").let { it == null }
     }
 
     // 暴露认证状态给ViewModel

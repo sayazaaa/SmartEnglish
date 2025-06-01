@@ -1,5 +1,7 @@
 package site.smartenglish.ui
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,37 +17,108 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import coil3.compose.AsyncImage
+import site.smartenglish.R
 import site.smartenglish.ui.compose.CenterAlignedBackArrowTopAppBar
 import site.smartenglish.ui.theme.Grey
 import site.smartenglish.ui.theme.White
+import site.smartenglish.ui.viewmodel.UserViewmodel
 
-@OptIn(ExperimentalMaterial3Api::class)
+
 @Composable
 fun ProfileScreen(
-
+    navigateBack: () -> Unit = {}, viewmodel: UserViewmodel = hiltViewModel()
 ) {
+    val navController = rememberNavController()
+
+    NavHost(navController = navController, startDestination = "profile") {
+        composable("profile") {
+            ProfileContent(
+                navigateModifyName = {
+                    navController.navigate("modify_name")
+                },
+                navigateModifyDescription = {
+                    navController.navigate("modify_description")
+                },
+                navigateFeedback = {
+                    navController.navigate("feedback")
+                },
+                navigateBack = navigateBack
+            )
+        }
+        composable("modify_name") {
+            ModifyNameScreen(
+                navigateBack = {
+                    navController.navigateUp()
+                },
+                viewmodel = viewmodel
+            )
+        }
+        composable("modify_description") {
+            ModifyDescriptionScreen(
+                navigateBack = {
+                    navController.navigateUp()
+                }, viewmodel = viewmodel
+            )
+        }
+        composable("feedback") {
+            UserFeedbackScreen(
+                navigateBack = {
+                    navController.navigateUp()
+                }, viewmodel = viewmodel
+            )
+        }
+    }
+}
+
+@Composable
+fun ProfileContent(
+    navigateModifyName: () -> Unit = {},
+    navigateModifyDescription: () -> Unit = {},
+    navigateFeedback: () -> Unit = {},
+    navigateBack: () -> Unit = {}, viewmodel: UserViewmodel = hiltViewModel()
+) {
+    val userProfile = viewmodel.userProfile.collectAsState().value
+
+    val avatarUrl = userProfile?.avatar
+    val username = userProfile?.name ?: ""
+    val description = userProfile?.description ?: "暂无描述"
+
+    // 图片选择器
+    val imagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            // 上传图片并更新头像
+            viewmodel.changeAvatar(it.toString())
+        }
+    }
+
     Scaffold(
         topBar = {
             CenterAlignedBackArrowTopAppBar(
                 "个人信息",
+                onBackClick = navigateBack,
             )
         },
         content = { paddingValues ->
@@ -68,23 +141,24 @@ fun ProfileScreen(
                         modifier = Modifier
                             .size(96.dp)
                             .background(
-                                Color.White.copy(alpha = 0.1f),
-                                shape = CircleShape
+                                Color.White.copy(alpha = 0.1f), shape = CircleShape
                             ),
                         onClick = { }) {
                         AsyncImage(
-                            model = "https://temp.im/100/",
+                            model = avatarUrl,
                             contentDescription = "Profile",
+                            error = painterResource(R.drawable.outline_person_24),
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
                                 .size(87.dp)
                                 .clip(CircleShape)
+                                .background(White)
                         )
                     }
                     // 更换头像按钮
                     IconButton(
                         onClick = {
-                            //TODO 打开相册或相机
+                            imagePicker.launch("image/*")
                         },
                         modifier = Modifier
                             .align(Alignment.BottomCenter)
@@ -106,7 +180,9 @@ fun ProfileScreen(
                         .fillMaxWidth()
                         .height(65.dp)
                         .background(Grey)
-                        .clickable { /*TODO*/ }
+                        .clickable {
+                            navigateModifyName()
+                        }
                         .padding(horizontal = 22.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -121,7 +197,7 @@ fun ProfileScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            text = "用户名",
+                            text = username,
                             color = Color(0xFF878278),
                             fontSize = 16.sp
                         )
@@ -129,23 +205,27 @@ fun ProfileScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
                             contentDescription = "编辑昵称",
-                            tint = White,
-                            modifier = Modifier.size(12.dp).offset(y = 1.dp)
+                            tint = White, modifier = Modifier
+                                .size(12.dp)
+                                .offset(y = 1.dp)
                         )
                     }
                 }
-                // 手机号区域
+                // 描述区域
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(65.dp)
                         .background(Grey)
+                        .clickable {
+                            navigateModifyDescription()
+                        }
                         .padding(horizontal = 22.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Text(
-                        text = "手机",
+                        text = "简介",
                         color = White,
                         fontSize = 17.sp
                     )
@@ -154,7 +234,7 @@ fun ProfileScreen(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            text = "12343211234",
+                            text = description,
                             color = Color(0xFF878278),
                             fontSize = 16.sp
                         )
@@ -162,8 +242,10 @@ fun ProfileScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
                             contentDescription = "编辑昵称",
-                            tint = Color.Transparent,
-                            modifier = Modifier.size(12.dp).offset(y = 1.dp)
+                            tint = White,
+                            modifier = Modifier
+                                .size(12.dp)
+                                .offset(y = 1.dp)
                         )
                     }
                 }
@@ -173,7 +255,9 @@ fun ProfileScreen(
                         .fillMaxWidth()
                         .height(65.dp)
                         .background(Grey)
-                        .clickable { /*TODO 打开反馈界面*/ }
+                        .clickable {
+                            navigateFeedback()
+                        }
                         .padding(horizontal = 22.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -190,8 +274,9 @@ fun ProfileScreen(
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowForwardIos,
                             contentDescription = "编辑昵称",
-                            tint = White,
-                            modifier = Modifier.size(12.dp).offset(y = 1.dp)
+                            tint = White, modifier = Modifier
+                                .size(12.dp)
+                                .offset(y = 1.dp)
                         )
                     }
                 }

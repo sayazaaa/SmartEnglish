@@ -31,17 +31,17 @@ import site.smartenglish.ui.theme.White
 import site.smartenglish.ui.viewmodel.UserViewmodel
 
 @Composable
-fun ModifyNameScreen(
+fun ModifyDescriptionScreen(
     navigateBack: () -> Unit = {},
     viewmodel: UserViewmodel = hiltViewModel()
 ) {
     // 传入原昵称
-    val originalName = viewmodel.userProfile.value?.name ?: ""
-    var name by remember { mutableStateOf(originalName) }
+    val originalDescription = viewmodel.userProfile.value?.description ?: ""
+    var description by remember { mutableStateOf(originalDescription) }
     Scaffold(
         topBar = {
             CenterAlignedBackArrowTopAppBar(
-                title = "修改昵称",
+                title = "修改简介",
                 onBackClick = navigateBack
             )
         },
@@ -53,9 +53,9 @@ fun ModifyNameScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 BasicTextField(
-                    value = name,
-                    onValueChange = { newName ->
-                        name = newName
+                    value = description,
+                    onValueChange = { new ->
+                        description = new
                     },
                     modifier = Modifier
                         .width(342.dp)
@@ -92,7 +92,7 @@ fun ModifyNameScreen(
                 WideButton(
                     text = "确认修改",
                     onClick = {
-                        viewmodel.changeName(name)
+                        viewmodel.changeDescription(description)
                         viewmodel.getProfile()
                         navigateBack()
                     },
@@ -105,4 +105,5 @@ fun ModifyNameScreen(
 
         }
     )
+
 }

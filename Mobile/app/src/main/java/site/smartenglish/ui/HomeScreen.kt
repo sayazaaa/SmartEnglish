@@ -73,17 +73,27 @@ import site.smartenglish.ui.compose.WordSearchItemData
 import site.smartenglish.ui.theme.LightOrange
 import site.smartenglish.ui.theme.Orange
 import site.smartenglish.ui.viewmodel.BackgroundImageViewmodel
+import site.smartenglish.ui.viewmodel.HomeViewmodel
+import site.smartenglish.ui.viewmodel.UserViewmodel
 
 
 @Composable
 fun HomeScreen(
-    viewmodel: BackgroundImageViewmodel = hiltViewModel()
+    navigateToProfile: () -> Unit = {},
+    navigateToArticle: () -> Unit = {},
+    navigateToDashBoard: () -> Unit = {},
+    //TODO 导航到听写
+    homeViewmodel: HomeViewmodel = hiltViewModel(),
+    userViewmodel: UserViewmodel = hiltViewModel(),
+    bgViewmodel: BackgroundImageViewmodel = hiltViewModel()
 ) {
     val learnNum = 500
     val reviewNum = 100
     val titleWord = "English"
+    val profilePicUrl = userViewmodel.userProfile.collectAsState().value?.avatar
 
-    val bitmap = viewmodel.backgroundBitmap.collectAsState().value
+    val bitmap = bgViewmodel.backgroundBitmap.collectAsState().value
+
 
 
     val density = LocalDensity.current
@@ -303,14 +313,18 @@ fun HomeScreen(
                                 Color.White.copy(alpha = 0.5f),
                                 shape = CircleShape
                             ),
-                        onClick = { }) {
+                        onClick = {
+                            navigateToProfile()  // 点击头像导航到个人页面
+                        }) {
                         AsyncImage(
-                            model = "https://temp.im/50x50/?text=head",
+                            model = profilePicUrl,
                             contentDescription = "Profile",
+                            error = painterResource(R.drawable.outline_person_24),
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
                                 .size(47.dp)
                                 .clip(CircleShape)  // 确保图片为圆形
+                                .background(Color.White)
                         )
                     }
                 }
