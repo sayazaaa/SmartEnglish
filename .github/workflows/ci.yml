@@ -14,18 +14,26 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-
+   
     - name: Checkout code
       uses: actions/checkout@v4
-    
+      with:
+        submodules: recursive 
   
+    - name: Find gradlew
+      run: |
+        echo "搜索 gradlew 文件..."
+        find . -name gradlew -exec ls -l {} \;
+        echo "-----------------------"
+    
+    
     - name: Set up JDK
       uses: actions/setup-java@v3
       with:
-        distribution: 'temurin'  
-        java-version: '21'       
+        distribution: 'temurin'
+        java-version: '21'  
     
-   
+  
     - name: Cache Gradle dependencies
       uses: actions/cache@v3
       with:
@@ -36,17 +44,40 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-gradle-
     
-   
+    # 步骤 5: 运行单元测试
     - name: Run Unit Tests
       run: |
-        chmod +x gradlew
-        ./gradlew testDebugUnitTest  
+      
+        GRADLEW_PATH=$(find . -name gradlew | head -1)
+        
+        if [ -z "$GRADLEW_PATH" ]; then
+          echo "::error::未找到 gradlew 文件！"
+          exit 1
+        fi
+        
+        echo "找到 gradlew 在: $GRADLEW_PATH"
+        
+      
+        chmod +x "$GRADLEW_PATH"
+        "$GRADLEW_PATH" testDebugUnitTest  
     
-   
+    # 步骤 6: 运行仪器化测试
     - name: Run Instrumented Tests
       uses: reactivecircus/android-emulator-runner@v2
       with:
-        api-level: 34             
+        api-level: 33
         arch: x86_64
         profile: Nexus 6
-        script: ./gradlew connectedDebugAndroidTest  
+        script: |
+        
+          GRADLEW_PATH=$(find . -name gradlew | head -1)
+          
+          if [ -z "$GRADLEW_PATH" ]; then
+            echo "::error::未找到 gradlew 文件！"
+            exit 1
+          fi
+          
+          echo "找到 gradlew 在: $GRADLEW_PATH"
+          
+          # 运行仪器化测试
+          "$GRADLEW_PATH" connectedDebugAndroidTest  
