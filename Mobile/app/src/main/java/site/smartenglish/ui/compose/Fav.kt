@@ -40,7 +40,7 @@ import site.smartenglish.ui.theme.LightOrange
 import site.smartenglish.ui.theme.SmartEnglishTheme
 import site.smartenglish.ui.theme.White
 
-data class FavBottomSheetsItem(
+data class FavBottomSheetsItemData(
     val id: Int,
     val title: String,
     val cover: String
@@ -54,7 +54,7 @@ fun FavBottomSheets(
     onAddToFav: (Int) -> Unit,
     onCreateFav: () -> Unit,
     error: Painter,
-    items: List<FavBottomSheetsItem> = emptyList(),
+    items: List<FavBottomSheetsItemData> = emptyList(),
 ) {
     val sheetState = rememberModalBottomSheetState()
     ModalBottomSheet(
@@ -111,7 +111,7 @@ fun FavBottomSheets(
 
 @Composable
 fun FavBottomSheetsItem(
-    item: FavBottomSheetsItem,
+    item: FavBottomSheetsItemData,
     onAddToFav: (Int) -> Unit,
     error: Painter
 ) {
@@ -168,9 +168,9 @@ fun FavBottomSheetsPreview() {
                 onCreateFav = {  },
                 error = painterResource(R.drawable.words),
                 items = listOf(
-                    FavBottomSheetsItem(1, "常用单词", "https://temp.im/"),
-                    FavBottomSheetsItem(2, "生僻单词", "https://temp.im/50"),
-                    FavBottomSheetsItem(3, "英语口语", "https://temp.im/50")
+                    FavBottomSheetsItemData(1, "常用单词", "https://temp.im/"),
+                    FavBottomSheetsItemData(2, "生僻单词", "https://temp.im/50"),
+                    FavBottomSheetsItemData(3, "英语口语", "https://temp.im/50")
                 )
             )
         }
