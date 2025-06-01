@@ -1,6 +1,7 @@
 package site.smartenglish.ui
 
 import android.util.Log
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -21,8 +22,6 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -44,22 +43,24 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.ViewModelStoreOwner
 import kotlinx.coroutines.delay
 import site.smartenglish.R
 import site.smartenglish.ui.compose.WideButton
 import site.smartenglish.ui.viewmodel.AccountViewmodel
+import site.smartenglish.ui.viewmodel.SnackBarViewmodel
 
 @Composable
 fun LoginScreen(
-    navigateToLogin: () -> Unit = {},
-    viewModel: AccountViewmodel = hiltViewModel()
+    navigateToRegister: () -> Unit = {},
+    navigateToHome: () -> Unit = {},
+    navigateToResetPassword: () -> Unit = {},
+    viewModel: AccountViewmodel = hiltViewModel(),
+    snackBarViewmodel: SnackBarViewmodel = hiltViewModel(LocalActivity.current as ViewModelStoreOwner)
 ) {
     val density = LocalDensity.current
     // 获取UI状态
     val uiState by viewModel.loginUiState.collectAsState()
-
-    // Snackbar状态管理
-    val snackbarHostState = remember { SnackbarHostState() }
 
     var phoneInput by remember { mutableStateOf("") }
     var verificationInput by remember { mutableStateOf("") }
@@ -105,12 +106,12 @@ fun LoginScreen(
     LaunchedEffect(uiState.loginSuccess, uiState.error) {
         when {
             uiState.loginSuccess -> {
-                snackbarHostState.showSnackbar("登录成功！")
-                navigateToLogin()
+                navigateToHome()
+                snackBarViewmodel.showSnackbar("登录成功")
             }
 
             uiState.error != null -> {
-                snackbarHostState.showSnackbar(uiState.error ?: "登录失败，请重试")
+                snackBarViewmodel.showSnackbar(uiState.error ?: "登录失败，请重试")
                 Log.e("LoginScreen", uiState.error!!)
                 viewModel.clearLoginError()
             }
@@ -129,7 +130,6 @@ fun LoginScreen(
     Scaffold(
         modifier = Modifier
             .background(Color(0xFFFFFCF8)),
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         contentColor = Color(0xFFFFFCF8),
     ) { i ->
         Box(
@@ -235,7 +235,12 @@ fun LoginScreen(
                 )
                 Spacer(Modifier.height(10.dp))
                 //切换按钮
-                Row(modifier = Modifier.height(30.dp).width(300.dp), horizontalArrangement = Arrangement.Start) {
+                Row(
+                    modifier = Modifier
+                        .height(30.dp)
+                        .width(300.dp),
+                    horizontalArrangement = Arrangement.Start
+                ) {
                     Text(
                         text = if(uiState.byPassword) "验证码登录" else "密码登录",
                         modifier = Modifier
@@ -289,25 +294,46 @@ fun LoginScreen(
                     onClick = {
                         // 验证所有输入
                         phoneError = validatePhone(phoneInput)
-                        codeError = validateCode(verificationInput)
-                        passwordError = validatePassword(passwordInput)
 
-                        // TODO login logics
-//                        if (phoneError == null && codeError == null && passwordError == null) {
-//                            viewModel.register(phoneInput, verificationInput, passwordInput)
-//                        }
+                        if (uiState.byPassword) {
+                            passwordError = validatePassword(passwordInput)
+                            if (passwordError == null) {
+                                codeError = null
+                            }
+                        } else {
+                            codeError = validateCode(verificationInput)
+                            if (codeError == null) {
+                                passwordError = null
+                            }
+                        }
+
+                        if (phoneError == null && codeError == null && passwordError == null) {
+                            if (uiState.byPassword) {
+                                viewModel.loginWithPassword(phoneInput, passwordInput)
+                            } else {
+                                viewModel.loginWithVerification(phoneInput, verificationInput)
+                            }
+                        }
                     },
                     fontsize = 16,
                     color = Color(0xFFFFFEFD)
                 )
                 // 注册按钮
                 TextButton(
-                    onClick = { navigateToLogin() },
+                    onClick = { navigateToRegister() },
                     modifier = Modifier.padding(0.dp)
                 ) {
                     Text(
                         "注册",
-                        fontSize = 14.sp,
+                        fontSize = 14.sp, color = Color.Black
+                    )
+                }
+                // 忘记密码按钮
+                TextButton(
+                    onClick = { navigateToResetPassword() }, modifier = Modifier.padding(0.dp)
+                ) {
+                    Text(
+                        "忘记密码？", fontSize = 14.sp, color = Color.Black
                     )
                 }
             }

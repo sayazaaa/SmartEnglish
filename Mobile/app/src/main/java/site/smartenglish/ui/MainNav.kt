@@ -56,10 +56,28 @@ fun MainNav(
         navController = navController,
         startDestination = startDestination
     ) {
-        composable<Login> { LoginScreen() }
-        composable<Register> { RegisterScreen() }
-        composable<ResetPassword> { ResetPasswordScreen() }
-        composable<Home> { HomeScreen() }
+        composable<Login> {
+            LoginScreen(
+                navigateToRegister = { navController.navigate(Register) },
+                navigateToResetPassword = { navController.navigate(ResetPassword) },
+                navigateToHome = {
+                    navController.navigate(Home) {
+                        popUpTo(0) {
+                            inclusive = true
+                        }
+                    }
+                })
+        }
+        composable<Register> { RegisterScreen(
+            navigateToLogin = { navController.navigate(Login) { popUpTo(0) { inclusive = true } } },
+        ) }
+        composable<ResetPassword> { ResetPasswordScreen(
+            navigateBack = { navController.navigate(Login) { popUpTo(0) { inclusive = true } } },
+            navigateToLogin = { navController.navigate(Login) { popUpTo(0) { inclusive = true } } }
+        ) }
+        composable<Home> { HomeScreen(
+
+        ) }
         composable<Profile> { ProfileScreen() }
 
 

@@ -1,6 +1,7 @@
 package site.smartenglish.ui
 
 import android.util.Log
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -43,22 +44,22 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.ViewModelStoreOwner
 import kotlinx.coroutines.delay
 import site.smartenglish.R
 import site.smartenglish.ui.compose.WideButton
 import site.smartenglish.ui.viewmodel.AccountViewmodel
+import site.smartenglish.ui.viewmodel.SnackBarViewmodel
 
 @Composable
 fun RegisterScreen(
     navigateToLogin: () -> Unit = {},
-    viewModel: AccountViewmodel = hiltViewModel()
+    viewModel: AccountViewmodel = hiltViewModel(),
+    snackBarViewmodel: SnackBarViewmodel = hiltViewModel(LocalActivity.current as ViewModelStoreOwner)
 ) {
     val density = LocalDensity.current
     // 获取UI状态
     val uiState by viewModel.registerUiState.collectAsState()
-
-    // Snackbar状态管理
-    val snackbarHostState = remember { SnackbarHostState() }
 
     var phoneInput by remember { mutableStateOf("") }
     var verificationInput by remember { mutableStateOf("") }
@@ -104,12 +105,12 @@ fun RegisterScreen(
     LaunchedEffect(uiState.registerSuccess, uiState.error) {
         when {
             uiState.registerSuccess -> {
-                snackbarHostState.showSnackbar("注册成功！")
+                snackBarViewmodel.showSnackbar("注册成功！")
                 navigateToLogin()
             }
 
             uiState.error != null -> {
-                snackbarHostState.showSnackbar(uiState.error ?: "注册失败，请重试")
+                snackBarViewmodel.showSnackbar(uiState.error ?: "注册失败，请重试")
                 Log.e("RegisterScreen", uiState.error!!)
                 viewModel.clearRegisterError()
             }
@@ -128,7 +129,6 @@ fun RegisterScreen(
     Scaffold(
         modifier = Modifier
             .background(Color(0xFFFFFCF8)),
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         contentColor = Color(0xFFFFFCF8),
     ) { i ->
         Box(
@@ -305,6 +305,7 @@ fun RegisterScreen(
                     Text(
                         "登录",
                         fontSize = 14.sp,
+                        color = Color.Black
                     )
                 }
             }

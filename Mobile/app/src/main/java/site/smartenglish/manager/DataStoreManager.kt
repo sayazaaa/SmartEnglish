@@ -1,6 +1,7 @@
 package site.smartenglish.manager
 
 import android.content.Context
+import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
@@ -27,6 +28,7 @@ class DataStoreManager @Inject constructor(
             cachedToken = context.dataStore.data.map { preferences ->
                 preferences[TOKEN_KEY]
             }.first()
+            Log.d("DataStoreManager", "Cached token initialized: $cachedToken")
         }
     }
 
