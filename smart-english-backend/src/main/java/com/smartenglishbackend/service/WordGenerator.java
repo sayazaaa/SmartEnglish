@@ -1,6 +1,7 @@
 package com.smartenglishbackend.service;
 
 import com.smartenglishbackend.customexceptions.AccountException;
+import com.smartenglishbackend.customexceptions.MyResourceNotFoundException;
 import com.smartenglishbackend.jpaentity.Account;
 import com.smartenglishbackend.jpaentity.Learned;
 import com.smartenglishbackend.jpaentity.LearnedId;
@@ -10,7 +11,6 @@ import com.smartenglishbackend.jparepo.LearnedRepository;
 import com.smartenglishbackend.jparepo.WordBookRepository;
 import com.smartenglishbackend.jparepo.WordSetRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.elasticsearch.ResourceNotFoundException;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -39,11 +39,11 @@ public class WordGenerator {
         Account account = accountOptional.get();
         Integer wordbookId = account.getWordbookId();
         if(wordbookId == null){
-            throw new ResourceNotFoundException("Wordbook not found");
+            throw new MyResourceNotFoundException("Wordbook not found");
         }
         Optional<WordBook> wordBookOptional = wordBookRepository.findById(wordbookId);
         if(wordBookOptional.isEmpty()){
-            throw new ResourceNotFoundException("WordBook content not found");
+            throw new MyResourceNotFoundException("WordBook content not found");
         }
         WordBook wordBook = wordBookOptional.get();
         List<String> words = wordBook.getContent();

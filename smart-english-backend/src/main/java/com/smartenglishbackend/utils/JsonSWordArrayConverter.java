@@ -3,10 +3,11 @@ package com.smartenglishbackend.utils;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.smartenglishbackend.jpaentity.SWord;
-import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.*;
 
 import java.util.List;
 
+@Converter
 public class JsonSWordArrayConverter implements AttributeConverter<List<SWord>, String> {
     private final ObjectMapper objectMapper = new ObjectMapper();
     @Override

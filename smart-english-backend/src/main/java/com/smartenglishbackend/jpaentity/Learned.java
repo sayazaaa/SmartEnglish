@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.sql.Date;
+import java.time.LocalDate;
 
 @Data
 @Entity
@@ -17,6 +18,5 @@ public class Learned {
     @Column(columnDefinition = "INT",name = "account_id")
     private Integer accountId;
     @Column(columnDefinition = "DATE")
-    private Date review_date;
-
+    private LocalDate review_date;
 }
