@@ -15,6 +15,7 @@ import site.smartenglish.remote.data.ChangeProfileRequest
 import site.smartenglish.remote.data.ChangeProfileResponse
 import site.smartenglish.remote.data.CreateFavoritesSetRequest
 import site.smartenglish.remote.data.CreateNWordBookRequest
+import site.smartenglish.remote.data.FeedBackRequest
 import site.smartenglish.remote.data.GetArticleResponse
 import site.smartenglish.remote.data.GetFavoritesListResponse
 import site.smartenglish.remote.data.GetFavoritesSetListResponse
@@ -505,5 +506,10 @@ interface ApiService {
     @DELETE("favorite")
     suspend fun deleteFavorites(
         @Query("id") favoriteSet: Int
+    ): Response<Unit>
+
+    @POST("feedback")
+    suspend fun sendFeedback(
+        @Body feedback: FeedBackRequest
     ): Response<Unit>
 }
