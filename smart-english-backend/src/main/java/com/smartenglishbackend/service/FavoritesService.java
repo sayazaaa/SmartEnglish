@@ -2,6 +2,7 @@ package com.smartenglishbackend.service;
 
 import com.smartenglishbackend.customexceptions.AccountException;
 import com.smartenglishbackend.customexceptions.MyResourceNotFoundException;
+import com.smartenglishbackend.customexceptions.RequestFormatException;
 import com.smartenglishbackend.dto.response.PDTOArticleInfo;
 import com.smartenglishbackend.esrepo.ArticleRepository;
 import com.smartenglishbackend.esrepo.CustomArticleRepository;
@@ -89,5 +90,12 @@ public class FavoritesService {
             throw new AccountException("wrong account id");
         }
         favoritesSetRepository.deleteById(favoriteSetId);
+    }
+    public Boolean checkFavorites(Integer id, String article){
+        if (id == null || article == null) {
+            throw new RequestFormatException("Invalid Request");
+        }
+        Optional<Favorites> favoritesOptional = favoritesRepository.findById(new FavoritesId(id,article));
+        return favoritesOptional.isPresent();
     }
 }

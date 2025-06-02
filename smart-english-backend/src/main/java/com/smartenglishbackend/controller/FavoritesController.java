@@ -2,6 +2,7 @@ package com.smartenglishbackend.controller;
 
 import com.smartenglishbackend.customexceptions.AccountException;
 import com.smartenglishbackend.customexceptions.MyResourceNotFoundException;
+import com.smartenglishbackend.customexceptions.RequestFormatException;
 import com.smartenglishbackend.dto.request.DTOFavoritesSetAddArticle;
 import com.smartenglishbackend.dto.response.PDTOArticleInfo;
 import com.smartenglishbackend.jpaentity.FavoritesSet;
@@ -93,5 +94,20 @@ public class FavoritesController {
         }catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
+    }
+    @RequestMapping(method = RequestMethod.GET, path = "/check")
+    public ResponseEntity<Boolean> CheckFavoritesSet(@RequestParam(name="id") Integer id,
+                                                     @RequestParam(name="article") String article,
+                                                     @RequestHeader(name="Authorization") String token){
+            if (!jwtUtils.verifyToken(token)) {
+                return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+            }
+            try{
+                return ResponseEntity.ok(favoritesService.checkFavorites(id,article));
+            }catch (RequestFormatException e){
+                return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            }catch (AccountException e){
+                return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+            }
     }
 }
