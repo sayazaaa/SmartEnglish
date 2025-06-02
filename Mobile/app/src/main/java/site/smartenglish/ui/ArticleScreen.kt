@@ -47,16 +47,16 @@ import site.smartenglish.ui.theme.Orange
 import site.smartenglish.ui.theme.White
 
 data class ArticleScreenItemData(
-    val tag: List<String> = listOf("推荐", "生活"),
-    val title: String = "精选外刊｜周日焦虑：这个问题有解吗?",
+    val tag: List<String> = emptyList(),
+    val title: String = "",
     val cover: String? = null,
-    val date: String = "2023-10-01"
+    val date: String = ""
 )
 
 
 @Composable
 fun ArticleScreen(
-    onBackClick: () -> Unit = { /* TODO */ }
+   navigateBack: () -> Unit = { /* TODO */ }
 ) {
     // 分类
     val tabs = listOf("热门", "科技", "文化")
@@ -72,7 +72,7 @@ fun ArticleScreen(
     Scaffold(
         topBar = {
             ArticleScreenTopBar(
-                onBackClick = onBackClick, tabs = tabs
+                onBackClick = navigateBack, tabs = tabs
             )
         }) { innerPadding ->
         Box(

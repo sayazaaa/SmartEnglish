@@ -236,9 +236,15 @@ fun HomeScreen(
                         )
                 )
             }
-            barItem(painterResource(R.drawable.dictionary), "外文阅读") { /* 处理点击 */ }
-            barItem(painterResource(R.drawable.chart), "仪表盘") { /* 处理点击 */ }
-            barItem(painterResource(R.drawable.edit_note), "单词听写") { /* 处理点击 */ }
+            barItem(painterResource(R.drawable.dictionary), "外文阅读") {
+                navigateToArticle()
+            }
+            barItem(painterResource(R.drawable.chart), "仪表盘") {
+                navigateToDashBoard()
+            }
+            barItem(painterResource(R.drawable.edit_note), "单词听写") {
+                //TODO
+            }
         }
         // 搜索时模糊背景
         AnimatedVisibility(

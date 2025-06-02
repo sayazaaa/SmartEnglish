@@ -1,5 +1,10 @@
 package site.smartenglish.ui
 
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -28,6 +33,12 @@ object Home
 
 @Serializable
 object Profile
+
+@Serializable
+object Article
+
+@Serializable
+object DashBoard
 
 @Composable
 fun MainNav(
@@ -77,11 +88,63 @@ fun MainNav(
         ) }
         composable<Home> { HomeScreen(
             navigateToProfile = { navController.navigate(Profile) },
+            navigateToArticle = { navController.navigate(Article){
 
+            } },
+            navigateToDashBoard = { navController.navigate(DashBoard) }
         ) }
         composable<Profile> { ProfileScreen(
-            navigateBack = { navController.navigate(Home)},
+            navigateBack = { navController.popBackStack()},
         ) }
+        composable<Article>(
+            enterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Up,
+                    animationSpec = tween(300, easing = FastOutSlowInEasing)
+                )
+            },
+            exitTransition = {
+                fadeOut(animationSpec = tween(150))
+            },
+            popEnterTransition = {
+                fadeIn(animationSpec = tween(150))
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Down,
+                    animationSpec = tween(300, easing = FastOutSlowInEasing)
+                )
+            }
+        ) {
+            ArticleScreen(
+                navigateBack = { navController.popBackStack() },
+            )
+        }
+
+        composable<DashBoard>(
+            enterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Up,
+                    animationSpec = tween(300, easing = FastOutSlowInEasing)
+                )
+            },
+            exitTransition = {
+                fadeOut(animationSpec = tween(150))
+            },
+            popEnterTransition = {
+                fadeIn(animationSpec = tween(150))
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Down,
+                    animationSpec = tween(300, easing = FastOutSlowInEasing)
+                )
+            }
+        ) {
+            DashBoardScreen(
+                navigateBack = { navController.popBackStack() },
+            )
+        }
 
 
 
