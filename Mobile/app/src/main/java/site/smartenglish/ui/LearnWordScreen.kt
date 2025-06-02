@@ -28,6 +28,7 @@ fun LearnWordScreen(
     val hintColor = Color(0xFFE1E3E5)
     val rightIndex = 1
     val soundType = "美"
+    val exampleSentence:String?="111Test"
     val words= listOf(
         "revert",
         "exile",
@@ -140,18 +141,23 @@ fun LearnWordScreen(
             }
             Spacer(modifier = Modifier.height(6.dp))
             // 例句
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                shape = RoundedCornerShape(8.dp),
-                colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.5f))
-            ) {
-                Text(
-                    text = "This place is just so charming, the perfect resort",
-                    color = textColor,
-                    fontSize = 16.sp,
-                    modifier = Modifier.padding(16.dp)
-                )
+            if(exampleSentence!=null) {
+                Card(
+                    modifier = Modifier
+                        .height(91.dp)
+                        .fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.5f))
+                ) {
+                    Text(
+                        text = exampleSentence,
+                        color = textColor,
+                        fontSize = 16.sp,
+                        modifier = Modifier.padding(16.dp)
+                    )
+                }
+            }else{
+                Spacer(modifier = Modifier.height(91.dp))
             }
         }
         Spacer(modifier = Modifier.height(6.dp))
@@ -189,7 +195,7 @@ fun LearnWordScreen(
                         fontSize = 18.sp,
                         modifier = Modifier
                             .align(Alignment.Start)
-                            .padding(start=18.dp,top=18.dp)
+                            .padding(start = 18.dp, top = 18.dp)
                     )
                     Text(
                         text = if(selected) wordTypes[index]+wordMeanings[index] else wordMeanings[index],
