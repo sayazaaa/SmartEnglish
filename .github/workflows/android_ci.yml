@@ -59,10 +59,3 @@ jobs:
       # 运行单元测试
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest
-
-      # 可选：上传构建产物
-      - name: Upload APK
-        uses: actions/upload-artifact@v3
-        with:
-          name: app-debug
-          path: Mobile/app/build/outputs/apk/debug/*.apk
