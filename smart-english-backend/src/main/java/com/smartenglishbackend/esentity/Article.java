@@ -1,5 +1,8 @@
 package com.smartenglishbackend.esentity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import lombok.Data;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.elasticsearch.annotations.Document;
@@ -13,6 +16,7 @@ import java.util.List;
 @Document(indexName="articles")
 public class Article {
     @Id
+    @Field(name="_id")
     private String id;
     private String title;
     private String cover;

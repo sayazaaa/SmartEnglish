@@ -1,5 +1,6 @@
 package com.smartenglishbackend.service;
 
+import com.smartenglishbackend.customexceptions.RequestFormatException;
 import com.smartenglishbackend.dto.request.DTOAccount;
 import com.smartenglishbackend.jparepo.AccountRepository;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -20,6 +21,6 @@ public class AccountService {
         return accountHandlers.stream()
                 .filter(h -> h.accept(dtoAccount, method))
                 .findFirst()
-                .orElseThrow(()->new RuntimeException("No handler found for " + dtoAccount));
+                .orElseThrow(()->new RequestFormatException("No handler found for " + dtoAccount));
     }
 }

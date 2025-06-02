@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
+
 @Service
 public class AccountInitializer {
     @Autowired
@@ -39,6 +41,7 @@ public class AccountInitializer {
         nWordBook.setAccountId(newId);
         nWordBook.setName("默认");
         nWordBook.setCover("");
+        nWordBook.setContent(new ArrayList<>());
         nWordBookRepository.save(nWordBook);
     }
 }

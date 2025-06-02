@@ -1,20 +1,7 @@
 package com.smartenglishbackend.esrepo;
 
 import com.smartenglishbackend.esentity.Article;
-import org.springframework.data.elasticsearch.annotations.Query;
-import org.springframework.data.elasticsearch.repository.ElasticsearchRepository;
+import org.springframework.data.repository.CrudRepository;
 
-import java.util.List;
-
-public interface ArticleRepository extends ElasticsearchRepository<Article, String> {
-    @Query("""
-            {
-                "match":{
-                    "title":{
-                        "query":?0
-                    }
-                }
-            }
-            """)
-   List<Article> searchArticlesByTitle(String title);
+public interface ArticleRepository extends CrudRepository<Article, String> {
 }

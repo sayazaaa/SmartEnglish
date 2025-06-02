@@ -60,9 +60,11 @@ public class AccountController {
             return e.GetResponse();
         }
         catch (RequestFormatException e){
+
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new PDTOAccount(e.getMessage()));
         }
         catch(Exception e){
+            System.out.println(e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }

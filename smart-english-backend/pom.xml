@@ -28,6 +28,8 @@
     </scm>
     <properties>
         <java.version>21</java.version>
+        <elasticsearch.version>8.18.0</elasticsearch.version>
+        <spring-data-elasticsearch.version>5.3.0</spring-data-elasticsearch.version>
     </properties>
     <dependencies>
         <dependency>
@@ -89,12 +91,17 @@
         <dependency>
             <groupId>org.springframework.data</groupId>
             <artifactId>spring-data-elasticsearch</artifactId>
-            <version>5.2.0</version> <!-- 对应 ES 8.x -->
+            <version>5.4.5</version>
         </dependency>
         <dependency>
             <groupId>co.elastic.clients</groupId>
             <artifactId>elasticsearch-java</artifactId>
-            <version>8.18.0</version>
+            <version>8.15.5</version>
+        </dependency>
+        <dependency>
+            <groupId>org.elasticsearch.client</groupId>
+            <artifactId>elasticsearch-rest-client</artifactId>
+            <version>8.15.5</version>
         </dependency>
 
     </dependencies>
