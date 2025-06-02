@@ -1,12 +1,16 @@
 package com.smartenglishbackend.jpaentity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Entity
 @Table(name="modusetime")
 @IdClass(ModUseTimeId.class)
+@AllArgsConstructor
+@NoArgsConstructor
 public class ModUseTime {
     @Id
     @Column(length=45, name = "modname")
@@ -14,6 +18,6 @@ public class ModUseTime {
     @Id
     @Column(columnDefinition = "INT", name = "account_id")
     private Integer accountId;
-    @Column(columnDefinition = "INT", name = "usetime")
-    private Integer useTime;
+    @Column(columnDefinition = "BIGINT", name = "usetime")
+    private Long useTime;
 }

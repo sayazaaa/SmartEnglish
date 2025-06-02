@@ -31,6 +31,9 @@ public class JWTUtils {
                 .sign(algorithm);
     }
     public boolean verifyToken(String token) {
+        if(token == null){
+            return false;
+        }
         try{
             JWTVerifier verifier = JWT.require(algorithm).build();
             DecodedJWT decodedJWT = verifier.verify(token);
