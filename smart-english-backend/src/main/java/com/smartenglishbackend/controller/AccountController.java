@@ -43,7 +43,8 @@ public class AccountController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new PDTOAccount(e.getMessage()));
         }
         catch(Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new PDTOAccount(e.getMessage()));
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
     @RequestMapping(path="/login", method = RequestMethod.POST, consumes = "application/json;charset=UTF-8")
@@ -59,10 +60,12 @@ public class AccountController {
             return e.GetResponse();
         }
         catch (RequestFormatException e){
+
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new PDTOAccount(e.getMessage()));
         }
         catch(Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new PDTOAccount(e.getMessage()));
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
     @RequestMapping(method=RequestMethod.PUT, consumes = "application/json;charset=UTF-8")
@@ -81,10 +84,10 @@ public class AccountController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new PDTOAccount(e.getMessage()));
         }
         catch(Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new PDTOAccount(e.getMessage()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-    @RequestMapping(path = "/admin",method = RequestMethod.GET, consumes = "application/json;charset=UTF-8")
+    @RequestMapping(path = "/admin",method = RequestMethod.POST, consumes = "application/json;charset=UTF-8")
     public ResponseEntity<PDTOAccount> adminLogin(@RequestBody DTOAdmin admin) {
         try{
             boolean res = adminLoginService.adminLogin(admin);
@@ -94,7 +97,7 @@ public class AccountController {
             return ResponseEntity.ok().header("Authorization", adminLoginService.getToken())
                     .body(new PDTOAccount("Login Succeed"));
         }catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new PDTOAccount(e.getMessage()));
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }

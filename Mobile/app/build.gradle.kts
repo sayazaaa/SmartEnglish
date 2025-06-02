@@ -32,6 +32,16 @@ android {
             "IP",
             "\"${localProperties.getProperty("IP")}\""
         )
+        buildConfigField(
+            "String",
+            "SecretId",
+            "\"${localProperties.getProperty("SecretId")}\""
+        )
+        buildConfigField(
+            "String",
+            "SecretKey",
+            "\"${localProperties.getProperty("SecretKey")}\""
+        )
 
     }
 
@@ -104,8 +114,12 @@ dependencies {
     implementation(libs.androidx.core.splashscreen)
     //ICON
     implementation(libs.androidx.material.icons.extended)
+    //JSoup
+    implementation(libs.jsoup)
+    // 腾讯云对象存储 SDK
+    implementation(libs.qcloud.cos.android)
 
-    androidTestImplementation(libs.mockwebserver)
+
 
 
 }

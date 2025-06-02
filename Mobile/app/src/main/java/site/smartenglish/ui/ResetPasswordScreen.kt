@@ -1,8 +1,10 @@
 package site.smartenglish.ui
 
 import android.util.Log
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,17 +15,24 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBackIos
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -43,22 +52,24 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.ViewModelStoreOwner
 import kotlinx.coroutines.delay
 import site.smartenglish.R
 import site.smartenglish.ui.compose.WideButton
 import site.smartenglish.ui.viewmodel.AccountViewmodel
+import site.smartenglish.ui.viewmodel.SnackBarViewmodel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ResetPasswordScreen(
     navigateToLogin: () -> Unit = {},
-    viewModel: AccountViewmodel = hiltViewModel()
+    navigateBack: () -> Unit = {},
+    viewModel: AccountViewmodel = hiltViewModel(),
+    snackBarViewmodel: SnackBarViewmodel = hiltViewModel(LocalActivity.current as ViewModelStoreOwner)
 ) {
     val density = LocalDensity.current
-    // 获取UI状态 应该用别的状态，不过好像这个也能用
-    val uiState by viewModel.registerUiState.collectAsState()
-
-    // Snackbar状态管理
-    val snackbarHostState = remember { SnackbarHostState() }
+    // 获取UI状态
+    val uiState by viewModel.resetPasswordUiState.collectAsState()
 
     var phoneInput by remember { mutableStateOf("") }
     var verificationInput by remember { mutableStateOf("") }
@@ -103,18 +114,18 @@ fun ResetPasswordScreen(
         }
     }
 
-    // 监听注册状态变化
-    LaunchedEffect(uiState.registerSuccess, uiState.error) {
+    // 监听状态变化
+    LaunchedEffect(uiState.resetSuccess, uiState.error) {
         when {
-            uiState.registerSuccess -> {
-                snackbarHostState.showSnackbar("注册成功！")
+            uiState.resetSuccess -> {
                 navigateToLogin()
+                snackBarViewmodel.showSnackbar("重置密码成功！")
             }
 
             uiState.error != null -> {
-                snackbarHostState.showSnackbar(uiState.error ?: "注册失败，请重试")
-                Log.e("RegisterScreen", uiState.error!!)
-                viewModel.clearRegisterError()
+                snackBarViewmodel.showSnackbar(uiState.error ?: "重置密码失败，请重试")
+                Log.e("ResetPasswordScreen", uiState.error!!)
+                viewModel.clearResetPasswordError()
             }
         }
     }
@@ -131,14 +142,34 @@ fun ResetPasswordScreen(
     Scaffold(
         modifier = Modifier
             .background(Color(0xFFFFFCF8)),
-        snackbarHost = { SnackbarHost(snackbarHostState) },
         contentColor = Color(0xFFFFFCF8),
+        topBar = {
+            TopAppBar(
+                title = { Text("重置密码") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent,
+                    titleContentColor = Color.Transparent
+                ),
+                navigationIcon = {
+                    IconButton(
+                        onClick = {navigateBack()},
+                        modifier = Modifier.border(2.dp, Color(0xFFD0D0D0), CircleShape)
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Default.ArrowBackIos,
+                            contentDescription = "返回",
+                            modifier = Modifier.offset(x= 4.dp)
+                        )
+                    }
+                }
+            )
+        }
     ) { i ->
+        Spacer(modifier = Modifier.padding(i))
         Box(
             modifier = Modifier
                 .background(Color(0xFFFFFCF8))
                 .fillMaxSize()
-                .padding(i)
         ) {
             //logo
             Image(
@@ -317,7 +348,7 @@ fun ResetPasswordScreen(
 
                 // 注册按钮
                 WideButton(
-                    text = if (uiState.isLoading) "登录中..." else "登录",
+                    text = if (uiState.isLoading) "重置密码中..." else "重置密码",
                     onClick = {
                         // 验证所有输入
                         phoneError = validatePhone(phoneInput)
@@ -325,10 +356,13 @@ fun ResetPasswordScreen(
                         passwordError = validatePassword(passwordInput,rePasswordInput)
 
                         // 只有全部验证通过才提交
-                        //TODO reset logics
-//                        if (phoneError == null && codeError == null && passwordError == null) {
-//                            viewModel.register(phoneInput, verificationInput, passwordInput)
-//                        }
+                        if (phoneError == null && codeError == null && passwordError == null) {
+                            viewModel.resetPassword(
+                                phone = phoneInput,
+                                verification = verificationInput,
+                                newPassword = passwordInput
+                            )
+                        }
                     },
                     fontsize = 16,
                     color = Color(0xFFFFFEFD)

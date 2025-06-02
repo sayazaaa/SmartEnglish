@@ -23,21 +23,26 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import site.smartenglish.ui.compose.CenterAlignedBackArrowTopAppBar
 import site.smartenglish.ui.compose.WideButton
 import site.smartenglish.ui.theme.Orange
 import site.smartenglish.ui.theme.White
+import site.smartenglish.ui.viewmodel.UserViewmodel
 
 @Composable
 fun ModifyNameScreen(
-
+    navigateBack: () -> Unit = {},
+    viewmodel: UserViewmodel = hiltViewModel()
 ) {
     // 传入原昵称
-    var name by remember { mutableStateOf("我爱学英语") }
+    val originalName = viewmodel.userProfile.value?.name ?: ""
+    var name by remember { mutableStateOf(originalName) }
     Scaffold(
         topBar = {
             CenterAlignedBackArrowTopAppBar(
                 title = "修改昵称",
+                onBackClick = navigateBack
             )
         },
         content = { paddingValues ->
@@ -86,7 +91,11 @@ fun ModifyNameScreen(
                 Spacer(modifier = Modifier.height(35.dp))
                 WideButton(
                     text = "确认修改",
-                    onClick = {},
+                    onClick = {
+                        viewmodel.changeName(name)
+                        viewmodel.getProfile()
+                        navigateBack()
+                    },
                     width = 342,
                     height = 53,
                     fontsize = 19

@@ -29,10 +29,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Image
-import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.automirrored.filled.ArrowBackIos
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -57,33 +54,46 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
+import site.smartenglish.R
 import site.smartenglish.ui.compose.BlurButton
 import site.smartenglish.ui.compose.WordSearchItem
 import site.smartenglish.ui.compose.WordSearchItemData
 import site.smartenglish.ui.theme.LightOrange
 import site.smartenglish.ui.theme.Orange
 import site.smartenglish.ui.viewmodel.BackgroundImageViewmodel
+import site.smartenglish.ui.viewmodel.HomeViewmodel
+import site.smartenglish.ui.viewmodel.UserViewmodel
 
 
 @Composable
 fun HomeScreen(
-    viewmodel: BackgroundImageViewmodel = hiltViewModel()
+    navigateToProfile: () -> Unit = {},
+    navigateToArticle: () -> Unit = {},
+    navigateToDashBoard: () -> Unit = {},
+    //TODO 导航到听写
+    homeViewmodel: HomeViewmodel = hiltViewModel(),
+    userViewmodel: UserViewmodel = hiltViewModel(),
+    bgViewmodel: BackgroundImageViewmodel = hiltViewModel()
 ) {
     val learnNum = 500
     val reviewNum = 100
     val titleWord = "English"
+    val profilePicUrl = userViewmodel.userProfile.collectAsState().value?.avatar
 
-    val bitmap = viewmodel.backgroundBitmap.collectAsState().value
+    val bitmap = bgViewmodel.backgroundBitmap.collectAsState().value
+
 
 
     val density = LocalDensity.current
@@ -193,18 +203,26 @@ fun HomeScreen(
         ) {
             // 首页图标
             val barItem: @Composable (
-                imageVector: ImageVector,
+                imageVector: Any,
                 contentDescription: String,
                 onClick: () -> Unit,
-            ) -> Unit = { image: ImageVector, desc: String, onClick: () -> Unit ->
+            ) -> Unit = { image: Any, desc: String, onClick: () -> Unit ->
                 NavigationBarItem(
                     modifier = Modifier.background(Color.Transparent),
                     icon = {
-                        Icon(
-                            image,
-                            contentDescription = desc,
-                            modifier = Modifier.size(30.dp)
-                        )
+                        when (image) {
+                            is ImageVector -> Icon(
+                                imageVector = image,
+                                contentDescription = desc,
+                                modifier = Modifier.size(30.dp)
+                            )
+                            is Painter -> Icon(
+                                painter = image,
+                                contentDescription = desc,
+                                modifier = Modifier.size(30.dp)
+                            )
+                            else -> throw IllegalArgumentException("Unsupported image type")
+                        }
                     },
                     selected = false,
                     onClick = onClick,
@@ -218,9 +236,15 @@ fun HomeScreen(
                         )
                 )
             }
-            barItem(Icons.Default.Check, "首页") { /* 处理点击 */ }
-            barItem(Icons.Default.Image, "练习") { /* 处理点击 */ }
-            barItem(Icons.Default.Mic, "我的") { /* 处理点击 */ }
+            barItem(painterResource(R.drawable.dictionary), "外文阅读") {
+                navigateToArticle()
+            }
+            barItem(painterResource(R.drawable.chart), "仪表盘") {
+                navigateToDashBoard()
+            }
+            barItem(painterResource(R.drawable.edit_note), "单词听写") {
+                //TODO
+            }
         }
         // 搜索时模糊背景
         AnimatedVisibility(
@@ -280,7 +304,7 @@ fun HomeScreen(
                         modifier = Modifier.size(51.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Default.ArrowBack,
+                            imageVector = Icons.AutoMirrored.Default.ArrowBackIos,
                             contentDescription = "Back",
                             modifier = Modifier.size(24.dp),
                             tint = Color.White.copy(alpha = 0.7f)
@@ -295,14 +319,18 @@ fun HomeScreen(
                                 Color.White.copy(alpha = 0.5f),
                                 shape = CircleShape
                             ),
-                        onClick = { }) {
+                        onClick = {
+                            navigateToProfile()  // 点击头像导航到个人页面
+                        }) {
                         AsyncImage(
-                            model = "https://temp.im/50x50/?text=head",
+                            model = profilePicUrl,
                             contentDescription = "Profile",
+                            error = painterResource(R.drawable.outline_person_24),
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
                                 .size(47.dp)
                                 .clip(CircleShape)  // 确保图片为圆形
+                                .background(Color.White)
                         )
                     }
                 }

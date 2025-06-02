@@ -10,7 +10,7 @@ import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import site.smartenglish.BuildConfig
-import site.smartenglish.data.DataStoreManager
+import site.smartenglish.manager.DataStoreManager
 import site.smartenglish.remote.ApiService
 import site.smartenglish.remote.AuthInterceptor
 import site.smartenglish.remote.ErrorInterceptor
@@ -52,4 +52,5 @@ object AppModule {
     fun provideApiService(retrofit: Retrofit): ApiService {
         return retrofit.create(ApiService::class.java)
     }
+
 }

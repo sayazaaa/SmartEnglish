@@ -15,6 +15,7 @@ import site.smartenglish.remote.data.ChangeProfileRequest
 import site.smartenglish.remote.data.ChangeProfileResponse
 import site.smartenglish.remote.data.CreateFavoritesSetRequest
 import site.smartenglish.remote.data.CreateNWordBookRequest
+import site.smartenglish.remote.data.FeedBackRequest
 import site.smartenglish.remote.data.GetArticleResponse
 import site.smartenglish.remote.data.GetFavoritesListResponse
 import site.smartenglish.remote.data.GetFavoritesSetListResponse
@@ -231,7 +232,7 @@ interface ApiService {
 
     /**
      * 提交新单词组接口
-     *
+     * @param type "learn"/"review"对应不同的单词组
      * @param wordSet
      * [
      *     {
@@ -243,6 +244,7 @@ interface ApiService {
      */
     @PUT("wordset")
     suspend fun putWordSet(
+        @Query("type") type: String,
         @Body wordSet: PutWordSetRequest
     ): Response<Unit>
 
@@ -504,5 +506,15 @@ interface ApiService {
     @DELETE("favorite")
     suspend fun deleteFavorites(
         @Query("id") favoriteSet: Int
+    ): Response<Unit>
+
+    /**
+     * 反馈接口
+     *
+     * @param feedback 反馈内容
+     */
+    @POST("feedback")
+    suspend fun sendFeedback(
+        @Body feedback: FeedBackRequest
     ): Response<Unit>
 }

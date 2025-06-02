@@ -1,6 +1,5 @@
 package com.smartenglishbackend.jpaentity;
 
-import com.smartenglishbackend.utils.JsonArrayConverter;
 import com.smartenglishbackend.utils.JsonSWordArrayConverter;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -13,8 +12,8 @@ import java.util.List;
 @Data
 public class WordSet {
     @Id
-    @Column(columnDefinition = "INT")
-    private int account_id;
+    @Column(columnDefinition = "INT", name = "account_id")
+    private Integer accountId;
     @Column(columnDefinition = "JSON")
     @Convert(converter = JsonSWordArrayConverter.class)
     private List<SWord> setpre;

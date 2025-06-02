@@ -1,9 +1,6 @@
 package com.smartenglishbackend.jpaentity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -15,9 +12,10 @@ import java.util.Date;
 public class Feedback {
     @Id
     @Column(columnDefinition = "INT")
-    private int id;
-    @Column(columnDefinition = "INT")
-    private int account_id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+    @Column(columnDefinition = "INT",name = "account_id")
+    private Integer accountId;
     @Column(columnDefinition = "DATE", name="`date`")
     private LocalDate date;
     @Column(columnDefinition = "TEXT")

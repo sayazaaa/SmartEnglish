@@ -1,11 +1,13 @@
 package site.smartenglish.ui.compose
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -25,6 +27,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -36,7 +40,7 @@ import site.smartenglish.ui.theme.LightOrange
 import site.smartenglish.ui.theme.SmartEnglishTheme
 import site.smartenglish.ui.theme.White
 
-data class FavBottomSheetsItem(
+data class FavBottomSheetsItemData(
     val id: Int,
     val title: String,
     val cover: String
@@ -49,7 +53,8 @@ fun FavBottomSheets(
     onDismiss: () -> Unit,
     onAddToFav: (Int) -> Unit,
     onCreateFav: () -> Unit,
-    items: List<FavBottomSheetsItem> = emptyList(),
+    error: Painter,
+    items: List<FavBottomSheetsItemData> = emptyList(),
 ) {
     val sheetState = rememberModalBottomSheetState()
     ModalBottomSheet(
@@ -71,7 +76,7 @@ fun FavBottomSheets(
             )
             items.forEach {
                 Spacer(modifier = Modifier.height(30.dp))
-                FavBottomSheetsItem(it, onAddToFav)
+                FavBottomSheetsItem(it, onAddToFav,error)
             }
             Spacer(modifier = Modifier.height(30.dp))
 
@@ -106,8 +111,9 @@ fun FavBottomSheets(
 
 @Composable
 fun FavBottomSheetsItem(
-    item: FavBottomSheetsItem,
-    onAddToFav: (Int) -> Unit
+    item: FavBottomSheetsItemData,
+    onAddToFav: (Int) -> Unit,
+    error: Painter
 ) {
     Row(
         modifier = Modifier
@@ -119,9 +125,12 @@ fun FavBottomSheetsItem(
     ) {
         AsyncImage(
             model = item.cover,
+            contentScale = ContentScale.Fit,
+            error = error,
             contentDescription = null,
             modifier = Modifier
-                .size(50.dp)
+                .width(50.dp)
+                .height(50.dp)
         )
         Spacer(Modifier.width(20.dp))
         Text(
@@ -157,10 +166,11 @@ fun FavBottomSheetsPreview() {
                 onDismiss = { showBottomSheet = false },
                 onAddToFav = {},
                 onCreateFav = {  },
+                error = painterResource(R.drawable.words),
                 items = listOf(
-                    FavBottomSheetsItem(1, "常用单词", "https://temp.im/50"),
-                    FavBottomSheetsItem(2, "生僻单词", "https://temp.im/50"),
-                    FavBottomSheetsItem(3, "英语口语", "https://temp.im/50")
+                    FavBottomSheetsItemData(1, "常用单词", "https://temp.im/"),
+                    FavBottomSheetsItemData(2, "生僻单词", "https://temp.im/50"),
+                    FavBottomSheetsItemData(3, "英语口语", "https://temp.im/50")
                 )
             )
         }

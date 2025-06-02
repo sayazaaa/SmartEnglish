@@ -4,10 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import site.smartenglish.manager.SessionManager
 import site.smartenglish.repository.AccountRepository
 import javax.inject.Inject
 
@@ -29,6 +32,14 @@ data class RegisterUiState(
     val error: String? = null
 )
 
+//重置密码页面状态
+data class ResetPasswordUiState(
+    val isLoading: Boolean = false,
+    val verificationSent: Boolean = false,
+    val resetSuccess: Boolean = false,
+    val error: String? = null
+)
+
 @HiltViewModel
 class AccountViewmodel @Inject constructor(
     private val accountRepository: AccountRepository
@@ -38,6 +49,18 @@ class AccountViewmodel @Inject constructor(
     val loginUiState: StateFlow<LoginUiState> = _loginUiState.asStateFlow()
     private val _registerUiState = MutableStateFlow(RegisterUiState())
     val registerUiState: StateFlow<RegisterUiState> = _registerUiState.asStateFlow()
+    private val _resetPasswordUiState = MutableStateFlow(ResetPasswordUiState())
+    val resetPasswordUiState: StateFlow<ResetPasswordUiState> = _resetPasswordUiState.asStateFlow()
+
+    fun hasToken(): Boolean = accountRepository.isAuthenticated()
+
+    // 认证状态
+    val authState: StateFlow<SessionManager.AuthState> = accountRepository.authState
+        .stateIn(
+            viewModelScope,
+            SharingStarted.Eagerly,
+            SessionManager.AuthState.AUTHENTICATED
+        )
 
     // 切换登录方式
     fun changeWayOfLogin(){
@@ -102,11 +125,33 @@ class AccountViewmodel @Inject constructor(
     }
 
     // 登录
-    fun login(phone: String, verification: String, password: String) {
+    fun loginWithVerification(phone: String, verification: String) {
         viewModelScope.launch {
             try {
                 _loginUiState.update { it.copy(isLoading = true) }
-                accountRepository.login(phone, verification, password)
+                accountRepository.loginWithVerification(phone, verification)
+                _loginUiState.update {
+                    it.copy(
+                        isLoading = false,
+                        loginSuccess = true
+                    )
+                }
+            } catch (e: Exception) {
+                _loginUiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = e.message
+                    )
+                }
+            }
+        }
+    }
+
+    fun loginWithPassword(phone: String, password: String) {
+        viewModelScope.launch {
+            try {
+                _loginUiState.update { it.copy(isLoading = true) }
+                accountRepository.loginWithPassword(phone, password)
                 _loginUiState.update {
                     it.copy(
                         isLoading = false,
@@ -147,6 +192,29 @@ class AccountViewmodel @Inject constructor(
         }
     }
 
+    // 重置密码
+    fun resetPassword(phone: String, verification: String, newPassword: String) {
+        viewModelScope.launch {
+            try {
+                _resetPasswordUiState.update { it.copy(isLoading = true) }
+                accountRepository.resetPassword(phone, verification, newPassword)
+                _resetPasswordUiState.update {
+                    it.copy(
+                        isLoading = false,
+                        resetSuccess = true
+                    )
+                }
+            } catch (e: Exception) {
+                _resetPasswordUiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = e.message
+                    )
+                }
+            }
+        }
+    }
+
     fun clearLoginError() {
         _loginUiState.update { it.copy(error = null) }
     }
@@ -155,5 +223,11 @@ class AccountViewmodel @Inject constructor(
         _registerUiState.update { it.copy(error = null) }
     }
 
+    fun clearResetPasswordError() {
+        _resetPasswordUiState.update { it.copy(error = null) }
+    }
 
+    fun resetAuthState() {
+        accountRepository.setAuthenticated()
+    }
 }

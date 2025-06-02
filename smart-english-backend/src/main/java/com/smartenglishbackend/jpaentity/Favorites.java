@@ -9,9 +9,9 @@ import lombok.Data;
 @IdClass(FavoritesId.class)
 public class Favorites {
     @Id
-    @Column(columnDefinition = "INT")
-    private int setid;
+    @Column(columnDefinition = "INT",name = "setid")
+    private Integer setId;
     @Id
-    @Column(length = 255)
-    private String articleid;
+    @Column(length = 255, name = "articleid")
+    private String articleId;
 }

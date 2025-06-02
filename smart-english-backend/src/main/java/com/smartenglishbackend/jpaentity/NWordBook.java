@@ -12,10 +12,11 @@ import java.util.List;
 @Table(name="nwordbook")
 public class NWordBook {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(columnDefinition = "INT")
-    private int id;
-    @Column(columnDefinition = "INT")
-    private int account_id;
+    private Integer id;
+    @Column(columnDefinition = "INT", name = "account_id")
+    private Integer accountId;
     @Column(length = 45)
     private String name;
     @Column(length = 128)
