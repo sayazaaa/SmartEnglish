@@ -32,4 +32,12 @@ public class WordService {
     public void SaveWord(Word word) {
         wordRepository.save(word);
     }
+    public List<Word> GetAllWords() {
+        Iterable<Word> words = wordRepository.findAll();
+        List<Word> wordList = new ArrayList<>();
+        for (Word word : words) {
+            wordList.add(word);
+        }
+        return wordList;
+    }
 }

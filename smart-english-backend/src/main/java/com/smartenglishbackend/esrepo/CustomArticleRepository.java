@@ -37,6 +37,7 @@ public class CustomArticleRepository {
         return list;
     }
     public List<PDTOArticleInfo> searchByTitle(String title){
+        if(title == null){return null;}
         NativeQuery query = NativeQuery.builder().withQuery(
                 q->q.match(m->m.field("title").query(title))
         ).withSourceFilter(new FetchSourceFilter(new String[]{"_id", "title","cover","date","tags"}, null)).build();
@@ -54,5 +55,23 @@ public class CustomArticleRepository {
             list.add(articleInfo);
         }
         return list;
+    }
+    public PDTOArticleInfo findById(String id){
+        if(id == null) return null;
+        NativeQuery query = NativeQuery.builder().withQuery(
+                q->q.ids(idsQuery->idsQuery.values(id))
+        ).withSourceFilter(new FetchSourceFilter(new String[]{"_id", "title","cover","date","tags"}, null)).build();
+        SearchHits<Article> searchHits = elasticsearchOperations.search(query, Article.class);
+        if(searchHits.getTotalHits() == 0){
+            return null;
+        }
+        SearchHit<Article> article = searchHits.getSearchHit(0);
+        PDTOArticleInfo articleInfo = new PDTOArticleInfo();
+        articleInfo.setId(article.getId());
+        articleInfo.setCover(articleInfo.getCover());
+        articleInfo.setDate(articleInfo.getDate());
+        articleInfo.setTitle(articleInfo.getTitle());
+        articleInfo.setTags(articleInfo.getTags());
+        return articleInfo;
     }
 }
