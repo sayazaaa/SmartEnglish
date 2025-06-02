@@ -119,7 +119,9 @@ interface ApiService {
      *         "name": "string",
      *         "cover": "string",
      *         "wordcount": 0
-     *     }
+     *     },
+     *     "new_word_count": 0,
+     *     "today_review": 0
      * }
      */
     @PUT("user")
@@ -140,7 +142,9 @@ interface ApiService {
      *         "name": "string",
      *         "cover": "string",
      *         "wordcount": 0
-     *     }
+     *     },
+     *     "new_word_count": 0,
+     *     "today_review": 0
      * }
      */
     @GET("user")
