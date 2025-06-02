@@ -1,37 +1,68 @@
-name: Android CI   名称：Android CI
+name: Android CI
 
-on:   :
-  push:   推动:
-    branches: [ main ]  # 触发分支
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'Mobile/**'  # 只监听 Mobile 目录变化
   pull_request:
-    branches: [ main ]   分支：[主]
+    branches: [ main ]
+    paths:
+      - 'Mobile/**'
 
-jobs:   工作:
-  build:   构建:
-    runs-on: ubuntu-latest  # 使用最新Ubuntu系统
+jobs:
+  android-build:
+    runs-on: ubuntu-latest
+    # 设置工作目录为 Mobile
+    defaults:
+      run:
+        working-directory: Mobile
 
-    steps:   步骤:
-    - name: Checkout code   —name：签出代码
-      uses: actions/checkout@v4  # 检出代码
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up JDK 17   —name：安装JDK 17
-      uses: actions/setup-java@v3用途:行动/ setup-java@v3
-      with:   :
-        java-version: '17'   java版本:“17”
-        distribution: 'temurin'
+      - name: Setup JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
 
-    - name: Grant execute permission for gradlew—name：授予gradlew执行权限
-      run: chmod +x gradlew  # 确保gradlew有可执行权限run: chmod  x gradlew  # 确保gradlew有可执行权限
+      # 确保 gradlew 有执行权限
+      - name: Grant gradlew permission
+        run: chmod +x gradlew
 
-    - name: Build with Gradle   - name：使用Gradle构建
-      run: ./gradlew assembleDebug  # 构建debug包
+      # 缓存 Gradle 依赖加速构建
+      - name: Cache Gradle
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('Mobile/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
 
-    - name: Run unit tests   —name：运行单元测试
-      run: ./gradlew test  # 运行单元测试
+      # 接受 Android SDK 许可（重要！）
+      - name: Accept licenses
+        run: |
+          yes | sudo $ANDROID_HOME/tools/bin/sdkmanager --licenses || true
 
-    # 可选：UI测试（需要Android模拟器）
-    - name: Run instrumented tests—name：运行仪表化测试
-      uses: reactivecircus/android-emulator-runner@v2用途:reactivecircus / android-emulator-runner@v2
-      with:   :
-        api-level: 33
-        script: ./gradlew connectedCheck脚本：./gradlew connectedCheck
+      # 安装 Android SDK
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v2
+
+      # 构建 debug APK
+      - name: Build APK
+        run: ./gradlew assembleDebug
+
+      # 运行单元测试
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest
+
+      # 可选：上传构建产物
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-debug
+          path: Mobile/app/build/outputs/apk/debug/*.apk
