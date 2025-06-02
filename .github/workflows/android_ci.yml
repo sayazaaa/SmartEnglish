@@ -29,6 +29,16 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
+      # 创建local.properties文件
+      - name: Create local.properties
+        run: |
+          echo "Creating local.properties"
+          touch local.properties
+          echo "IP=${{ secrets.IP }}" >> local.properties
+          echo "SecretId=${{ secrets.SECRET_ID }}" >> local.properties
+          echo "SecretKey=${{ secrets.SECRET_KEY }}" >> local.properties
+        working-directory: Mobile
+
       - name: Grant gradlew permission
         run: chmod +x gradlew
 
@@ -57,7 +67,6 @@ jobs:
           ls -l gradle/wrapper/
           ./gradlew --version
 
-      # 替换所有旧版本的actions
       - name: Build APK
         run: ./gradlew assembleDebug
       - name: Run unit tests
