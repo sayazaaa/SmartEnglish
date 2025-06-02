@@ -1,0 +1,37 @@
+name: Android CI   名称：Android CI
+
+on:   :
+  push:   推动:
+    branches: [ main ]  # 触发分支
+  pull_request:
+    branches: [ main ]   分支：[主]
+
+jobs:   工作:
+  build:   构建:
+    runs-on: ubuntu-latest  # 使用最新Ubuntu系统
+
+    steps:   步骤:
+    - name: Checkout code   —name：签出代码
+      uses: actions/checkout@v4  # 检出代码
+
+    - name: Set up JDK 17   —name：安装JDK 17
+      uses: actions/setup-java@v3用途:行动/ setup-java@v3
+      with:   :
+        java-version: '17'   java版本:“17”
+        distribution: 'temurin'
+
+    - name: Grant execute permission for gradlew—name：授予gradlew执行权限
+      run: chmod +x gradlew  # 确保gradlew有可执行权限run: chmod  x gradlew  # 确保gradlew有可执行权限
+
+    - name: Build with Gradle   - name：使用Gradle构建
+      run: ./gradlew assembleDebug  # 构建debug包
+
+    - name: Run unit tests   —name：运行单元测试
+      run: ./gradlew test  # 运行单元测试
+
+    # 可选：UI测试（需要Android模拟器）
+    - name: Run instrumented tests—name：运行仪表化测试
+      uses: reactivecircus/android-emulator-runner@v2用途:reactivecircus / android-emulator-runner@v2
+      with:   :
+        api-level: 33
+        script: ./gradlew connectedCheck脚本：./gradlew connectedCheck
