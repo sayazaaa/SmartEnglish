@@ -58,7 +58,7 @@ import site.smartenglish.ui.theme.White
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashBoardScreen(
-    onBackClick: () -> Unit = {}
+    navigateBack: () -> Unit = {}
 ) {
     val wordBookCover = "https://temp.im/50x100"
     val learnedWordNum = 800
@@ -79,7 +79,7 @@ fun DashBoardScreen(
                         text = "仪表盘", color = White, fontSize = 17.sp
                     )
                 }, navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    IconButton(onClick = navigateBack) {
                         Icon(
                             imageVector = Icons.Default.KeyboardArrowDown,
                             contentDescription = "返回",
