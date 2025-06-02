@@ -508,6 +508,11 @@ interface ApiService {
         @Query("id") favoriteSet: Int
     ): Response<Unit>
 
+    /**
+     * 反馈接口
+     *
+     * @param feedback 反馈内容
+     */
     @POST("feedback")
     suspend fun sendFeedback(
         @Body feedback: FeedBackRequest
