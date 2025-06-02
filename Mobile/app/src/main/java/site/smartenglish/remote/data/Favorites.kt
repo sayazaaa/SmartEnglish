@@ -10,7 +10,7 @@ data class GetFavoritesSetListResponseElement(
 )
 
 data class GetFavoritesListResponseElement(
-    val id: Int? = null,
+    val id: String? = null,
     val title: String? = null,
     val cover: String? = null,
     val date: Int? = null,
@@ -24,9 +24,6 @@ data class CreateFavoritesSetRequest(
 
 data class AddFavoritesRequest(
     val favorite_set: Int? = null,
-    val article: Int? = null,
-)
-
-data class DeleteFavoritesRequest(
-    val id: Int? = null,
+    val article: String? = null,
+    val method: String? = null, // "add" or "remove"
 )
