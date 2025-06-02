@@ -11,7 +11,6 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SnackBarViewmodel @Inject constructor() : ViewModel() {
-
     val snackbarHostState = SnackbarHostState()
 
     fun showSnackbar(

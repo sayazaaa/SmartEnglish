@@ -1,6 +1,7 @@
 package site.smartenglish.remote
 
 import android.util.Log
+import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -10,11 +11,12 @@ import okhttp3.ResponseBody.Companion.toResponseBody
 import org.json.JSONObject
 import site.smartenglish.manager.DataStoreManager
 import site.smartenglish.manager.SessionManager
+import site.smartenglish.ui.viewmodel.SnackBarViewmodel
 import javax.inject.Inject
 
 class ErrorInterceptor @Inject constructor(
     private val dataStoreManager: DataStoreManager,
-    private val sessionManager: SessionManager
+    private val sessionManager: SessionManager,
 ) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         val request = chain.request()

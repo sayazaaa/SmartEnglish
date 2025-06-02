@@ -98,7 +98,7 @@ fun UserFeedbackScreen(
             WideButton(
                 text = "提交反馈", onClick = {
                     if (feedback.isNotBlank()) {
-                        //toDO 提交反馈逻辑
+                        viewmodel.sendFeedback(feedback)
                         navigateBack()
                     }
                 }, width = 342, height = 53, fontsize = 19

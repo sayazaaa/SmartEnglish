@@ -131,6 +131,17 @@ class UserViewmodel @Inject constructor(
         }
     }
 
+    // 发送反馈
+    fun sendFeedback(content: String) {
+        viewModelScope.launch {
+            try {
+                userRepository.sendFeedback(content)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
     // 重置上传状态
     fun resetUploadState() {
         _uploadState.value = UploadState.Idle

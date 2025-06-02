@@ -5,6 +5,7 @@ import site.smartenglish.manager.SessionManager
 import site.smartenglish.remote.ApiService
 import site.smartenglish.remote.data.ChangeProfileRequest
 import site.smartenglish.remote.data.ChangeProfileResponse
+import site.smartenglish.remote.data.FeedBackRequest
 import site.smartenglish.remote.data.GetProfileResponse
 import site.smartenglish.util.handleResponse
 import javax.inject.Inject
@@ -57,5 +58,10 @@ class UserRepository @Inject constructor(
         )
     }
 
-    //TODO feedback
+    suspend fun sendFeedback(
+        content: String
+    ): Boolean {
+        api.sendFeedback(FeedBackRequest(content)).handleResponse("发送反馈失败")
+        return true
+    }
 }
