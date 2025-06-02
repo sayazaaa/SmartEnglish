@@ -25,9 +25,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBackIos
 import androidx.compose.material.icons.filled.Search
@@ -39,11 +41,13 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -66,10 +70,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
+import kotlinx.coroutines.flow.debounce
 import site.smartenglish.R
 import site.smartenglish.ui.compose.BlurButton
 import site.smartenglish.ui.compose.WordSearchItem
-import site.smartenglish.ui.compose.WordSearchItemData
 import site.smartenglish.ui.theme.LightOrange
 import site.smartenglish.ui.theme.Orange
 import site.smartenglish.ui.viewmodel.BackgroundImageViewmodel
@@ -83,14 +87,17 @@ fun HomeScreen(
     navigateToArticle: () -> Unit = {},
     navigateToDashBoard: () -> Unit = {},
     //TODO 导航到听写
+    //TODO 导航到单词详情
     homeViewmodel: HomeViewmodel = hiltViewModel(),
     userViewmodel: UserViewmodel = hiltViewModel(),
     bgViewmodel: BackgroundImageViewmodel = hiltViewModel()
 ) {
-    val learnNum = 500
-    val reviewNum = 100
-    val titleWord = "English"
-    val profilePicUrl = userViewmodel.userProfile.collectAsState().value?.avatar
+    val titleWord = "Lantern"
+
+    val userProfile = userViewmodel.userProfile.collectAsState().value
+    val profilePicUrl = userProfile?.avatar
+    val learnNum = userProfile?.new_word_count ?: 0
+    val reviewNum = userProfile?.today_review ?: 0
 
     val bitmap = bgViewmodel.backgroundBitmap.collectAsState().value
 
@@ -120,21 +127,19 @@ fun HomeScreen(
         label = "alphaAnim"
     )
 
-    val searchItemList = listOf<WordSearchItemData>(
-        WordSearchItemData("Hello", "A greeting", isFav = false),
-        WordSearchItemData(
-            "World",
-            "The earth, together with all of its countries and peoples",
-            isFav = true
-        ),
-        WordSearchItemData("Compose", "A modern toolkit for building native UI", isFav = false),
-        WordSearchItemData(
-            "Android",
-            "A mobile operating system developed by Google",
-            isFav = true
-        ),
-        WordSearchItemData("Jetpack", "A suite of libraries for Android development", isFav = false)
-    )
+    val searchItemList = homeViewmodel.searchResult.collectAsState().value
+
+    LaunchedEffect(searchQuery) {
+        snapshotFlow { searchQuery }
+            .debounce(300) // 延迟300毫秒，防止频繁请求
+            .collect { query ->
+                if (query.isNotBlank()) {
+                    homeViewmodel.searchWord(query)
+                } else {
+                    homeViewmodel.clearSearchResult()
+                }
+            }
+    }
 
 
     val buttonContent: @Composable (text: String, num: Int) -> Unit = { t: String, n: Int ->
@@ -353,6 +358,7 @@ fun HomeScreen(
                         color = Color.DarkGray,
                         fontSize = 16.sp
                     ),
+                    maxLines = 1,
                     cursorBrush = SolidColor(Orange),
                     decorationBox = { innerTextField ->
                         // 搜索图标
@@ -383,17 +389,25 @@ fun HomeScreen(
             enter = fadeIn(tween(500)),
             exit = fadeOut(tween(500))
         ) {
+            val scrollState = rememberScrollState()
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(top = 114.dp)
-                    .background(Color.Transparent),
+                    .background(Color.Transparent)
+                    .verticalScroll(scrollState),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 searchItemList.forEach {
-                    val (title, description, isFav) = it
-                    WordSearchItem(title, description, {}, {}, isFav)
+                    val (title, description) = it
+                    WordSearchItem(
+                        title, description,
+                        onClick = {
+                            //TODO 点击单词跳转到单词详情
+
+                        }
+                    )
                 }
             }
         }
