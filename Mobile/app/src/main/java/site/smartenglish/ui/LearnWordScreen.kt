@@ -9,13 +9,20 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.unit.*
+import androidx.hilt.navigation.compose.hiltViewModel
+import site.smartenglish.ui.viewmodel.BackgroundImageViewmodel
 
 @Composable
-fun LearnWordScreen() {
-    val mainColor = Color(0xFF006400)
+fun LearnWordScreen(
+    bgViewmodel: BackgroundImageViewmodel = hiltViewModel()
+) {
+
+    val bitmap = bgViewmodel.backgroundBitmap.collectAsState().value
     val textColor = Color.White
     val darkTextColor = Color.LightGray
     val hintColor = Color(0xFFE1E3E5)
@@ -41,10 +48,22 @@ fun LearnWordScreen() {
     )
     var selected by remember { mutableStateOf<Boolean>(false) }
 
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .blur(32.dp)
+    ) {
+        Image(
+            bitmap = bitmap.asImageBitmap(),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.fillMaxSize()
+        )
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(mainColor)
             .padding(16.dp)
     ) {
         // 页面角落辅助功能组件
