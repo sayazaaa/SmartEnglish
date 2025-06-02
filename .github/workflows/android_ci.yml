@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'Mobile/**'  # 只监听 Mobile 目录变化
+      - 'Mobile/**'
   pull_request:
     branches: [ main ]
     paths:
@@ -13,7 +13,6 @@ on:
 jobs:
   android-build:
     runs-on: ubuntu-latest
-    # 设置工作目录为 Mobile
     defaults:
       run:
         working-directory: Mobile
@@ -21,6 +20,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 确保完整检出
 
       - name: Setup JDK 17
         uses: actions/setup-java@v3
@@ -28,11 +29,9 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # 确保 gradlew 有执行权限
       - name: Grant gradlew permission
         run: chmod +x gradlew
 
-      # 缓存 Gradle 依赖加速构建
       - name: Cache Gradle
         uses: actions/cache@v3
         with:
@@ -43,19 +42,23 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      # 接受 Android SDK 许可（重要！）
       - name: Accept licenses
         run: |
           yes | sudo $ANDROID_HOME/tools/bin/sdkmanager --licenses || true
 
-      # 安装 Android SDK
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v2
+        uses: android-actions/setup-android@v3
 
-      # 构建 debug APK
+      # 验证Gradle Wrapper是否可用
+      - name: Verify Gradle
+        run: |
+          echo "检查Gradle Wrapper完整性:"
+          ls -l gradlew
+          ls -l gradle/wrapper/
+          ./gradlew --version
+
+      # 替换所有旧版本的actions
       - name: Build APK
         run: ./gradlew assembleDebug
-
-      # 运行单元测试
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest
