@@ -38,7 +38,7 @@ jobs:
           cat > src/main/resources/application.properties <<EOF
           ${{ secrets.APPLICATION_PROPERTIES }}
           EOF
-          chmod 600 src/main/resources/application-secrets.properties
+          chmod 600 src/main/resources/application.properties
 
       # Maven依赖缓存（增强版）
       - name: Cache Maven dependencies
