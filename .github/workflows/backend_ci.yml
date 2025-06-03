@@ -3,12 +3,12 @@ name: Backend CI
 on:
   push:
     branches: [ main ]
-    paths:
-      - 'smart-english-backend/**'  
+#    paths:
+#      - 'smart-english-backend/**'
   pull_request:
     branches: [ main ]
-    paths:
-      - 'smart-english-backend/**'
+#    paths:
+#      - 'smart-english-backend/**'
 
 jobs:
   backend-build:
@@ -35,10 +35,7 @@ jobs:
         run: |
           echo "Creating application-secrets.properties"
           cat > src/main/resources/application-secrets.properties <<EOF
-          database.url=${{ secrets.DB_URL }}
-          database.username=${{ secrets.DB_USERNAME }}
-          database.password=${{ secrets.DB_PASSWORD }}
-          api.key=${{ secrets.API_KEY }}
+          ${{ secrets.APPLICATION_PROPERTIES }}
           EOF
           chmod 600 src/main/resources/application-secrets.properties
 
