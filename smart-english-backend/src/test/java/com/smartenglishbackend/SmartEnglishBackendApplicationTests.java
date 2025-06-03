@@ -7,7 +7,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 class SmartEnglishBackendApplicationTests {
 
     @Test
-    void contextLoads() {
+    fun addition_isCorrect() {
+        assertEquals(4, 2 + 2)
     }
 
 }
