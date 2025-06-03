@@ -33,8 +33,8 @@ jobs:
       # 创建环境配置文件（根据项目需要）
       - name: Setup environment config
         run: |
-          echo "Creating application-secrets.properties"
-          cat > src/main/resources/application-secrets.properties <<EOF
+          echo "Creating application.properties"
+          cat > src/main/resources/application.properties <<EOF
           ${{ secrets.APPLICATION_PROPERTIES }}
           EOF
           chmod 600 src/main/resources/application-secrets.properties
