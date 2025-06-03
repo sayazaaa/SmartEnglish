@@ -7,8 +7,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 class SmartEnglishBackendApplicationTests {
 
     @Test
-    fun addition_isCorrect() {
-        assertEquals(4, 2 + 2)
+    void addition_isCorrect() {
+        assertEquals(4, 2 + 2);
     }
 
 }
