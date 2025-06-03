@@ -44,6 +44,7 @@ public class LearnedService {
             Account account = accountOptional.get();
             Pair<String, Integer> res = wordGenerator.GetNewWord(userId, account.getWordbook_p());
             account.setWordbook_p(res.getSecond());
+            account.setNewWordCount(account.getNewWordCount()+1);
             accountRepository.save(account);
             return res.getFirst();
         }else if(dtoUpdateLearned.getStatus().equals("review")){

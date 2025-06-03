@@ -56,7 +56,7 @@ public class WordController {
         if(!jwtUtils.verifyToken(token)){
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
-        if(jwtUtils.getUserIdFromToken(token) != -1){
+        if(!jwtUtils.getUserIdFromToken(token).equals(-1)){
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
         try{
@@ -64,6 +64,20 @@ public class WordController {
             return ResponseEntity.ok().build();
         }catch (MyResourceNotFoundException e){
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }catch (Exception e){
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    @RequestMapping(method = RequestMethod.GET, path = "/all")
+    public ResponseEntity<List<Word>> GetAllWords(@RequestHeader(name="Authorization") String token) {
+        if(!jwtUtils.verifyToken(token)){
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        if(!jwtUtils.getUserIdFromToken(token).equals(-1)){
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+        try{
+            return ResponseEntity.ok(wordService.GetAllWords());
         }catch (Exception e){
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }

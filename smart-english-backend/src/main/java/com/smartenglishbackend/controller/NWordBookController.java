@@ -83,4 +83,21 @@ public class NWordBookController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    @RequestMapping(method = RequestMethod.GET, path = "/check")
+    public ResponseEntity<Boolean> CheckNWordBook(@RequestParam(name="nwordbook_id") Integer nWordBookId,
+                                                 @RequestParam(name="word")String word,
+                                                 @RequestHeader("Authorization") String token){
+        if(!jwtUtils.verifyToken(token)) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        try{
+            return ResponseEntity.ok(nWordBookService.checkNWordBook(nWordBookId,word));
+        }catch (RequestFormatException e){
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }catch (MyResourceNotFoundException e){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }catch (Exception e){
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

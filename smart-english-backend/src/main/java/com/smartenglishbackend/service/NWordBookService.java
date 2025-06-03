@@ -74,4 +74,15 @@ public class NWordBookService {
             throw new RequestFormatException("Invalid request");
         }
     }
+    public Boolean checkNWordBook(Integer id, String word){
+        if(id == null || word == null){
+            throw new RequestFormatException("Invalid request");
+        }
+        Optional<NWordBook> nWordBookOptional = nWordBookRepository.findById(id);
+        if(nWordBookOptional.isEmpty()){
+            throw new MyResourceNotFoundException("NWordBook not found");
+        }
+        NWordBook nWordBookEntity = nWordBookOptional.get();
+        return nWordBookEntity.getContent().contains(word);
+    }
 }

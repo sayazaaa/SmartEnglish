@@ -12,6 +12,7 @@ import java.util.Date;
 public class Feedback {
     @Id
     @Column(columnDefinition = "INT")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
     @Column(columnDefinition = "INT",name = "account_id")
     private Integer accountId;

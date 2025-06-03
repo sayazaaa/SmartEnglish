@@ -30,4 +30,6 @@ public class Account {
     private String description;
     @Column(columnDefinition = "INT")
     private Integer wordbook_p;
+    @Column(columnDefinition = "INT", name="new_word_count")
+    private Integer newWordCount;
 }
