@@ -34,6 +34,7 @@ jobs:
       - name: Setup environment config
         run: |
           echo "Creating application.properties"
+          touch src/main/resources/application.properties
           cat > src/main/resources/application.properties <<EOF
           ${{ secrets.APPLICATION_PROPERTIES }}
           EOF
