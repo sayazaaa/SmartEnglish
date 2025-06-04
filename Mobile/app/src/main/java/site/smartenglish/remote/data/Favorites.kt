@@ -13,7 +13,7 @@ data class GetFavoritesListResponseElement(
     val id: String? = null,
     val title: String? = null,
     val cover: String? = null,
-    val date: Int? = null,
+    val date: String? = null,
     val tags: List<String?>? = null
 )
 
