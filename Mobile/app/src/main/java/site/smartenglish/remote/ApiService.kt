@@ -408,7 +408,7 @@ interface ApiService {
      */
     @GET("article")
     suspend fun getArticle(
-        @Query("id") article: Int,
+        @Query("id") article: String,
     ): Response<GetArticleResponse>
 
     /**
@@ -509,8 +509,14 @@ interface ApiService {
      */
     @DELETE("favorite")
     suspend fun deleteFavorites(
-        @Query("id") favoriteSet: String
+        @Query("id") favoriteSet: Int
     ): Response<Unit>
+
+    @GET("favorite/check")
+    suspend fun checkFavorite(
+        @Query("id") favoriteSet: Int,
+        @Query("article") article: String
+    ): Response<Boolean?>
 
     /**
      * 反馈接口
