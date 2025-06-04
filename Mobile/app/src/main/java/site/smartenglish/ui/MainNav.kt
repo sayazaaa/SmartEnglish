@@ -43,6 +43,15 @@ class ArticleDetail(
 )
 
 @Serializable
+object Favorite
+
+@Serializable
+class FavoriteDetail(
+    val setId: Int,
+    val title: String
+)
+
+@Serializable
 object DashBoard
 
 
@@ -127,6 +136,9 @@ fun MainNav(
                 navigateArticleDetail = { articleId ->
                     navController.navigate(ArticleDetail(articleId))
                 },
+                navigateFavorite = {
+                    navController.navigate(Favorite)
+                },
                 navigateBack = { navController.popBackStack() },
             )
         }
@@ -155,6 +167,72 @@ fun MainNav(
             }
             ArticleDetailScreen(
                 articleId = articleDetail?.articleId ?: "",
+                navigateBack = { navController.popBackStack() }
+            )
+        }
+        composable<Favorite>(
+            enterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                    animationSpec = tween(300, easing = FastOutSlowInEasing)
+                )
+            },
+            exitTransition = {
+                fadeOut(animationSpec = tween(150))
+            },
+            popEnterTransition = {
+                fadeIn(animationSpec = tween(150))
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.End,
+                    animationSpec = tween(300, easing = FastOutSlowInEasing)
+                )
+            }
+        ) {
+            FavoriteScreen(
+                navigateArticleDetail = { articleId ->
+                    navController.navigate(ArticleDetail(articleId))
+                },
+                navigateFavoriteDetail = { id, title ->
+                    navController.navigate(FavoriteDetail(id, title))
+                },
+                navigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<FavoriteDetail>(
+            enterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                    animationSpec = tween(300, easing = FastOutSlowInEasing)
+                )
+            },
+            exitTransition = {
+                fadeOut(animationSpec = tween(150))
+            },
+            popEnterTransition = {
+                fadeIn(animationSpec = tween(150))
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.End,
+                    animationSpec = tween(300, easing = FastOutSlowInEasing)
+                )
+            }
+        ) { backStackEntry ->
+            val favoriteDetail = backStackEntry.arguments?.let {
+                FavoriteDetail(
+                    it.getInt("setId"),
+                    it.getString("title") ?: "收藏夹"
+                )
+            }
+            FavoriteDetailScreen(
+                setId = favoriteDetail?.setId ?: 0,
+                title = favoriteDetail?.title ?: "",
+                navigateToArticleDetail = { articleId ->
+                    navController.navigate(ArticleDetail(articleId))
+                },
                 navigateBack = { navController.popBackStack() }
             )
         }

@@ -27,10 +27,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBackIos
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.CollectionsBookmark
@@ -40,12 +42,12 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,6 +55,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
@@ -63,6 +67,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModelStoreOwner
 import coil3.compose.AsyncImage
+import kotlinx.coroutines.delay
 import site.smartenglish.ui.theme.DarkGrey
 import site.smartenglish.ui.theme.Grey
 import site.smartenglish.ui.theme.LightGrey
@@ -70,19 +75,13 @@ import site.smartenglish.ui.theme.Orange
 import site.smartenglish.ui.theme.White
 import site.smartenglish.ui.viewmodel.ArticleViewmodel
 import site.smartenglish.ui.viewmodel.SnackBarViewmodel
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material.icons.automirrored.filled.ArrowBackIos
-import androidx.compose.material3.LocalTextStyle
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import kotlinx.coroutines.delay
 
 
 @Composable
 fun ArticleScreen(
     navigateArticleDetail: (String) -> Unit = {},
     navigateBack: () -> Unit = {},
+    navigateFavorite: () -> Unit = {},
     viewmodel: ArticleViewmodel = hiltViewModel(),
     snackBarViewmodel: SnackBarViewmodel = hiltViewModel(
         LocalActivity.current as ViewModelStoreOwner
@@ -129,7 +128,8 @@ fun ArticleScreen(
                         // 进入搜索状态
                         isSearching = true
                     }
-                }
+                },
+                navigateFavorite = navigateFavorite
             )
         }) { innerPadding ->
         Box(
@@ -181,6 +181,7 @@ fun ArticleScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ArticleScreenTopBar(
+    navigateFavorite: () -> Unit,
     onBackClick: () -> Unit = {},
     isSearching: Boolean = false,
     searchQuery: String = "",
@@ -236,7 +237,10 @@ fun ArticleScreenTopBar(
                             modifier = Modifier
                                 .fillMaxWidth(0.8f)
                                 .height(38.dp)
-                                .background(Color(0xFFFFFEFD).copy(alpha = 0.15f), RoundedCornerShape(8.dp))
+                                .background(
+                                    Color(0xFFFFFEFD).copy(alpha = 0.15f),
+                                    RoundedCornerShape(8.dp)
+                                )
                                 .padding(horizontal = 8.dp, vertical = 4.dp)
                                 .focusRequester(focusRequester),
                             decorationBox = { innerTextField ->
@@ -332,7 +336,7 @@ fun ArticleScreenTopBar(
                     exit = fadeOut() + shrinkHorizontally()
                 ) {
                     IconButton(
-                        onClick = { /* TODO: 收藏夹功能 */ },
+                        onClick = { navigateFavorite() },
                     ) {
                         Icon(
                             imageVector = Icons.Default.CollectionsBookmark,

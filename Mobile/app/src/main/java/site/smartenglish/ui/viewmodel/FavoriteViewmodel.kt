@@ -3,14 +3,15 @@ package site.smartenglish.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import site.smartenglish.remote.data.GetFavoritesSetListResponse
 import site.smartenglish.repository.FavoritesRepository
+import site.smartenglish.ui.FavoriteListItemData
 import javax.inject.Inject
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 
 @HiltViewModel
 class FavoriteViewmodel @Inject constructor(
@@ -26,6 +27,12 @@ class FavoriteViewmodel @Inject constructor(
 
     private val _favoritesList = MutableStateFlow<GetFavoritesSetListResponse>(emptyList())
     val favoritesList = _favoritesList.asStateFlow()
+
+    // Map<SetId,List<FavoriteListItemData>>
+    private val _favoritesDetail =
+        MutableStateFlow<Map<Int, List<FavoriteListItemData>>>(emptyMap())
+    val favoritesDetail = _favoritesDetail.asStateFlow()
+
 
     fun getIsFavorite(articleId: String) {
         viewModelScope.launch {
@@ -54,11 +61,13 @@ class FavoriteViewmodel @Inject constructor(
         }
     }
 
-    suspend fun getFavoriteList() {
-        try {
-            _favoritesList.value = favoritesRepository.getFavoriteList()
-        } catch (e: Exception) {
-            e.printStackTrace()
+    fun getFavoriteList() {
+        viewModelScope.launch {
+            try {
+                _favoritesList.value = favoritesRepository.getFavoriteList()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 
@@ -122,6 +131,43 @@ class FavoriteViewmodel @Inject constructor(
                 if (result) {
                     // 删除成功后刷新收藏夹列表
                     getFavoriteList()
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    fun getFavoriteDetail() {
+        viewModelScope.launch {
+            try {
+                // 先获取收藏夹列表
+                val favoritesList = favoritesRepository.getFavoriteList()
+
+                // 并行获取每个收藏夹的详情
+                val detailTasks =
+                    favoritesList?.filterNotNull()?.filter { it.id != null }?.map { set ->
+                        async {
+                            val articles = favoritesRepository.getFavoriteDetail(set.id!!)
+                            set.id to articles
+                        }
+                    } ?: emptyList()
+
+                // 等待所有请求完成并收集结果
+                val results = detailTasks.awaitAll().toMap()
+
+                // 更新状态
+                _favoritesDetail.value = results.mapValues { entry ->
+                    entry.value?.mapNotNull { article ->
+                        article?.let {
+                            FavoriteListItemData(
+                                id = it.id ?: "",
+                                title = it.title ?: "",
+                                date = it.date ?: "",
+                                cover = it.cover ?: ""
+                            )
+                        }
+                    } ?: emptyList()
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
