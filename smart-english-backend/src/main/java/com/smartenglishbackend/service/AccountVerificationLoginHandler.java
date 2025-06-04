@@ -24,6 +24,8 @@ public class AccountVerificationLoginHandler implements IAccountHandler{
     private VerificationSender verificationSender;
     @Autowired
     private Cache<String, Object> cache;
+    @Autowired
+    private UseDataLogger useDataLogger;
     @Override
     public boolean accept(DTOAccount dtoAccount, String method){
         return dtoAccount.getPhone() != null && (!dtoAccount.getPhone().isEmpty()) && method.equals("LOGIN")
@@ -58,6 +60,7 @@ public class AccountVerificationLoginHandler implements IAccountHandler{
             if(account == null){
                 throw new AccountException("Account not found");
             }
+            useDataLogger.LogLogin(account.getId());
             String token = jwtUtils.generateToken(account.getId());
             //token装载入Authorization字段
             ResponseEntity<PDTOAccount> response = ResponseEntity.ok()

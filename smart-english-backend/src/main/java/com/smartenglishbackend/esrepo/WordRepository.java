@@ -20,5 +20,16 @@ public interface WordRepository extends CrudRepository<Word, String> {
             }
             """)
     List<Word> searchWordsByWord(String word, Pageable pageable);
+    @Query("""
+            {
+                "match": {
+                    "word": {
+                        "query":"?0",
+                        "fuzziness":"AUTO"
+                    }
+                }
+            }
+            """)
+    List<Word> searchWordsByWordFuzzy(String word, Pageable pageable);
     Word findByWord(String word);
 }

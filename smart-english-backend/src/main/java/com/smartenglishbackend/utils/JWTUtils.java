@@ -8,6 +8,7 @@ import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.smartenglishbackend.jpaentity.Account;
 import com.smartenglishbackend.jparepo.AccountRepository;
+import com.smartenglishbackend.service.UseDataLogger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -22,6 +23,8 @@ public class JWTUtils {
     private Algorithm algorithm;
     @Autowired
     private AccountRepository accountRepository;
+    @Autowired
+    private UseDataLogger useDataLogger;
     @Value("${jwt.expiration-time}")
     private Long expirationTime;//单位为秒
     public String generateToken(Integer userId) {
@@ -40,6 +43,7 @@ public class JWTUtils {
             DecodedJWT decodedJWT = verifier.verify(token);
             if(Integer.parseInt(decodedJWT.getSubject()) == -1)return true;
             Optional<Account> accountOptional = accountRepository.findById(Integer.parseInt(decodedJWT.getSubject()));
+            useDataLogger.LogLogin(Integer.parseInt(decodedJWT.getSubject()));
             return accountOptional.isPresent();
         }catch (JWTVerificationException e){
             return false;

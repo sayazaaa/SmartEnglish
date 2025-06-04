@@ -14,6 +14,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.Optional;
 import java.util.Random;
 
 @Service
@@ -26,6 +27,8 @@ public class AccountRegisterHandler implements IAccountHandler{
     VerificationSender verificationSender;
     @Autowired
     AccountInitializer accountInitializer;
+    @Autowired
+    UseDataLogger useDataLogger;
     @Override
     public boolean accept(DTOAccount dtoAccount, String method) {
         return (method.equals("POST") && dtoAccount.getPhone() != null);
@@ -38,7 +41,7 @@ public class AccountRegisterHandler implements IAccountHandler{
         if(dtoAccount.getVerification() != null){//第二次带验证码
             String veri = (String)cache.getIfPresent(dtoAccount.getPhone());
             if(veri == null){
-                throw new RuntimeException("The verification code has expired or is no longer valid. Please request a new one.");
+                throw new AccountException("The verification code has expired or is no longer valid. Please request a new one.");
             }
             Account account = new Account();
             if(accountRepository.findByPhone(dtoAccount.getPhone()) != null){
@@ -53,6 +56,9 @@ public class AccountRegisterHandler implements IAccountHandler{
             }else{
                 throw new AccountException("Verification code incorrect");
             }
+            Account veriAccount = accountRepository.findByPhone(dtoAccount.getPhone());
+            assert veriAccount != null;
+            useDataLogger.LogRegister(veriAccount.getId());
             return ResponseEntity.ok(new PDTOAccount("Account created"));
         }else{//第一次请求验证码
             if(dtoAccount.getPhone() == null || dtoAccount.getPhone().isEmpty()){

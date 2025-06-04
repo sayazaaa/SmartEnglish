@@ -40,4 +40,23 @@ public class WordService {
         }
         return wordList;
     }
+    public List<Word> SearchWordsFuzzy(String word) {
+        Pageable pageable = PageRequest.of(0, 10, Sort.by(Sort.Order.desc("_score")));
+        List<Word> wordList = new ArrayList<>();
+        String searchWord = word;
+        while (wordList.size() < 5) {
+            if(searchWord.isEmpty()){
+                wordList = GetAllWords().stream().
+                        filter(w -> (!w.getExplanations().isEmpty())&&(!w.getWord().equals(word))).
+                        toList();
+                break;
+            }
+            wordList = wordRepository.searchWordsByWordFuzzy(searchWord,pageable);
+            wordList = wordList.stream().
+                    filter(w -> (!w.getExplanations().isEmpty())&&(!w.getWord().equals(word))).
+                    toList();
+            searchWord = searchWord.substring(0, searchWord.length()/2);
+        }
+        return wordList.subList(0,5).stream().toList();
+    }
 }

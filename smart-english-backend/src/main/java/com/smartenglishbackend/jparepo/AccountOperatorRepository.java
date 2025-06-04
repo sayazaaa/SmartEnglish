@@ -12,8 +12,16 @@ import java.util.List;
 public interface AccountOperatorRepository extends JpaRepository<AccountOperator, Integer> {
     abstract List<AccountOperator> findByAccountId(Integer accountId);
     abstract List<AccountOperator> findByOp(Integer op);
-    @Query("""
-        select AccountOperator from AccountOperator where accountId = ?1 and logDate = ?2 and op = ?3
-    """)
+    @Query(value = """
+        select * from accountoperator ao 
+        where ao.account_id = ?1 and ao.logdate = ?2 and ao.op = ?3
+    """, nativeQuery = true)
     List<AccountOperator> searchByAccountIdAndDateAndOp(Integer accountId, LocalDate date, Integer op);
+    @Query(value = """
+        select * from accountoperator ao
+        where ao.logdate >= ?1
+        and ao.logdate < ?2
+        and ao.op = ?3
+    """,nativeQuery = true)
+    List<AccountOperator> searchByDateAndOp(LocalDate start, LocalDate end, Integer op);
 }

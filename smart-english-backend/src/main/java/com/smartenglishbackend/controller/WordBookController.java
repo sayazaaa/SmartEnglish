@@ -116,4 +116,18 @@ public class WordBookController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    @RequestMapping(method = RequestMethod.GET, path="/new20")
+    public ResponseEntity<List<String>> GetNew20WordBook(@RequestHeader("Authorization") String token){
+        if(!jwtUtils.verifyToken(token)){
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        try{
+            return ResponseEntity.ok(wordBookService.GetNewWord20(jwtUtils.getUserIdFromToken(token)));
+        }catch (MyResourceNotFoundException e){
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        }catch (Exception e){
+            System.out.println(e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }
