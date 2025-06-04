@@ -123,7 +123,12 @@ fun ProfileContent(
     // 监听上传状态变化
     LaunchedEffect(uploadState) {
         when (uploadState) {
-            is UploadImageViewmodel.UploadState.Success, is UploadImageViewmodel.UploadState.Error -> {
+            is UploadImageViewmodel.UploadState.Success -> {
+                viewmodel.changeAvatar(uploadState.imageUrl)
+                delay(3000)
+                imageViewmodel.resetUploadState()
+            }
+            is UploadImageViewmodel.UploadState.Error -> {
                 delay(3000)
                 imageViewmodel.resetUploadState()
             }
@@ -173,7 +178,7 @@ fun ProfileContent(
                             .size(96.dp)
                             .clip(CircleShape)
                             .background(White),
-                        error = painterResource(R.drawable.outline_person_24)
+                        error = painterResource(R.drawable.apple)
                     )
 
                     // 上传状态指示器
