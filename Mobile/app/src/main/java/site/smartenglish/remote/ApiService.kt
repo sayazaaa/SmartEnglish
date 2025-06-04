@@ -23,6 +23,7 @@ import site.smartenglish.remote.data.GetLearnedResponse
 import site.smartenglish.remote.data.GetNWordBookListResponse
 import site.smartenglish.remote.data.GetNWordBookWordListResponse
 import site.smartenglish.remote.data.GetProfileResponse
+import site.smartenglish.remote.data.GetUsingResponse
 import site.smartenglish.remote.data.GetWordBookInfoResponse
 import site.smartenglish.remote.data.GetWordBookListResponse
 import site.smartenglish.remote.data.GetWordResponse
@@ -283,6 +284,18 @@ interface ApiService {
     suspend fun getWordBookList(): Response<GetWordBookListResponse>
 
     /**
+     * 获取模块使用时长接口
+     *
+     * @param modName 模块名称："learn"/"review"/"listen"/"read"
+     * @return
+     * 返回该模块的累计使用时长，单位为分钟
+     */
+    @GET("using")
+    suspend fun getUsingTime(
+        @Query("modname") modName: String
+    ): Response<GetUsingResponse>
+
+    /**
      * 更新应用使用时间接口
      *
      * @param usingTime
@@ -512,6 +525,13 @@ interface ApiService {
         @Query("id") favoriteSet: Int
     ): Response<Unit>
 
+    /**
+     * 检查文章是否在收藏夹中
+     *
+     * @param favoriteSet 收藏集的ID
+     * @param article 文章的ID
+     * @return 如果文章在收藏夹中，返回true；否则返回false
+     */
     @GET("favorite/check")
     suspend fun checkFavorite(
         @Query("id") favoriteSet: Int,
