@@ -1,5 +1,7 @@
 package site.smartenglish.remote.data
 
+typealias SearchWordResponse = List<SearchWordResponseElement>
+
 data class GetWordResponse(
     val word: String? = null,
     val phonetic: String? = null,
@@ -10,7 +12,7 @@ data class GetWordResponse(
     val examples: Example? = null
 )
 
-data class SearchWordResponse(
+data class SearchWordResponseElement(
     val word: String? = null,
     val explanations: List<String?>? = null
 )

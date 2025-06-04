@@ -25,16 +25,13 @@ import site.smartenglish.ui.theme.White
 data class WordSearchItemData(
     val title: String,
     val description: String,
-    val isFav: Boolean
 )
 
 @Composable
 fun WordSearchItem(
     title: String,
     description: String,
-    onFavButtonClick: () -> Unit = {},
-    onClick: () -> Unit = {},
-    isFav: Boolean
+    onClick: () -> Unit = {}
 ) {
     Row(
         modifier = Modifier
@@ -61,17 +58,17 @@ fun WordSearchItem(
                 .padding(start = 16.dp, end = 16.dp)
                 .weight(1f)
         )
-        Icon(
-            painter =
-                if (isFav) painterResource(R.drawable.kid_star_fill) else painterResource(R.drawable.kid_star),
-            contentDescription = "Favorite",
-            tint = White,
-            modifier = Modifier
-                .size(22.dp)
-                .clickable {
-                    onFavButtonClick()
-                }
-        )
+//        Icon(
+//            painter =
+//                if (isFav) painterResource(R.drawable.kid_star_fill) else painterResource(R.drawable.kid_star),
+//            contentDescription = "Favorite",
+//            tint = White,
+//            modifier = Modifier
+//                .size(22.dp)
+//                .clickable {
+//                    onFavButtonClick()
+//                }
+//        )
 
 
     }

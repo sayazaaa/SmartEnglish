@@ -6,7 +6,7 @@ data class GetArticleResponse(
     val content: String? = null,
     val cover: String? = null,
     val date: String? = null,
-    val id: Int? = null,
+    val id: String? = null,
     val tags: List<String?>? = null,
     val title: String? = null
 )
@@ -14,7 +14,7 @@ data class GetArticleResponse(
 data class SearchArticleResponseElement(
     val cover: String? = null,
     val date: String? = null,
-    val id: Int? = null,
+    val id: String? = null,
     val tags: List<String?>? = null,
     val title: String? = null
 )

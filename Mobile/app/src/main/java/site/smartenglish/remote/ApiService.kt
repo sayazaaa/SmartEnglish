@@ -119,7 +119,9 @@ interface ApiService {
      *         "name": "string",
      *         "cover": "string",
      *         "wordcount": 0
-     *     }
+     *     },
+     *     "new_word_count": 0,
+     *     "today_review": 0
      * }
      */
     @PUT("user")
@@ -140,7 +142,9 @@ interface ApiService {
      *         "name": "string",
      *         "cover": "string",
      *         "wordcount": 0
-     *     }
+     *     },
+     *     "new_word_count": 0,
+     *     "today_review": 0
      * }
      */
     @GET("user")
@@ -392,7 +396,7 @@ interface ApiService {
      * @param article 文章的ID
      * @return
      * {
-     *     "id": 0,
+     *     "id": "string",
      *     "title": "string",
      *     "cover": "string",
      *     "content": "string",
@@ -414,7 +418,7 @@ interface ApiService {
      * @return
      * [
      *     {
-     *         "id": 0,
+     *         "id": "string",
      *         "title": "string",
      *         "cover": "string",
      *         "date": "string",
@@ -451,7 +455,7 @@ interface ApiService {
      * @return
      * [
      *     {
-     *         "id": 0,
+     *         "id": "string",
      *         "title": "string",
      *         "cover": "string",
      *         "date": "string",
@@ -488,7 +492,7 @@ interface ApiService {
      * - method "add"/"remove"
      * {
      *     "favorite_set": 0,
-     *     "article": 0,
+     *     "article": "string",
      *     "method": "string"
      * }
      * @return 添加结果的响应
@@ -505,7 +509,7 @@ interface ApiService {
      */
     @DELETE("favorite")
     suspend fun deleteFavorites(
-        @Query("id") favoriteSet: Int
+        @Query("id") favoriteSet: String
     ): Response<Unit>
 
     /**

@@ -1,5 +1,6 @@
 package com.smartenglishbackend;
 
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -7,7 +8,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 class SmartEnglishBackendApplicationTests {
 
     @Test
-    void contextLoads() {
+    void addition_isCorrect() { Assertions.assertEquals(4, 2 + 2);
     }
 
 }
