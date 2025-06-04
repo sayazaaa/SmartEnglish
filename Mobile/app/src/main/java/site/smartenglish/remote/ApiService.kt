@@ -465,7 +465,7 @@ interface ApiService {
      *     }
      * ]
      */
-    @GET("favorite")
+    @GET("favorite/detail")
     suspend fun getFavoritesInfo(
         @Query("id") favoriteSet: Int,
     ): Response<GetFavoritesListResponse>
