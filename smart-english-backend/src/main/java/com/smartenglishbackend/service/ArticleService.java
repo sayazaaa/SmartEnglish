@@ -8,6 +8,7 @@ import com.smartenglishbackend.esrepo.ArticleRepository;
 import com.smartenglishbackend.esrepo.CustomArticleRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,6 +36,7 @@ public class ArticleService {
         }
         return customArticleRepository.searchByTitle(searchStr);
     }
+    @Transactional
     public void DeleteArticle(String id) {
         if(id == null) {
             throw new RequestFormatException("Article not found");
@@ -45,6 +47,7 @@ public class ArticleService {
         }
         articleRepository.deleteById(id);
     }
+    @Transactional
     public void CreateArticle(Article article) {
         if(article == null) {
             throw new RequestFormatException("Article cannot be null");

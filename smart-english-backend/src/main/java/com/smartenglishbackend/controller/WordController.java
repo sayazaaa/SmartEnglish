@@ -82,4 +82,15 @@ public class WordController {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+    @RequestMapping(method = RequestMethod.GET, path="/match")
+    public ResponseEntity<List<Word>> GetMatchWords(@RequestParam(name="word") String word,@RequestHeader(name="Authorization") String token) {
+        if(!jwtUtils.verifyToken(token)){
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+        try{
+            return ResponseEntity.ok(wordService.SearchWordsFuzzy(word));
+        }catch (Exception e){
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
 }

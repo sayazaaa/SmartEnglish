@@ -10,6 +10,7 @@ import com.smartenglishbackend.jparepo.NWordBookRepository;
 import com.smartenglishbackend.jparepo.WordSetRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
@@ -24,7 +25,7 @@ public class AccountInitializer {
     private FavoritesSetRepository favoritesSetRepository;
     @Autowired
     private NWordBookRepository nWordBookRepository;
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void AccountInit(Account account) {
         accountRepository.save(account);
         Account newAccount = accountRepository.findByPhone(account.getPhone());

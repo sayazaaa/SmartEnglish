@@ -68,10 +68,10 @@ public class CustomArticleRepository {
         SearchHit<Article> article = searchHits.getSearchHit(0);
         PDTOArticleInfo articleInfo = new PDTOArticleInfo();
         articleInfo.setId(article.getId());
-        articleInfo.setCover(articleInfo.getCover());
-        articleInfo.setDate(articleInfo.getDate());
-        articleInfo.setTitle(articleInfo.getTitle());
-        articleInfo.setTags(articleInfo.getTags());
+        articleInfo.setCover(article.getContent().getCover());
+        articleInfo.setDate(article.getContent().getDate());
+        articleInfo.setTitle(article.getContent().getTitle());
+        articleInfo.setTags(article.getContent().getTags());
         return articleInfo;
     }
 }

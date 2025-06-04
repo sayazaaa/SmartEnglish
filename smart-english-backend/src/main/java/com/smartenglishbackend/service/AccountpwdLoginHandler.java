@@ -19,6 +19,8 @@ public class AccountpwdLoginHandler implements IAccountHandler{
     private AccountRepository accountRepository;
     @Autowired
     private JWTUtils jwtUtils;
+    @Autowired
+    private UseDataLogger useDataLogger;
     @Override
     public boolean accept(DTOAccount dtoAccount, String method) {
         return (method.equals("LOGIN")
@@ -43,6 +45,7 @@ public class AccountpwdLoginHandler implements IAccountHandler{
                 throw new AccountException("Wrong password");
             }
             //返回token
+            useDataLogger.LogLogin(account.getId());
             String token = jwtUtils.generateToken(account.getId());
             ResponseEntity<PDTOAccount> response = ResponseEntity.ok()
                     .header("Authorization",token)
