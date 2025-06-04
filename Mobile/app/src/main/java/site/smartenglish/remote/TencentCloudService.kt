@@ -107,7 +107,7 @@ class TencentCloudService @Inject constructor(
             "file" -> uri.path
             "content" -> {
                 context.contentResolver.openInputStream(uri)?.use { inputStream ->
-                    val tempFile = File.createTempFile("upload_", ".tmp", context.cacheDir)
+                    val tempFile = File.createTempFile("SmartEnglish_", ".png", context.cacheDir)
                     tempFile.outputStream().use { outputStream ->
                         inputStream.copyTo(outputStream)
                     }
