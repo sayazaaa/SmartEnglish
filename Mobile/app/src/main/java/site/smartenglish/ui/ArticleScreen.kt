@@ -1,6 +1,17 @@
 package site.smartenglish.ui
 
 import androidx.activity.compose.LocalActivity
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,9 +26,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.CollectionsBookmark
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.Search
@@ -25,18 +40,24 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -45,9 +66,17 @@ import coil3.compose.AsyncImage
 import site.smartenglish.ui.theme.DarkGrey
 import site.smartenglish.ui.theme.Grey
 import site.smartenglish.ui.theme.LightGrey
+import site.smartenglish.ui.theme.Orange
 import site.smartenglish.ui.theme.White
 import site.smartenglish.ui.viewmodel.ArticleViewmodel
 import site.smartenglish.ui.viewmodel.SnackBarViewmodel
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material.icons.automirrored.filled.ArrowBackIos
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import kotlinx.coroutines.delay
 
 
 @Composable
@@ -61,13 +90,46 @@ fun ArticleScreen(
 ) {
     // 文章列表
     val articles = viewmodel.articleList.collectAsState().value ?: emptyList()
+    val searchResults = viewmodel.searchResult.collectAsState().value ?: emptyList()
 
+    // 搜索状态
+    var isSearching by remember { mutableStateOf(false) }
+    var searchQuery by remember { mutableStateOf("") }
+    var hasPerformedSearch by remember { mutableStateOf(false) }
+
+    // 显示的列表 - 根据是否在搜索状态来决定显示原列表还是搜索结果
+    val displayedArticles = if (isSearching && hasPerformedSearch) {
+        searchResults
+    } else {
+        articles
+    }
 
     val scrollState = rememberScrollState()
     Scaffold(
         topBar = {
             ArticleScreenTopBar(
-                onBackClick = navigateBack
+                onBackClick = navigateBack,
+                isSearching = isSearching,
+                searchQuery = searchQuery,
+                onSearchQueryChange = { searchQuery = it },
+                onSearch = {
+                    if (searchQuery.isNotEmpty()) {
+                        viewmodel.searchArticle(searchQuery)
+                        hasPerformedSearch = true
+                    }
+                },
+                onToggleSearch = {
+                    if (isSearching) {
+                        // 退出搜索状态
+                        isSearching = false
+                        searchQuery = ""
+                        hasPerformedSearch = false
+                        viewmodel.clearSearchResult()
+                    } else {
+                        // 进入搜索状态
+                        isSearching = true
+                    }
+                }
             )
         }) { innerPadding ->
         Box(
@@ -82,7 +144,7 @@ fun ArticleScreen(
                     .verticalScroll(scrollState)
             ) {
                 // 文章列表
-                articles.forEach { article ->
+                displayedArticles.forEach { article ->
                     article?.let { it ->
                         ArticleScreenItem(
                             onClick = {
@@ -90,19 +152,26 @@ fun ArticleScreen(
                                     viewmodel.getArticleById(it.id)
                                     navigateArticleDetail(it.id)
                                 } else {
-                                    snackBarViewmodel.showSnackbar(
-                                        "文章ID为空"
-                                    )
+                                    snackBarViewmodel.showSnackbar("文章ID为空")
                                 }
                             },
                             title = it.title ?: "",
                             cover = it.cover,
                             date = it.date ?: "",
-                            tag = it.tags?.map {
-                                it ?: ""
-                            }.let { it ?: emptyList() }
+                            tag = it.tags?.map { it ?: "" }.let { it ?: emptyList() }
                         )
                     }
+                }
+
+                // 如果执行过搜索但没有结果
+                if (isSearching && hasPerformedSearch && searchResults.isEmpty()) {
+                    Spacer(modifier = Modifier.height(32.dp))
+                    Text(
+                        text = "没有找到相关文章",
+                        color = LightGrey,
+                        fontSize = 16.sp,
+                        modifier = Modifier.align(Alignment.CenterHorizontally)
+                    )
                 }
             }
         }
@@ -112,80 +181,170 @@ fun ArticleScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ArticleScreenTopBar(
-    onBackClick: () -> Unit = {}
+    onBackClick: () -> Unit = {},
+    isSearching: Boolean = false,
+    searchQuery: String = "",
+    onSearchQueryChange: (String) -> Unit = {},
+    onSearch: () -> Unit = {},
+    onToggleSearch: () -> Unit = {}
 ) {
-    val selectedTabIndex = remember { mutableStateOf(0) }
+    val focusRequester = remember { FocusRequester() }
+
+    // 当切换到搜索状态时自动获取焦点
+    LaunchedEffect(isSearching) {
+        if (isSearching) {
+            delay(100) // 短暂延迟确保动画开始后再获取焦点
+            focusRequester.requestFocus()
+        }
+    }
+
     Column {
         CenterAlignedTopAppBar(
             colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
-            containerColor = Grey
-        ), title = {
-            Text(
-                text = "外文阅读", color = White, fontSize = 17.sp
-            )
-        }, navigationIcon = {
-            IconButton(onClick = onBackClick) {
-                Icon(
-                    imageVector = Icons.Default.KeyboardArrowDown,
-                    contentDescription = "返回",
-                    tint = White
-                )
-            }
-        }, actions = {
-            // 搜索
-            IconButton(
-                onClick = { /* TODO: 搜索功能 */ },
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Search,
-                    contentDescription = "搜索",
-                    tint = White
-                )
-            }
-            // 收藏夹
-            IconButton(
-                onClick = { /* TODO: 收藏夹功能 */ },
-            ) {
-                Icon(
-                    imageVector = Icons.Default.CollectionsBookmark,
-                    contentDescription = "收藏夹",
-                    tint = White
-                )
-            }
+                containerColor = Grey
+            ),
+            title = {
+                // 使用AnimatedContent在标题和搜索框之间平滑切换
+                AnimatedContent(
+                    targetState = isSearching,
+                    transitionSpec = {
+                        if (targetState) {
+                            // 进入搜索模式
+                            (slideInHorizontally { width -> width } + fadeIn()) togetherWith
+                                    (slideOutHorizontally { width -> -width } + fadeOut())
+                        } else {
+                            // 退出搜索模式
+                            (slideInHorizontally { width -> -width } + fadeIn()) togetherWith
+                                    (slideOutHorizontally { width -> width } + fadeOut())
+                        }.using(SizeTransform(clip = false))
+                    },
+                    label = "SearchBoxAnimation"
+                ) { searching ->
+                    if (searching) {
+                        // 搜索模式下显示搜索输入框
+                        BasicTextField(
+                            value = searchQuery,
+                            onValueChange = onSearchQueryChange,
+                            singleLine = true,
+                            textStyle = LocalTextStyle.current.copy(
+                                color = White,
+                                fontSize = 16.sp
+                            ),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                            keyboardActions = KeyboardActions(onSearch = { onSearch() }),
+                            cursorBrush = SolidColor(Orange),
+                            modifier = Modifier
+                                .fillMaxWidth(0.8f)
+                                .height(38.dp)
+                                .background(Color(0xFFFFFEFD).copy(alpha = 0.15f), RoundedCornerShape(8.dp))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                                .focusRequester(focusRequester),
+                            decorationBox = { innerTextField ->
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Start,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Search,
+                                        contentDescription = "搜索",
+                                        modifier = Modifier.size(20.dp),
+                                        tint = White.copy(alpha = 0.7f)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Box(Modifier.weight(1f)) {
+                                        if (searchQuery.isEmpty()) {
+                                            Text(
+                                                "输入搜索关键词",
+                                                color = LightGrey,
+                                                fontSize = 16.sp
+                                            )
+                                        }
+                                        innerTextField()
+                                    }
+                                    if (searchQuery.isNotEmpty()) {
+                                        IconButton(
+                                            onClick = { onSearchQueryChange("") },
+                                            modifier = Modifier.size(24.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Clear,
+                                                contentDescription = "清除",
+                                                tint = White,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        )
+                    } else {
+                        Text(
+                            text = "外文阅读",
+                            color = White,
+                            fontSize = 17.sp
+                        )
+                    }
+                }
+            },
+            navigationIcon = {
+                IconButton(onClick = onBackClick) {
+                    Icon(
+                        imageVector = Icons.Default.KeyboardArrowDown,
+                        contentDescription = "返回",
+                        tint = White
+                    )
+                }
+            },
+            actions = {
+                // 搜索/返回按钮动画
+                AnimatedContent(
+                    targetState = isSearching,
+                    transitionSpec = {
+                        (fadeIn(animationSpec = tween(150)) togetherWith
+                                fadeOut(animationSpec = tween(150)))
+                    },
+                    label = "SearchIconAnimation"
+                ) { searching ->
+                    IconButton(onClick = onToggleSearch) {
+                        if (searching) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Default.ArrowBackIos,
+                                contentDescription = "返回",
+                                tint = White,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "搜索",
+                                tint = White,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                    }
+                }
 
-        })
-
-//        TabRow(
-//            selectedTabIndex = selectedTabIndex.value,
-//            containerColor = Grey,
-//            contentColor = Grey,
-//            indicator = { tabPositions ->
-//                if (selectedTabIndex.value < tabPositions.size) {
-//                    val tabPosition = tabPositions[selectedTabIndex.value]
-//                    Box(
-//                        Modifier
-//                            .tabIndicatorOffset(tabPosition)
-//                            .background(color = Orange)
-//                            .height(4.dp)
-//
-//                    )
-//                }
-//            },
-//            divider = {}) {
-//            tabs.forEachIndexed { index, title ->
-//                Tab(
-//                    selected = selectedTabIndex.value == index,
-//                    onClick = { selectedTabIndex.value = index },
-//                    text = {
-//                        Text(
-//                            title, color = White, fontSize = 16.sp
-//                        )
-//                    })
-//            }
-//        }
+                // 收藏夹图标的显示/隐藏动画
+                AnimatedVisibility(
+                    visible = !isSearching,
+                    enter = fadeIn() + expandHorizontally(),
+                    exit = fadeOut() + shrinkHorizontally()
+                ) {
+                    IconButton(
+                        onClick = { /* TODO: 收藏夹功能 */ },
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CollectionsBookmark,
+                            contentDescription = "收藏夹",
+                            tint = White
+                        )
+                    }
+                }
+            }
+        )
     }
 }
-
 @Composable
 fun ArticleScreenItem(
     onClick: () -> Unit = {},
