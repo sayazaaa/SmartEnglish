@@ -57,18 +57,18 @@ class FavoritesRepository @Inject constructor(
         ).handleResponse("删除收藏失败").let { it == null }
     }
 
-    suspend fun deleteFavoriteSet(
+    suspend fun checkIfFavorite(
+        id: Int,
+        article: String
+    ): Boolean {
+        return api.checkFavorite(id, article).handleResponse("检查收藏状态失败") as Boolean
+    }
+
+    suspend fun deleteFavoriteSetById(
         id: Int
     ): Boolean {
         return api.deleteFavorites(id)
             .handleResponse("删除收藏夹失败").let { it == null }
-    }
-
-    suspend fun checkIfFavorite(
-        id: Int,
-        word: String
-    ): Boolean {
-        return api.checkFavorite(id, word).handleResponse("检查收藏状态失败") as Boolean
     }
 
 

@@ -1,5 +1,6 @@
 package site.smartenglish.ui
 
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -25,54 +26,48 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.ViewModelStoreOwner
 import coil3.compose.AsyncImage
-import site.smartenglish.ui.compose.tabIndicatorOffset
 import site.smartenglish.ui.theme.DarkGrey
 import site.smartenglish.ui.theme.Grey
 import site.smartenglish.ui.theme.LightGrey
-import site.smartenglish.ui.theme.Orange
 import site.smartenglish.ui.theme.White
-
-data class ArticleScreenItemData(
-    val tag: List<String> = emptyList(),
-    val title: String = "",
-    val cover: String? = null,
-    val date: String = ""
-)
+import site.smartenglish.ui.viewmodel.ArticleViewmodel
+import site.smartenglish.ui.viewmodel.SnackBarViewmodel
 
 
 @Composable
 fun ArticleScreen(
-   navigateBack: () -> Unit = { /* TODO */ }
+    navigateArticleDetail: (String) -> Unit = {},
+    navigateBack: () -> Unit = {},
+    viewmodel: ArticleViewmodel = hiltViewModel(),
+    snackBarViewmodel: SnackBarViewmodel = hiltViewModel(
+        LocalActivity.current as ViewModelStoreOwner
+    )
 ) {
-    // 分类
-    val tabs = listOf("热门", "科技", "文化")
     // 文章列表
-    val articles = List(20) { index ->
-        ArticleScreenItemData(
-            title = "文章之标题！排版的秘密！ $index ".repeat(2),
-            cover = "https://via.placeholder.com/150",
-            date = "2023-10-${index + 1}"
-        )
-    }
+    val articles = viewmodel.articleList.collectAsState().value ?: emptyList()
+
+
     val scrollState = rememberScrollState()
     Scaffold(
         topBar = {
             ArticleScreenTopBar(
-                onBackClick = navigateBack, tabs = tabs
+                onBackClick = navigateBack
             )
         }) { innerPadding ->
         Box(
@@ -88,13 +83,26 @@ fun ArticleScreen(
             ) {
                 // 文章列表
                 articles.forEach { article ->
-                    ArticleScreenItem(
-                        onClick = { /* TODO: 点击事件 */ },
-                        tag = article.tag,
-                        title = article.title,
-                        cover = article.cover,
-                        date = article.date
-                    )
+                    article?.let { it ->
+                        ArticleScreenItem(
+                            onClick = {
+                                if (it.id != null) {
+                                    viewmodel.getArticleById(it.id)
+                                    navigateArticleDetail(it.id)
+                                } else {
+                                    snackBarViewmodel.showSnackbar(
+                                        "文章ID为空"
+                                    )
+                                }
+                            },
+                            title = it.title ?: "",
+                            cover = it.cover,
+                            date = it.date ?: "",
+                            tag = it.tags?.map {
+                                it ?: ""
+                            }.let { it ?: emptyList() }
+                        )
+                    }
                 }
             }
         }
@@ -104,7 +112,7 @@ fun ArticleScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ArticleScreenTopBar(
-    onBackClick: () -> Unit = { /* TODO */ }, tabs: List<String>
+    onBackClick: () -> Unit = {}
 ) {
     val selectedTabIndex = remember { mutableStateOf(0) }
     Column {
@@ -147,52 +155,52 @@ fun ArticleScreenTopBar(
 
         })
 
-        TabRow(
-            selectedTabIndex = selectedTabIndex.value,
-            containerColor = Grey,
-            contentColor = Grey,
-            indicator = { tabPositions ->
-                if (selectedTabIndex.value < tabPositions.size) {
-                    val tabPosition = tabPositions[selectedTabIndex.value]
-                    Box(
-                        Modifier
-                            .tabIndicatorOffset(tabPosition)
-                            .background(color = Orange)
-                            .height(4.dp)
-
-                    )
-                }
-            },
-            divider = {}) {
-            tabs.forEachIndexed { index, title ->
-                Tab(
-                    selected = selectedTabIndex.value == index,
-                    onClick = { selectedTabIndex.value = index },
-                    text = {
-                        Text(
-                            title, color = White, fontSize = 16.sp
-                        )
-                    })
-            }
-        }
+//        TabRow(
+//            selectedTabIndex = selectedTabIndex.value,
+//            containerColor = Grey,
+//            contentColor = Grey,
+//            indicator = { tabPositions ->
+//                if (selectedTabIndex.value < tabPositions.size) {
+//                    val tabPosition = tabPositions[selectedTabIndex.value]
+//                    Box(
+//                        Modifier
+//                            .tabIndicatorOffset(tabPosition)
+//                            .background(color = Orange)
+//                            .height(4.dp)
+//
+//                    )
+//                }
+//            },
+//            divider = {}) {
+//            tabs.forEachIndexed { index, title ->
+//                Tab(
+//                    selected = selectedTabIndex.value == index,
+//                    onClick = { selectedTabIndex.value = index },
+//                    text = {
+//                        Text(
+//                            title, color = White, fontSize = 16.sp
+//                        )
+//                    })
+//            }
+//        }
     }
 }
 
 @Composable
 fun ArticleScreenItem(
-    onClick: () -> Unit = { /* TODO */ },
-    tag: List<String>,
+    onClick: () -> Unit = {},
     title: String = "文章标题",
     cover: String? = null,
-    date: String = "2023-10-01",
+    date: String = "",
+    tag: List<String> = emptyList()
 ) {
     // 文章列表项的布局
     Spacer(Modifier.height(17.dp))
     Row(
         modifier = Modifier
+            .clickable(onClick = onClick)
             .fillMaxWidth()
-            .padding(horizontal = 20.dp)
-            .clickable(onClick = onClick),
+            .padding(horizontal = 20.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         // 左侧内容区域
@@ -236,6 +244,7 @@ fun ArticleScreenItem(
             AsyncImage(
                 model = cover ?: "https://via.placeholder.com/100",
                 contentDescription = "封面图片",
+                contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .size(89.dp)
                     .background(Color.Black) // 深色背景

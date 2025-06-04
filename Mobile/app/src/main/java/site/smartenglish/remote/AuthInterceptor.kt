@@ -19,7 +19,7 @@ class AuthInterceptor @Inject constructor(
 
         val token = dataStoreManager.getTokenSync()
         val request = if (!token.isNullOrEmpty()) {
-            Log.d("AuthInterceptor", "Token found, adding Authorization header")
+            Log.d("AuthInterceptor", "Token found, adding Authorization header: $token")
             requestBuilder
                 .addHeader("Authorization", "$token")
                 .build()
@@ -27,7 +27,12 @@ class AuthInterceptor @Inject constructor(
             Log.d("AuthInterceptor", "No token found, proceeding without Authorization header")
             requestBuilder.build()
         }
-
+        // 输出完整的请求信息
+        Log.d("AuthInterceptor", "Request: ${request.method} ${request.url}")
+        Log.d("AuthInterceptor", "Headers: ${request.headers}")
+        request.body?.let {
+            Log.d("AuthInterceptor", "Body size: ${it.contentLength()} bytes, Type: ${it.contentType()}")
+        }
         return chain.proceed(request)
     }
 }

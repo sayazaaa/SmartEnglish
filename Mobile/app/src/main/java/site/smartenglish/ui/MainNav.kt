@@ -38,7 +38,14 @@ object Profile
 object Article
 
 @Serializable
+class ArticleDetail(
+    val articleId: String
+)
+
+@Serializable
 object DashBoard
+
+
 
 @Composable
 fun MainNav(
@@ -117,7 +124,38 @@ fun MainNav(
             }
         ) {
             ArticleScreen(
+                navigateArticleDetail = { articleId ->
+                    navController.navigate(ArticleDetail(articleId))
+                },
                 navigateBack = { navController.popBackStack() },
+            )
+        }
+        composable<ArticleDetail>(
+            enterTransition = {
+                slideIntoContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.Start,
+                    animationSpec = tween(300, easing = FastOutSlowInEasing)
+                )
+            },
+            exitTransition = {
+                fadeOut(animationSpec = tween(150))
+            },
+            popEnterTransition = {
+                fadeIn(animationSpec = tween(150))
+            },
+            popExitTransition = {
+                slideOutOfContainer(
+                    towards = AnimatedContentTransitionScope.SlideDirection.End,
+                    animationSpec = tween(300, easing = FastOutSlowInEasing)
+                )
+            }
+        ) { backStackEntry ->
+            val articleDetail = backStackEntry.arguments?.let {
+                ArticleDetail(it.getString("articleId") ?: "")
+            }
+            ArticleDetailScreen(
+                articleId = articleDetail?.articleId ?: "",
+                navigateBack = { navController.popBackStack() }
             )
         }
 
