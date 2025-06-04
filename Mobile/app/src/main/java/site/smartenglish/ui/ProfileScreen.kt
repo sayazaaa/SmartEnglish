@@ -52,12 +52,13 @@ import site.smartenglish.ui.compose.CenterAlignedBackArrowTopAppBar
 import site.smartenglish.ui.theme.Grey
 import site.smartenglish.ui.theme.White
 import site.smartenglish.ui.viewmodel.SnackBarViewmodel
+import site.smartenglish.ui.viewmodel.UploadImageViewmodel
 import site.smartenglish.ui.viewmodel.UserViewmodel
 
 
 @Composable
 fun ProfileScreen(
-    navigateBack: () -> Unit = {}, viewmodel: UserViewmodel = hiltViewModel()
+    navigateBack: () -> Unit = {}, viewmodel: UserViewmodel = hiltViewModel(),
 ) {
     val navController = rememberNavController()
 
@@ -107,7 +108,9 @@ fun ProfileContent(
     navigateModifyDescription: () -> Unit = {},
     navigateFeedback: () -> Unit = {},
     navigateBack: () -> Unit = {}, viewmodel: UserViewmodel = hiltViewModel(),
-    snackBarViewmodel: SnackBarViewmodel = hiltViewModel(LocalActivity.current as ViewModelStoreOwner)
+    snackBarViewmodel: SnackBarViewmodel = hiltViewModel(LocalActivity.current as ViewModelStoreOwner),
+    imageViewmodel: UploadImageViewmodel = hiltViewModel()
+
 ) {
     val userProfile = viewmodel.userProfile.collectAsState().value
 
@@ -115,14 +118,14 @@ fun ProfileContent(
     val username = userProfile?.name ?: ""
     val description = userProfile?.description ?: "暂无描述"
 
-    val uploadState = viewmodel.uploadState.collectAsState().value
+    val uploadState = imageViewmodel.uploadState.collectAsState().value
 
     // 监听上传状态变化
     LaunchedEffect(uploadState) {
         when (uploadState) {
-            is UserViewmodel.UploadState.Success, is UserViewmodel.UploadState.Error -> {
+            is UploadImageViewmodel.UploadState.Success, is UploadImageViewmodel.UploadState.Error -> {
                 delay(3000)
-                viewmodel.resetUploadState()
+                imageViewmodel.resetUploadState()
             }
 
             else -> {}
@@ -134,7 +137,8 @@ fun ProfileContent(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
         uri?.let {
-            viewmodel.uploadImage(it)
+            imageViewmodel.uploadImage(it)
+            viewmodel.getProfile()
         }
     }
 
@@ -174,7 +178,7 @@ fun ProfileContent(
 
                     // 上传状态指示器
                     when (uploadState) {
-                        is UserViewmodel.UploadState.Progress -> {
+                        is UploadImageViewmodel.UploadState.Progress -> {
                             CircularProgressIndicator(
                                 modifier = Modifier
                                     .align(Alignment.Center)
@@ -184,16 +188,16 @@ fun ProfileContent(
                             )
                         }
 
-                        is UserViewmodel.UploadState.Success -> {
+                        is UploadImageViewmodel.UploadState.Success -> {
                             snackBarViewmodel.showSnackbar(
                                 message = "上传成功",
                                 actionLabel = "确定",
                                 duration = SnackbarDuration.Short,
                             )
-                            viewmodel.resetUploadState()
+                            imageViewmodel.resetUploadState()
                         }
 
-                        is UserViewmodel.UploadState.Error -> {
+                        is UploadImageViewmodel.UploadState.Error -> {
                             snackBarViewmodel.showSnackbar(
                                 message = "上传失败 $uploadState.message",
                                 actionLabel = "重试",
@@ -204,7 +208,7 @@ fun ProfileContent(
                                     imagePicker.launch("image/*")
                                 },
                             )
-                            viewmodel.resetUploadState()
+                            imageViewmodel.resetUploadState()
                         }
 
                         else -> {

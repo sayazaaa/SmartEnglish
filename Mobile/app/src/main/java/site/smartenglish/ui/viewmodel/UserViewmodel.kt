@@ -20,20 +20,13 @@ class UserViewmodel @Inject constructor(
     private val userRepository: UserRepository,
     private val cloudService: TencentCloudService
 ) : ViewModel() {
-    sealed class UploadState {
-        data object Idle : UploadState()
-        data object Progress : UploadState()
-        data class Success(val imageUrl: String) : UploadState()
-        data class Error(val message: String) : UploadState()
-    }
+
 
     // 用户资料状态
     private val _userProfile = MutableStateFlow<GetProfileResponse?>(null)
     val userProfile: StateFlow<GetProfileResponse?> = _userProfile.asStateFlow()
 
-    // 上传状态
-    private val _uploadState = MutableStateFlow<UploadState>(UploadState.Idle)
-    val uploadState: StateFlow<UploadState> = _uploadState.asStateFlow()
+
 
     init {
         getProfile()
@@ -111,25 +104,7 @@ class UserViewmodel @Inject constructor(
 
 
 
-    // 上传图片
-    fun uploadImage(uri: Uri) {
-        viewModelScope.launch {
-            try {
-                _uploadState.value = UploadState.Progress
 
-                // 上传图片
-                val imageUrl = cloudService.uploadImage(uri)
-
-                // 更新用户资料
-                changeProfile(avatar = imageUrl)
-
-                // 更新状态
-                _uploadState.value = UploadState.Success(imageUrl)
-            } catch (e: Exception) {
-                _uploadState.value = UploadState.Error("上传失败: ${e.message ?: "未知错误"}")
-            }
-        }
-    }
 
     // 发送反馈
     fun sendFeedback(content: String) {
@@ -142,10 +117,6 @@ class UserViewmodel @Inject constructor(
         }
     }
 
-    // 重置上传状态
-    fun resetUploadState() {
-        _uploadState.value = UploadState.Idle
-    }
 
 
 
