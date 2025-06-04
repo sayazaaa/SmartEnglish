@@ -12,6 +12,7 @@ import dagger.hilt.android.HiltAndroidApp
 import site.smartenglish.ui.HomeScreen
 import site.smartenglish.ui.LearnWordScreen
 import site.smartenglish.ui.MainScreen
+import site.smartenglish.ui.WordDetailScreen
 import site.smartenglish.ui.theme.SmartEnglishTheme
 
 @AndroidEntryPoint
@@ -24,7 +25,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             SmartEnglishTheme {
                 Surface {
-                  MainScreen()
+                  WordDetailScreen()
                 }
             }
         }
