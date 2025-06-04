@@ -14,7 +14,6 @@ import javax.inject.Inject
 
 @HiltViewModel
 class UploadImageViewmodel @Inject constructor(
-    private val userRepository: UserRepository,
     private val cloudService: TencentCloudService
 ) : ViewModel() {
     sealed class UploadState {
