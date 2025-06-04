@@ -18,7 +18,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import site.smartenglish.ui.viewmodel.BackgroundImageViewmodel
 
 @Composable
-fun LearnWordScreen(
+fun WordDetailScreen(
     bgViewmodel: BackgroundImageViewmodel = hiltViewModel()
 ) {
 
@@ -26,16 +26,11 @@ fun LearnWordScreen(
     val textColor = Color.White
     val darkTextColor = Color.LightGray
     val hintColor = Color(0xFFE1E3E5)
-    val rightIndex = 1
-    val symbol="/nˈzɜːrt/"
     val soundType = "美"
-    val exampleSentence:String?="111Test"
-    val words= listOf(
-        "revert",
-        "exile",
-        "escort",
-        "resort"
-    )
+    val exampleSentence="111Test"
+    val symbol="/nˈzɜːrt/"
+    val exampleSentenceTranslate="Test111"
+    val word="resort"
     val wordTypes = listOf(
         "vi.",
         "vt.",
@@ -48,7 +43,24 @@ fun LearnWordScreen(
         "333",
         "444"
     )
-    var selected by remember { mutableStateOf<Boolean>(false) }
+    val phrases = listOf(
+        "a ski resort",
+        "a holiday resort",
+        "a last resort"
+    )
+    val phraseTranslate = listOf(
+        "111",
+        "Test",
+        "Genshin"
+    )
+    val usages=listOf(
+        "resort to stl",
+        "test"
+    )
+    val usageTranslate=listOf(
+        "111",
+        "Test"
+    )
 
     Box(
         modifier = Modifier
@@ -107,7 +119,7 @@ fun LearnWordScreen(
                 .fillMaxWidth()
         ) {
             Text(
-                text = "resort",
+                text = word,
                 color = textColor,
                 fontSize = 46.sp,
                 fontFamily = FontFamily.Monospace
@@ -118,13 +130,13 @@ fun LearnWordScreen(
             ) {
                 Card(
                     modifier = Modifier
-                    .width(38.dp),
+                        .width(38.dp),
                     shape = RoundedCornerShape(8.dp),
                     colors = CardDefaults.cardColors(containerColor = Color.Gray.copy(alpha = 0.5f))
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically
-                    ){
+                    ) {
                         Text(
                             text = soundType,
                             color = Color.LightGray,
@@ -146,90 +158,113 @@ fun LearnWordScreen(
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
             }
-            Spacer(modifier = Modifier.height(6.dp))
-            // 例句
-            if(exampleSentence!=null) {
-                Card(
-                    modifier = Modifier
-                        .height(91.dp)
-                        .fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.5f))
-                ) {
-                    Text(
-                        text = exampleSentence,
-                        color = textColor,
-                        fontSize = 16.sp,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-            }else{
-                Spacer(modifier = Modifier.height(91.dp))
-            }
-        }
-        Spacer(modifier = Modifier.height(6.dp))
-        Text(
-            text = "请从下列 4 个选项中选择正确词义",
-            color = hintColor,
-            fontSize = 13.sp,
-        )
-        Column {
-            words.forEachIndexed { index, option ->
-                Spacer(modifier = Modifier.height(13.dp))
-                Card(
-                    shape = RoundedCornerShape(8.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (selected) {
-                            when (index) {
-                                rightIndex -> Color(0xFF10885B)
-                                else -> Color(0xFF8A0303)
-                            }
-                        } else Color.Transparent
-                    ),
-                    modifier = Modifier
-                        .width(394.dp)
-                        .height(80.dp)
-                        .clickable { selected = true }
-                        .border(
-                            width = 2.dp,
-                            color = if (selected) Color.Transparent else Color.White.copy(alpha = 0.3f),
-                            shape = RoundedCornerShape(8.dp)
+            Spacer(modifier = Modifier.height(20.dp))
+            Column {
+                wordMeanings.forEachIndexed { index, option ->
+                    Row(
+                        modifier = Modifier
+                            .padding(start = 18.dp)
+                    ) {
+                        Text(
+                            text = wordTypes[index],
+                            color = darkTextColor,
+                            fontSize = 17.sp
                         )
-                ) {
-                    Text(
-                        text = if(selected) option else wordTypes[index],
-                        color =if(selected)  textColor else darkTextColor,
-                        fontSize = 18.sp,
+                        Text(
+                            text = option,
+                            color = textColor,
+                            fontSize = 18.sp
+                        )
+                    }
+                }
+            }
+            // 例句
+            Spacer(modifier = Modifier.height(25.dp))
+            Card(
+                modifier = Modifier
+                    .height(126.dp)
+                    .width(394.dp)
+                    .padding(start = 17.dp, end = 17.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.5f))
+            ) {
+                Text(
+                    text = exampleSentence,
+                    color = darkTextColor,
+                    fontSize = 16.sp,
+                    modifier = Modifier.padding(start = 18.dp, end = 18.dp, top = 18.dp)
+                )
+                Text(
+                    text = exampleSentenceTranslate,
+                    color = darkTextColor,
+                    fontSize = 16.sp,
+                    modifier = Modifier.padding(start = 18.dp, end = 18.dp)
+                )
+            }
+            Spacer(modifier=Modifier.height(12.dp))
+            Card(
+                modifier = Modifier
+                    .height(310.dp)
+                    .width(394.dp)
+                    .padding(start = 17.dp, end = 17.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.5f))
+            ) {
+                Spacer(modifier = Modifier.height(18.dp))
+                phrases.forEachIndexed{ index, option ->
+                    Row(
                         modifier = Modifier
-                            .align(Alignment.Start)
-                            .padding(start = 18.dp, top = 18.dp)
-                    )
-                    Text(
-                        text = if(selected) wordTypes[index]+wordMeanings[index] else wordMeanings[index],
-                        color = if(selected) darkTextColor else textColor,
-                        fontSize = 18.sp,
+                            .padding(start = 18.dp)
+                    ) {
+                        Text(
+                            text = option,
+                            color = darkTextColor,
+                            fontSize = 17.sp
+                        )
+                        Text(
+                            text = phraseTranslate[index],
+                            color = darkTextColor,
+                            fontSize = 15.sp,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(28.dp))
+                usages.forEachIndexed{ index, option ->
+                    Row(
                         modifier = Modifier
-                            .align(Alignment.Start)
-                            .padding(start = 18.dp, bottom = 18.dp)
-                    )
+                            .padding(start = 18.dp)
+                    ) {
+                        Text(
+                            text = option,
+                            color = textColor,
+                            fontSize = 17.sp
+                        )
+                        Text(
+                            text = usageTranslate[index],
+                            color = darkTextColor,
+                            fontSize = 15.sp,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                }
+                Row (
+                    modifier = Modifier
+                        .padding(start = 8.dp, end = 8.dp, bottom = 8.dp),
+                ){
+
                 }
             }
         }
-
         Row(
             horizontalArrangement = Arrangement.Center,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 93.dp)
+                .padding(top = 37.dp)
         ) {
             Button(
                 onClick = {
-                    if(selected){
-                        //TODO next word
-                    }
-                    else{
-                        selected=true
-                    }
+                    //TODO next word
                 },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.White.copy(alpha = 0.3f),
@@ -239,7 +274,7 @@ fun LearnWordScreen(
                 modifier =Modifier.width(105.dp)
             ) {
                 Text(
-                    text = if(selected) "继续" else "看答案",
+                    text = "下一词",
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold)
             }
