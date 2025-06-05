@@ -13,6 +13,7 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.*
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
 import androidx.hilt.navigation.compose.hiltViewModel
 import site.smartenglish.ui.viewmodel.BackgroundImageViewmodel
@@ -21,11 +22,7 @@ import site.smartenglish.ui.viewmodel.BackgroundImageViewmodel
 fun WordDetailScreen(
     bgViewmodel: BackgroundImageViewmodel = hiltViewModel()
 ) {
-
-    val bitmap = bgViewmodel.backgroundBitmap.collectAsState().value
-    val textColor = Color.White
-    val darkTextColor = Color.LightGray
-    val hintColor = Color(0xFFE1E3E5)
+    //input data
     val soundType = "美"
     val exampleSentence="111Test"
     val symbol="/nˈzɜːrt/"
@@ -61,6 +58,15 @@ fun WordDetailScreen(
         "111",
         "Test"
     )
+
+
+    //config
+    val bitmap = bgViewmodel.backgroundBitmap.collectAsState().value
+    val textColor = Color.White
+    val darkTextColor = Color.LightGray
+
+    var phraseMode by remember { mutableStateOf(false) }
+
 
     Box(
         modifier = Modifier
@@ -210,49 +216,101 @@ fun WordDetailScreen(
                 shape = RoundedCornerShape(8.dp),
                 colors = CardDefaults.cardColors(containerColor = Color.Black.copy(alpha = 0.5f))
             ) {
-                Spacer(modifier = Modifier.height(18.dp))
-                phrases.forEachIndexed{ index, option ->
-                    Row(
-                        modifier = Modifier
-                            .padding(start = 18.dp)
-                    ) {
-                        Text(
-                            text = option,
-                            color = darkTextColor,
-                            fontSize = 17.sp
-                        )
-                        Text(
-                            text = phraseTranslate[index],
-                            color = darkTextColor,
-                            fontSize = 15.sp,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(28.dp))
-                usages.forEachIndexed{ index, option ->
-                    Row(
-                        modifier = Modifier
-                            .padding(start = 18.dp)
-                    ) {
-                        Text(
-                            text = option,
-                            color = textColor,
-                            fontSize = 17.sp
-                        )
-                        Text(
-                            text = usageTranslate[index],
-                            color = darkTextColor,
-                            fontSize = 15.sp,
-                            modifier = Modifier.padding(start = 8.dp)
-                        )
-                    }
-                }
-                Row (
+                Box(
                     modifier = Modifier
-                        .padding(start = 8.dp, end = 8.dp, bottom = 8.dp),
+                        .fillMaxSize()
                 ){
-
+                    Column(
+                        modifier = Modifier
+                            .padding(18.dp)
+                    ){
+                        phrases.forEachIndexed{ index, option ->
+                            Row{
+                                Text(
+                                    text = option,
+                                    color = darkTextColor,
+                                    fontSize = 17.sp
+                                )
+                                Text(
+                                    text = phraseTranslate[index],
+                                    color = darkTextColor,
+                                    fontSize = 15.sp,
+                                    modifier = Modifier.padding(start = 8.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(10.dp))
+                        usages.forEachIndexed{ index, option ->
+                            Row {
+                                Text(
+                                    text = option,
+                                    color = textColor,
+                                    fontSize = 17.sp
+                                )
+                                Text(
+                                    text = usageTranslate[index],
+                                    color = darkTextColor,
+                                    fontSize = 15.sp,
+                                    modifier = Modifier.padding(start = 8.dp)
+                                )
+                            }
+                        }
+                    }
+                    Row (
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                            .padding(8.dp)
+                            .align(Alignment.BottomStart)
+                    ){
+                        Card(
+                            shape = RoundedCornerShape(8.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (phraseMode) Color(0xFFDA9209) else Color.White.copy(alpha = 0.2f)
+                            ),
+                            modifier = Modifier
+                                .width(68.dp)
+                                .height(32.dp)
+                                .clickable { phraseMode = true }
+                                .border(
+                                    width = 2.dp,
+                                    color = if (phraseMode) Color.Transparent else Color.White.copy(alpha = 0.3f),
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                        ) {
+                            Text(
+                                text = "词组搭配",
+                                color =textColor ,
+                                fontSize = 12.sp,
+                                modifier = Modifier
+                                    .align(Alignment.CenterHorizontally)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Card(
+                            shape = RoundedCornerShape(8.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (!phraseMode) Color(0xFFDA9209) else Color.White.copy(alpha = 0.2f)
+                            ),
+                            modifier = Modifier
+                                .width(68.dp)
+                                .height(32.dp)
+                                .clickable { phraseMode = false }
+                                .border(
+                                    width = 2.dp,
+                                    color = if (!phraseMode) Color.Transparent else Color.White.copy(alpha = 0.3f),
+                                    shape = RoundedCornerShape(8.dp)
+                                )
+                        ) {
+                            Text(
+                                text = "词汇变形",
+                                color =textColor ,
+                                fontSize = 12.sp,
+                                modifier = Modifier
+                                    .align(Alignment.CenterHorizontally)
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -281,3 +339,9 @@ fun WordDetailScreen(
         }
     }
 }
+
+//@Preview
+//@Composable
+//fun WordDetailScreenPreview() {
+//    WordDetailScreen()
+//}
