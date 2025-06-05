@@ -10,7 +10,7 @@ val Orange = Color(0xFFF4A100)
 val White = Color(0xFFE1E3E5)
 
 //灰色字体
-val LightGrey = White.copy(alpha = 0.5f)
+val LightGrey = White.copy(alpha = 0.7f)
 
 
 //橙色字体

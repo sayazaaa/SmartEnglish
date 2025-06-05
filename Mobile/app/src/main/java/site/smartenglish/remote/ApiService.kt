@@ -198,7 +198,6 @@ interface ApiService {
     suspend fun getWordInfo(
         @Query("word") word: String
     ): Response<GetWordResponse>
-
     /**
      * 搜索单词接口
      *
@@ -217,6 +216,17 @@ interface ApiService {
     suspend fun searchWord(
         @Query("query_string") word: String,
     ): Response<SearchWordResponse>
+
+    /**
+     * 模糊搜索单词接口
+     *
+     * @param word 搜索的关键词或单词
+     * @return
+     */
+    @GET("/word/match")
+    suspend fun fuzzySearchWord(
+        @Query("word") word: String,
+    ): Response<List<GetWordResponse>>
 
     /**
      * 获取单词组接口

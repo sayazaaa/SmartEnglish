@@ -69,6 +69,14 @@ class WordBookDetail(
 @Serializable
 object LearnedWord
 
+@Serializable
+class LearnWordFinished(
+    val wordList:List<String>
+)
+
+@Serializable
+object LearnWord
+
 
 
 @Composable
@@ -135,7 +143,8 @@ fun MainNav(
             navigateToArticle = { navController.navigate(Article){
 
             } },
-            navigateToDashBoard = { navController.navigate(DashBoard) }
+            navigateToDashBoard = { navController.navigate(DashBoard) },
+            navigateToLearnWord = { navController.navigate(LearnWord) },
         ) }
         composable<Profile> { ProfileScreen(
             navigateBack = { navController.popBackStack()},
@@ -313,6 +322,17 @@ fun MainNav(
         }
         composable<LearnedWord> {
             LearnedWordScreen(
+                navigateBack = { navController.popBackStack() }
+            )
+        }
+        composable<LearnWordFinished> {
+            LearnWordFinishedScreen()
+        }
+        composable<LearnWord> {
+            LearnWordScreen(
+                navigateToLearnWordFinished = { wordList ->
+                    navController.navigate(LearnWordFinished(wordList))
+                },
                 navigateBack = { navController.popBackStack() }
             )
         }
