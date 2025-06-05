@@ -17,6 +17,7 @@ import androidx.navigation.compose.rememberNavController
 import kotlinx.serialization.Serializable
 import site.smartenglish.manager.SessionManager
 import site.smartenglish.ui.viewmodel.AccountViewmodel
+import site.smartenglish.ui.viewmodel.WordBookDetailScreen
 
 
 @Serializable
@@ -54,6 +55,20 @@ class FavoriteDetail(
 @Serializable
 object DashBoard
 
+@Serializable
+object ChangeWordBook
+
+@Serializable
+object NewWordBook
+
+@Serializable
+class WordBookDetail(
+    val wordBookId: Int
+)
+
+@Serializable
+object LearnedWord
+
 
 
 @Composable
@@ -76,6 +91,19 @@ fun MainNav(
                 popUpTo(0) { inclusive = true }
             }
             accountViewmodel.resetAuthState()
+        }
+    }
+    // 用户词书检查逻辑
+    LaunchedEffect(Unit) {
+        // 如果已登录，检查用户是否有词书
+        if (accountViewmodel.hasToken()) {
+            accountViewmodel.checkUserHasWordbook { hasWordbook ->
+                if (!hasWordbook) {
+                    navController.navigate(NewWordBook) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            }
         }
     }
 
@@ -258,9 +286,48 @@ fun MainNav(
             }
         ) {
             DashBoardScreen(
+                navigateToLearnedWords = {
+                    navController.navigate(LearnedWord)
+                },
+                navigateToWordBookDetail = { wordBookId ->
+                    navController.navigate(WordBookDetail(wordBookId))
+                },
+                navigateToChangeWordBook = {navController.navigate(ChangeWordBook)},
                 navigateBack = { navController.popBackStack() },
             )
         }
+        composable<ChangeWordBook> {
+            ChangeWordBookScreen(
+                navigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<WordBookDetail> { backStackEntry ->
+            val wordDetail = backStackEntry.arguments?.let {
+                WordBookDetail(it.getInt("wordBookId"))
+            }
+            WordBookDetailScreen(
+                wordBookId = wordDetail?.wordBookId ?: 0,
+                navigateBack = { navController.popBackStack() }
+            )
+        }
+        composable<LearnedWord> {
+            LearnedWordScreen(
+                navigateBack = { navController.popBackStack() }
+            )
+        }
+        composable<NewWordBook> {
+            NewWordBookScreen(
+                navigateToHome = {
+                    navController.navigate(Home) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+
+
 
 
 

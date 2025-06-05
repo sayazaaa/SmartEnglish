@@ -1,5 +1,6 @@
 package site.smartenglish.ui
 
+import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -39,6 +40,7 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -69,6 +71,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.ViewModelStoreOwner
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.flow.debounce
 import site.smartenglish.R
@@ -78,6 +81,7 @@ import site.smartenglish.ui.theme.LightOrange
 import site.smartenglish.ui.theme.Orange
 import site.smartenglish.ui.viewmodel.BackgroundImageViewmodel
 import site.smartenglish.ui.viewmodel.HomeViewmodel
+import site.smartenglish.ui.viewmodel.SnackBarViewmodel
 import site.smartenglish.ui.viewmodel.UserViewmodel
 
 
@@ -90,7 +94,7 @@ fun HomeScreen(
     //TODO 导航到单词详情
     homeViewmodel: HomeViewmodel = hiltViewModel(),
     userViewmodel: UserViewmodel = hiltViewModel(),
-    bgViewmodel: BackgroundImageViewmodel = hiltViewModel()
+    bgViewmodel: BackgroundImageViewmodel = hiltViewModel(),
 ) {
     val titleWord = "Lantern"
 
@@ -139,6 +143,10 @@ fun HomeScreen(
                     homeViewmodel.clearSearchResult()
                 }
             }
+    }
+
+    LaunchedEffect(Unit) {
+
     }
 
 

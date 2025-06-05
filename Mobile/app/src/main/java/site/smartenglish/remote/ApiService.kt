@@ -262,7 +262,7 @@ interface ApiService {
      *     "string"
      * ]
      */
-    @GET("wordbook")
+    @GET("wordbook/detail")
     suspend fun getWordBookInfo(
         @Query("id") wordbookId: Int
     ): Response<GetWordBookInfoResponse>
@@ -280,7 +280,7 @@ interface ApiService {
      *     }
      * ]
      */
-    @GET("wordbooklist")
+    @GET("wordbook")
     suspend fun getWordBookList(): Response<GetWordBookListResponse>
 
     /**

@@ -38,6 +38,9 @@ class DashBoardViewmodel @Inject constructor(
     val todayTime = _todayTime.asStateFlow()
     val totalTime = _totalTime.asStateFlow()
 
+    private val _currentWordBookId = MutableStateFlow(0)
+    val currentWordBookId = _currentWordBookId.asStateFlow()
+
 
     fun getDashBoardData() {
         viewModelScope.launch {
@@ -53,6 +56,8 @@ class DashBoardViewmodel @Inject constructor(
 
                 _totalWord.value = learnedListSize
                 _totalTime.value = usingTime?:0
+
+                _currentWordBookId.value = profile.wordbook?.id?:0
             }catch (e: Exception) {
                 e.printStackTrace()
             }

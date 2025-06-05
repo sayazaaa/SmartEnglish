@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import site.smartenglish.manager.SessionManager
 import site.smartenglish.repository.AccountRepository
+import site.smartenglish.repository.UserRepository
 import javax.inject.Inject
 
 
@@ -42,7 +43,8 @@ data class ResetPasswordUiState(
 
 @HiltViewModel
 class AccountViewmodel @Inject constructor(
-    private val accountRepository: AccountRepository
+    private val accountRepository: AccountRepository,
+    private val userRepository: UserRepository
 ) : ViewModel() {
     // UI状态
     private val _loginUiState = MutableStateFlow(LoginUiState())
@@ -229,5 +231,18 @@ class AccountViewmodel @Inject constructor(
 
     fun resetAuthState() {
         accountRepository.setAuthenticated()
+    }
+
+    fun checkUserHasWordbook(any: (Boolean)->Unit) {
+        viewModelScope.launch {
+            try {
+                val profile = userRepository.getProfile()
+                val hasWordbook = profile.wordbook?.id != null
+                any.invoke(hasWordbook)
+            } catch (e: Exception) {
+                e.printStackTrace()
+                any.invoke(false)
+            }
+        }
     }
 }

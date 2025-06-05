@@ -1,6 +1,6 @@
 package site.smartenglish.remote.data
 
-typealias GetLearnedResponse = List<String?>?
+typealias GetLearnedResponse = List<GetLearnedResponseElement>?
 
 data class PutLearnedRequest(
     val word: String? = null,
@@ -11,4 +11,9 @@ data class PutLearnedRequest(
 data class PutLearnedResponse(
     val new_word: String? = null,
     val message: String? = null
+)
+
+data class GetLearnedResponseElement(
+    val word: String? = null,
+    val review_date: String? = null
 )

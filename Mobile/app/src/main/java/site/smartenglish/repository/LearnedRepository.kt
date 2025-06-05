@@ -12,8 +12,9 @@ import javax.inject.Singleton
 class LearnedRepository @Inject constructor(
     private val api: ApiService
 ){
-    suspend fun getLearnedWordList(): GetLearnedResponse =
-        api.getLearnedWords().handleResponse("获取已学单词失败") as GetLearnedResponse
+    suspend fun getLearnedWordList(): GetLearnedResponse {
+        return api.getLearnedWords().handleResponse("获取已学单词失败") as GetLearnedResponse
+    }
 
     suspend fun updateLearnedWordList(
         word: String,

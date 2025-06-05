@@ -63,6 +63,9 @@ import site.smartenglish.ui.viewmodel.DashBoardViewmodel
 @Composable
 fun DashBoardScreen(
     navigateBack: () -> Unit = {},
+    navigateToWordBookDetail: (Int) -> Unit = {},
+    navigateToChangeWordBook: () -> Unit = {},
+    navigateToLearnedWords:()->Unit = {},
     dashBoardViewmodel: DashBoardViewmodel = hiltViewModel()
 ) {
     val wordBookCover = dashBoardViewmodel.wordbookUrl.collectAsState().value
@@ -74,6 +77,7 @@ fun DashBoardScreen(
     val todayStudyTime = dashBoardViewmodel.todayTime.collectAsState().value
     val totalStudyTime = dashBoardViewmodel.totalTime.collectAsState().value
 
+    val currentBookId = dashBoardViewmodel.currentWordBookId.collectAsState().value
     LaunchedEffect (Unit){
         dashBoardViewmodel.getDashBoardData()
     }
@@ -145,7 +149,9 @@ fun DashBoardScreen(
                         }
                     }
                 //正在学习块
-                titleRow("正在学习", "换本词书") {}
+                titleRow("正在学习", "换本词书") {
+                    navigateToChangeWordBook()
+                }
                 Spacer(modifier = Modifier.height(18.dp))
                 Column(
                     modifier = Modifier
@@ -168,7 +174,7 @@ fun DashBoardScreen(
                                 .clip(RoundedCornerShape(6.dp))
                                 .background(Color.White.copy(alpha = 0.2f))
                                 .clickable {
-                                    //TODO
+                                    navigateToWordBookDetail(currentBookId)
                                 })
                         val showMenu = remember { mutableStateOf(false) }
                         Box {
@@ -192,7 +198,7 @@ fun DashBoardScreen(
                                 DropdownMenuItem(
                                     text = { Text("查看词书", color = White) },
                                     onClick = {
-                                        //TODO
+                                        navigateToWordBookDetail(currentBookId)
                                         showMenu.value = false
                                     })
                             }
@@ -235,7 +241,7 @@ fun DashBoardScreen(
                 Spacer(modifier = Modifier.height(18.dp))
                 //我的数据块
                 titleRow("我的数据", "已学单词") {
-                    //TODO onclick
+                    navigateToLearnedWords()
                 }
                 Spacer(modifier = Modifier.height(18.dp))
                 val dataItem: @Composable (icon: Any, iconColor: Color, title: String, value: String, unit: String) -> Unit =
