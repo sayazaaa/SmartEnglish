@@ -1,324 +1,391 @@
 <template>
   <el-container class="article-manager-container">
-    <!-- 顶部 Header -->
-    <el-header class="header">
-      <div class="header-left">
-        <span class="logo">管理系统</span>
+    <div class="page-content">
+      <!-- 顶部操作栏 -->
+      <div class="top-bar">
+        <el-button type="primary" @click="openCreateDialog">新建文章</el-button>
+        <el-button type="danger" @click="openDeleteDialog">删除</el-button>
       </div>
-      <div class="header-right">
-        <el-dropdown>
-          <span class="el-dropdown-link">
-            <i class="el-icon-user"></i>
-            admin
-            <i class="el-icon-arrow-down el-icon--right"></i>
-          </span>
-          <el-dropdown-menu slot="dropdown">
-            <el-dropdown-item>退出登录</el-dropdown-item>
-          </el-dropdown-menu>
-        </el-dropdown>
+
+      <!-- 文章列表表格 -->
+      <el-table
+          :data="computedArticles"
+          style="width: 100%;"
+          @selection-change="handleSelectionChange"
+          border
+      >
+        <el-table-column type="selection" width="55" />
+
+        <el-table-column prop="id" label="ID" width="100" align="center" />
+        <el-table-column prop="title" label="阅读材料名称" align="center" />
+
+        <el-table-column label="操作" align="center" width="240">
+          <template #default="scope">
+            <el-button
+                type="text"
+                size="small"
+                @click="openEditDialog(scope.row)"
+            >
+              编辑文章
+            </el-button>
+            <el-button
+                type="text"
+                size="small"
+                @click="handleImport(scope.row)"
+            >
+              导入
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <!-- 底部分页与统计（去掉“10/page”下拉） -->
+      <div class="footer-bar">
+        <div class="total-info">共 {{ total }} 项数据</div>
+        <el-pagination
+            background
+            layout="prev, pager, next, jumper"
+            :total="total"
+            :page-size="pageSize"
+            :current-page="currentPage"
+            @current-change="handlePageChange"
+        />
       </div>
-    </el-header>
+    </div>
 
-    <el-container>
-      <!-- 左侧侧边栏 -->
-      <el-aside width="200px" class="sidebar">
-        <div class="user-info">
-          <el-avatar
-              size="large"
-              src="https://via.placeholder.com/80x80.png?text=头像"
-              class="avatar"
+    <!-- 新建文章对话框 -->
+    <el-dialog
+        title="新建文章"
+        :visible.sync="createDialogVisible"
+        width="600px"
+        :before-close="() => (createDialogVisible = false)"
+        append-to-body
+    >
+      <el-form
+          ref="createFormRef"
+          :model="newArticle"
+          :rules="articleRules"
+          label-width="100px"
+          label-position="left"
+          class="create-form"
+      >
+        <el-form-item label="标题" prop="title">
+          <el-input v-model="newArticle.title" placeholder="请输入标题" />
+        </el-form-item>
+
+        <el-form-item label="封面 URL" prop="cover">
+          <el-input v-model="newArticle.cover" placeholder="请输入封面地址" />
+        </el-form-item>
+
+        <el-form-item label="内容" prop="content">
+          <el-input
+              type="textarea"
+              v-model="newArticle.content"
+              placeholder="请输入文章内容"
+              rows="4"
           />
-          <div class="user-text">
-            <p class="username">测试用户</p>
-            <p class="status"><i class="el-icon-circle-online"></i> 在线</p>
-          </div>
-        </div>
-        <el-menu
-            default-active="2"
-            class="el-menu-vertical-demo"
-            background-color="#2d3a4b"
-            text-color="#bfcbd9"
-            active-text-color="#409EFF"
-            router
-        >
-          <el-menu-item index="/wordsetmanager">
-            <i class="el-icon-reading"></i>
-            <span slot="title">词书管理</span>
-          </el-menu-item>
-          <el-menu-item index="/articlemanager">
-            <i class="el-icon-folder-opened"></i>
-            <span slot="title">阅读材料管理</span>
-          </el-menu-item>
-          <el-menu-item index="/wordmanager">
-            <i class="el-icon-document"></i>
-            <span slot="title">单词管理</span>
-          </el-menu-item>
-          <el-menu-item index="4">
-            <i class="el-icon-data-analysis"></i>
-            <span slot="title">数据分析</span>
-          </el-menu-item>
-          <el-menu-item index="/feedback">
-            <i class="el-icon-message"></i>
-            <span slot="title">用户反馈</span>
-          </el-menu-item>
-        </el-menu>
-      </el-aside>
+        </el-form-item>
 
-      <!-- 右侧主内容 -->
-      <el-main class="main-content">
-        <!-- 顶部操作栏 -->
-        <div class="top-bar">
-          <el-button type="primary" @click="openCreateDialog">
-            新建文章
-          </el-button>
-          <el-button type="danger" @click="openDeleteDialog">
-            删除
-          </el-button>
-        </div>
-
-        <!-- 文章列表表格 -->
-        <el-table
-            :data="articles"
-            style="width: 100%;"
-            border
-            @selection-change="onSelectionChange"
-        >
-          <el-table-column type="selection" width="55" />
-          <el-table-column prop="id" label="ID" width="100" align="center" />
-          <el-table-column
-              prop="title"
-              label="阅读材料名称"
-              align="center"
+        <el-form-item label="发布日期" prop="date">
+          <el-date-picker
+              v-model="newArticle.date"
+              type="date"
+              placeholder="选择发布日期"
+              style="width: 100%;"
           />
-          <el-table-column label="操作" align="center" width="240">
-            <template #default="scope">
-              <el-button
-                  type="text"
-                  size="small"
-                  @click="openEditDialog(scope.row)"
-              >
-                编辑文章
-              </el-button>
-              <el-button
-                  type="text"
-                  size="small"
-                  @click="importArticle(scope.row)"
-              >
-                导入
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+        </el-form-item>
 
-        <!-- 底部分页与统计 -->
-        <div class="footer-bar">
-          <div class="total-info">共 {{ total }} 项数据</div>
-          <el-pagination
-              background
-              layout="sizes, prev, pager, next, jumper"
-              :total="total"
-              :page-size="pageSize"
-              :current-page="currentPage"
-              :page-sizes="[5, 10, 20, 50]"
-              @current-change="onPageChange"
-              @size-change="onSizeChange"
+        <el-form-item label="标签（逗号分隔）" prop="tags">
+          <el-input
+              v-model="newArticle.tagsInput"
+              placeholder="例如：阅读,英语,考试"
           />
-        </div>
+        </el-form-item>
+      </el-form>
 
-        <!-- 创建文章对话框 -->
-        <el-dialog
-            title="创建文章"
-            :visible.sync="createDialogVisible"
-            width="400px"
-            :before-close="() => (createDialogVisible = false)"
-        >
-          <el-form
-              ref="createFormRef"
-              :model="newArticle"
-              :rules="rules"
-              label-width="0px"
-          >
-            <el-form-item prop="title">
-              <el-input
-                  v-model="newArticle.title"
-                  placeholder="请输入阅读材料名称"
-              />
-            </el-form-item>
-          </el-form>
-          <span slot="footer" class="dialog-footer">
-            <el-button @click="createDialogVisible = false">取消</el-button>
-            <el-button type="primary" @click="confirmCreate">
-              确认创建
-            </el-button>
-          </span>
-        </el-dialog>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="createDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmCreate">确认创建</el-button>
+      </span>
+    </el-dialog>
 
-        <!-- 编辑文章对话框 -->
-        <el-dialog
-            title="编辑文章"
-            :visible.sync="editDialogVisible"
-            width="400px"
-            :before-close="() => (editDialogVisible = false)"
-        >
-          <el-form
-              ref="editFormRef"
-              :model="editingArticle"
-              :rules="rules"
-              label-width="0px"
-          >
-            <el-form-item prop="title">
-              <el-input
-                  v-model="editingArticle.title"
-                  placeholder="修改阅读材料名称"
-              />
-            </el-form-item>
-          </el-form>
-          <span slot="footer" class="dialog-footer">
-            <el-button @click="editDialogVisible = false">取消</el-button>
-            <el-button type="primary" @click="confirmEdit">
-              保存修改
-            </el-button>
-          </span>
-        </el-dialog>
+    <!-- 编辑文章对话框 -->
+    <el-dialog
+        title="编辑文章"
+        :visible.sync="editDialogVisible"
+        width="600px"
+        :before-close="() => (editDialogVisible = false)"
+        append-to-body
+    >
+      <el-form
+          ref="editFormRef"
+          :model="editArticle"
+          :rules="articleRules"
+          label-width="100px"
+          label-position="left"
+          class="edit-form"
+      >
+        <el-form-item label="标题" prop="title">
+          <el-input v-model="editArticle.title" />
+        </el-form-item>
 
-        <!-- 删除确认对话框 -->
-        <el-dialog
-            title="提示"
-            :visible.sync="deleteDialogVisible"
-            width="350px"
-            :before-close="() => (deleteDialogVisible = false)"
-        >
-          <span>确定要删除所选文章吗？</span>
-          <span slot="footer" class="dialog-footer">
-            <el-button @click="deleteDialogVisible = false">取消</el-button>
-            <el-button type="primary" @click="confirmDelete">
-              确认删除
-            </el-button>
-          </span>
-        </el-dialog>
-      </el-main>
-    </el-container>
+        <el-form-item label="封面 URL" prop="cover">
+          <el-input v-model="editArticle.cover" />
+        </el-form-item>
+
+        <el-form-item label="内容" prop="content">
+          <el-input
+              type="textarea"
+              v-model="editArticle.content"
+              rows="4"
+          />
+        </el-form-item>
+
+        <el-form-item label="发布日期" prop="date">
+          <el-date-picker
+              v-model="editArticle.date"
+              type="date"
+              placeholder="选择发布日期"
+              style="width: 100%;"
+          />
+        </el-form-item>
+
+        <el-form-item label="标签（逗号分隔）" prop="tags">
+          <el-input v-model="editArticle.tagsInput" />
+        </el-form-item>
+      </el-form>
+
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="editDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmEdit">保存修改</el-button>
+      </span>
+    </el-dialog>
+
+    <!-- 删除确认对话框 -->
+    <el-dialog
+        title="提示"
+        :visible.sync="deleteDialogVisible"
+        width="350px"
+        :before-close="() => (deleteDialogVisible = false)"
+        append-to-body
+    >
+      <span>确定要删除所选文章吗？</span>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="deleteDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmDelete">确认删除</el-button>
+      </span>
+    </el-dialog>
   </el-container>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, computed, onMounted } from "vue";
+import axios from "axios";
 import { ElMessage } from "element-plus";
+import { useRouter } from "vue-router";
 
-/**
- * 文章列表示例数据
- * 实际项目中，请从后端 API 获取并赋值给 articles
- */
-const articles = ref([]); // 每一项形如 { id: 44, title: "xxxxxxx" }
-const total = ref(0); // 总数据条数
-const pageSize = ref(10); // 每页条数
-const currentPage = ref(1); // 当前页码
+// **路由实例（用于“导入”或跳转到编辑页面）**
+const router = useRouter();
 
-// 选中行
+// **分页参数：前端分页**
+const currentPage = ref(1);
+const pageSize = ref(10);
+const articles = ref([]); // 从后端 GET /article/search 拉回来的全部文章
+const total = computed(() => articles.value.length);
+
+// **选中行**
 const selectedArticles = ref([]);
 
-// “创建文章”对话框相关
+// —— “新建文章” 对话框相关 —— //
 const createDialogVisible = ref(false);
-const newArticle = reactive({ title: "" });
 const createFormRef = ref(null);
+const newArticle = reactive({
+  title: "",
+  cover: "",
+  content: "",
+  date: "",       // 存储为 YYYY-MM-DD 字符串
+  tagsInput: "",  // 前端存储“逗号分隔”的标签字符串，提交时再 split
+});
 
-// “编辑文章”对话框相关
-const editDialogVisible = ref(false);
-const editingArticle = reactive({ id: null, title: "" });
-const editFormRef = ref(null);
-
-// 表单校验规则
-const rules = {
-  title: [{ required: true, message: "请输入文章名称", trigger: "blur" }],
+// **表单校验规则**
+const articleRules = {
+  title: [{ required: true, message: "请输入标题", trigger: "blur" }],
+  cover: [{ required: true, message: "请输入封面 URL", trigger: "blur" }],
+  content: [{ required: true, message: "请输入内容", trigger: "blur" }],
+  date: [{ type: "date", required: true, message: "请选择发布日期", trigger: "change" }],
+  tags: [{ required: true, message: "请输入至少一个标签", trigger: "blur" }],
 };
 
-// “删除”对话框
+// —— “编辑文章” 对话框相关 —— //
+const editDialogVisible = ref(false);
+const editFormRef = ref(null);
+const editArticle = reactive({
+  id: null,
+  title: "",
+  cover: "",
+  content: "",
+  date: "",
+  tagsInput: "",
+});
+
+// —— “删除文章” 对话框 —— //
 const deleteDialogVisible = ref(false);
 
 /**
- * 模拟拉取文章列表
- * 实际项目中，从后端 API 获取数据并更新 articles、total
+ * 前端分页计算：当前页要在 table 里渲染的数据
  */
-function fetchArticles() {
-  // 示例：假设总共 101 条数据
-  total.value = 101;
-
-  // 根据 currentPage 和 pageSize，从后端拉取对应页数据
-  // 这里只做简单示例，只给出一条记录
-  articles.value = [
-    {
-      id: 44,
-      title: "xxxxxxx",
-    },
-    // … 如需更多示例可继续添加
-  ];
-}
+const computedArticles = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value;
+  const end = start + pageSize.value;
+  return articles.value.slice(start, end);
+});
 
 /**
- * 点击 “新建文章” 按钮
+ * 拉取“所有文章”：GET /article/search?query_string=""
+ * 假定后端返回：[{ id, title, cover, content, date, tags: [..] }, ...]
  */
-function openCreateDialog() {
-  newArticle.title = "";
-  createDialogVisible.value = true;
-}
-
-/**
- * 确认创建文章
- */
-function confirmCreate() {
-  createFormRef.value.validate((valid) => {
-    if (valid) {
-      // 实际项目中，此处调用后端接口创建文章
-      console.log("创建文章：", newArticle.title);
-      ElMessage.success("文章创建成功");
-      createDialogVisible.value = false;
-      fetchArticles();
+async function fetchArticles() {
+  try {
+    const resp = await axios.get("/article/search", {
+      params: { query_string: "" }, // 空串表示“拉取全部”
+    });
+    if (resp.status === 200) {
+      // 如果后端直接返回一个数组
+      articles.value = resp.data || [];
+    } else {
+      ElMessage.error(`获取文章列表失败 (状态 ${resp.status})`);
     }
-  });
+  } catch (err) {
+    console.error("fetchArticles 异常：", err);
+    ElMessage.error("网络异常，无法获取文章列表");
+  }
 }
 
-/**
- * 点击 “编辑文章” 按钮
- */
-function openEditDialog(row) {
-  editingArticle.id = row.id;
-  editingArticle.title = row.title;
-  editDialogVisible.value = true;
+/** 分页页码变化 */
+function handlePageChange(page) {
+  currentPage.value = page;
 }
 
-/**
- * 确认保存编辑
- */
-function confirmEdit() {
-  editFormRef.value.validate((valid) => {
-    if (valid) {
-      // 实际项目中，此处调用后端接口保存编辑
-      console.log("编辑文章：", editingArticle.id, editingArticle.title);
-      ElMessage.success("文章保存成功");
-      editDialogVisible.value = false;
-      fetchArticles();
-    }
-  });
-}
-
-/**
- * 点击 “导入” 按钮
- */
-function importArticle(row) {
-  console.log("导入文章：", row.id);
-  // TODO: 实际项目中可触发文件上传或其他导入逻辑
-}
-
-/**
- * 选中行变化
- */
-function onSelectionChange(val) {
+/** 表格选中行变化 */
+function handleSelectionChange(val) {
   selectedArticles.value = val;
 }
 
-/**
- * 点击 “删除” 按钮
- */
+/** 点击“新建文章” */
+function openCreateDialog() {
+  // 重置表单
+  newArticle.title = "";
+  newArticle.cover = "";
+  newArticle.content = "";
+  newArticle.date = "";
+  newArticle.tagsInput = "";
+  createDialogVisible.value = true;
+}
+
+/** 点击“确认创建” */
+async function confirmCreate() {
+  createFormRef.value.validate(async (valid) => {
+    if (!valid) return;
+
+    try {
+      // 把 tagsInput（逗号分隔）转成数组
+      const tagsArr = newArticle.tagsInput
+          .split(",")
+          .map((t) => t.trim())
+          .filter((t) => t !== "");
+
+      const payload = {
+        title: newArticle.title,
+        cover: newArticle.cover,
+        content: newArticle.content,
+        date: newArticle.date, // “YYYY-MM-DD”
+        tags: tagsArr,
+      };
+
+      const resp = await axios.post("/article", payload);
+      if (resp.status === 200) {
+        ElMessage.success("文章创建成功");
+        createDialogVisible.value = false;
+        // 重新拉取全部文章，并跳回第 1 页
+        currentPage.value = 1;
+        await fetchArticles();
+      } else {
+        const msg =
+            (resp.data && resp.data.message) ||
+            `创建失败 (状态 ${resp.status})`;
+        ElMessage.error(msg);
+      }
+    } catch (err) {
+      console.error("confirmCreate 异常：", err);
+      ElMessage.error("网络异常，创建失败");
+    }
+  });
+}
+
+/** 点击“编辑文章” */
+async function openEditDialog(row) {
+  try {
+    // 先调用 GET /article?id=<row.id> 拿到完整文章数据
+    const resp = await axios.get("/article", {
+      params: { id: row.id },
+    });
+    if (resp.status === 200) {
+      const data = resp.data;
+      // 填充到 editArticle
+      editArticle.id = data.id;
+      editArticle.title = data.title;
+      editArticle.cover = data.cover;
+      editArticle.content = data.content;
+      // 假定后端的 date 字段就是 “YYYY-MM-DD”
+      editArticle.date = data.date;
+      // 假定后端返回 tags 是数组，前端显示成 “逗号分隔” 形式
+      editArticle.tagsInput = (data.tags || []).join(",");
+      editDialogVisible.value = true;
+    } else {
+      ElMessage.error(`获取文章内容失败 (状态 ${resp.status})`);
+    }
+  } catch (err) {
+    console.error("openEditDialog 异常：", err);
+    ElMessage.error("网络异常，获取失败");
+  }
+}
+
+/** 点击“保存修改” */
+async function confirmEdit() {
+  editFormRef.value.validate(async (valid) => {
+    if (!valid) return;
+
+    try {
+      const tagsArr = editArticle.tagsInput
+          .split(",")
+          .map((t) => t.trim())
+          .filter((t) => t !== "");
+
+      const payload = {
+        id: editArticle.id,
+        title: editArticle.title,
+        cover: editArticle.cover,
+        content: editArticle.content,
+        date: editArticle.date,
+        tags: tagsArr,
+      };
+
+      const resp = await axios.put("/article", payload);
+      if (resp.status === 200) {
+        ElMessage.success("文章更新成功");
+        editDialogVisible.value = false;
+        await fetchArticles();
+      } else {
+        ElMessage.error(`更新失败 (状态 ${resp.status})`);
+      }
+    } catch (err) {
+      console.error("confirmEdit 异常：", err);
+      ElMessage.error("网络异常，更新失败");
+    }
+  });
+}
+
+/** 点击“删除”按钮 */
 function openDeleteDialog() {
   if (selectedArticles.value.length === 0) {
     ElMessage.warning("请先选择要删除的文章");
@@ -327,35 +394,40 @@ function openDeleteDialog() {
   deleteDialogVisible.value = true;
 }
 
-/**
- * 确认删除文章
- */
-function confirmDelete() {
-  // 实际项目中，此处调用后端接口批量删除文章
-  console.log(
-      "删除文章：",
-      selectedArticles.value.map((row) => row.id)
-  );
-  ElMessage.success("删除成功");
-  deleteDialogVisible.value = false;
-  selectedArticles.value = [];
-  fetchArticles();
+/** 确认删除选中文章 */
+async function confirmDelete() {
+  try {
+    // 并发删除所有选中行：DELETE /article?id=<id>
+    const promises = selectedArticles.value.map((row) =>
+        axios.delete("/article", { params: { id: row.id } })
+    );
+    const results = await Promise.all(promises);
+    const allOk = results.every((r) => r.status === 200);
+    if (allOk) {
+      ElMessage.success("删除成功");
+      deleteDialogVisible.value = false;
+      selectedArticles.value = [];
+      // 如果当前页条目刚好被删光，则翻到上一页
+      if (computedArticles.value.length === results.length && currentPage.value > 1) {
+        currentPage.value -= 1;
+      }
+      await fetchArticles();
+    } else {
+      ElMessage.error("部分删除失败，请重试");
+    }
+  } catch (err) {
+    console.error("confirmDelete 异常：", err);
+    ElMessage.error("网络异常，删除失败");
+  }
 }
 
-/**
- * 分页页码变化
- */
-function onPageChange(page) {
-  currentPage.value = page;
-  fetchArticles();
-}
-
-/**
- * 分页每页条数变化
- */
-function onSizeChange(size) {
-  pageSize.value = size;
-  fetchArticles();
+/** 点击“导入”按钮——示例跳转逻辑，可替换为你自己项目需要的路由 */
+function handleImport(row) {
+  // 假设你想把当前文章 ID 传给 WordManager 或别的页面
+  router.push({
+    name: "WordManager",
+    params: { wordsetId: row.id },
+  });
 }
 
 onMounted(() => {
@@ -368,68 +440,17 @@ onMounted(() => {
   height: 100vh;
   background-color: #f9f6f2;
 }
-
-.header {
-  background-color: #2d3a4b;
-  color: #fff;
-  padding: 0 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.header-left .logo {
-  font-size: 18px;
-  color: #fff;
-}
-
-.header-right {
-  color: #fff;
-  cursor: pointer;
-}
-
-.sidebar {
-  background-color: #2d3a4b;
-  color: #fff;
-  padding-top: 20px;
-}
-
-.user-info {
-  text-align: center;
-  margin-bottom: 20px;
-  color: #fff;
-}
-
-.avatar {
-  margin-bottom: 8px;
-}
-
-.user-text .username {
-  font-size: 14px;
-  margin: 0;
-}
-
-.user-text .status {
-  font-size: 12px;
-  color: #9fa6b7;
-  margin: 0;
-}
-
-.el-menu-vertical-demo {
-  border-right: none;
-}
-
-.main-content {
+.page-content {
   padding: 20px;
   background-color: #faf6f2;
 }
 
+/* 顶部操作栏 */
 .top-bar {
   margin-bottom: 16px;
-  display: flex;
-  gap: 10px;
 }
 
+/* 底部分页栏 */
 .footer-bar {
   margin-top: 12px;
   display: flex;
@@ -442,10 +463,19 @@ onMounted(() => {
   font-size: 14px;
 }
 
+/* create/edit 对话框的表单宽度自适应 */
+.create-form,
+.edit-form {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* 对话框底部按钮对齐 */
 .dialog-footer {
   text-align: right;
 }
 
+/* el-dialog body 内部 padding 调整 */
 .el-dialog__body {
   padding: 20px 30px;
 }
