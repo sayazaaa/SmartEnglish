@@ -16,7 +16,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DictationScreen() {
     // 单词数据
@@ -71,7 +70,7 @@ fun DictationScreen() {
         Row {
             IconButton(onClick = { /* TODO 收藏逻辑 */ }) {
                 Icon(
-                    imageVector = if (favourites[currentWordIndex]) Icons.Filled.StarOutline else Icons.Filled.Star,
+                    imageVector = if (favourites[currentWordIndex]) Icons.Filled.Star else Icons.Filled.StarOutline,
                     contentDescription = "收藏",
                     tint = textColor
                 )
@@ -250,8 +249,8 @@ fun DictationScreen() {
     }
 }
 
-@Preview
-@Composable
-fun DictationScreenPreview() {
-    DictationScreen()
-}
+//@Preview
+//@Composable
+//fun DictationScreenPreview() {
+//    DictationScreen()
+//}
