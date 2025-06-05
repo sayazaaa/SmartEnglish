@@ -1,69 +1,6 @@
 <template>
   <el-container class="feedback-manager-container">
-    <!-- 顶部 Header -->
-    <el-header class="header">
-      <div class="header-left">
-        <span class="logo">管理系统</span>
-      </div>
-      <div class="header-right">
-        <el-dropdown>
-          <span class="el-dropdown-link">
-            <i class="el-icon-user"></i>
-            admin
-            <i class="el-icon-arrow-down el-icon--right"></i>
-          </span>
-          <el-dropdown-menu slot="dropdown">
-            <el-dropdown-item>退出登录</el-dropdown-item>
-          </el-dropdown-menu>
-        </el-dropdown>
-      </div>
-    </el-header>
-
     <el-container>
-      <!-- 左侧 Sidebar -->
-      <el-aside width="200px" class="sidebar">
-        <div class="user-info">
-          <el-avatar
-              size="large"
-              src="https://via.placeholder.com/80x80.png?text=头像"
-              class="avatar"
-          />
-          <div class="user-text">
-            <p class="username">测试用户</p>
-            <p class="status"><i class="el-icon-circle-online"></i> 在线</p>
-          </div>
-        </div>
-        <el-menu
-            :default-active="activeMenu"
-            class="el-menu-vertical-demo"
-            background-color="#2d3a4b"
-            text-color="#bfcbd9"
-            active-text-color="#409EFF"
-            router
-        >
-          <el-menu-item index="/wordsetmanager">
-            <i class="el-icon-reading"></i>
-            <span slot="title">词书管理</span>
-          </el-menu-item>
-          <el-menu-item index="/articlemanager">
-            <i class="el-icon-folder-opened"></i>
-            <span slot="title">阅读材料管理</span>
-          </el-menu-item>
-          <el-menu-item index="/wordmanager">
-            <i class="el-icon-document"></i>
-            <span slot="title">单词管理</span>
-          </el-menu-item>
-          <el-menu-item index="4">
-            <i class="el-icon-data-analysis"></i>
-            <span slot="title">数据分析</span>
-          </el-menu-item>
-          <el-menu-item index="/feedback">
-            <i class="el-icon-message"></i>
-            <span slot="title">用户反馈</span>
-          </el-menu-item>
-        </el-menu>
-      </el-aside>
-
       <!-- 右侧主内容 -->
       <el-main class="main-content">
         <!-- 顶部操作栏 -->

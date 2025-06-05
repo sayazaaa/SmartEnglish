@@ -11,14 +11,14 @@ import FeedBack from "@/views/FeedBack.vue";
 const routes = [
    {
         path: '/',
-        redirect:'/wordsetmanager'
+        redirect:'/login'
     },
 
-    /*{
-        path: '/',
+    {
+        path: '/login',
         name: 'Login',
         component: Login
-    },*/
+    },
 
    {
         path: '/wordsetmanager',
@@ -49,5 +49,21 @@ const router = createRouter({
     routes,
     history:createWebHashHistory()
 })
+
+router.beforeEach((to, from, next) => {
+    const token = localStorage.getItem("admin_token");
+    // 如果去的是 /login，不做拦截
+    if (to.path === "/login") {
+        next();
+        return;
+    }
+    // 如果没有 token，就跳到登录页
+    if (!token) {
+        next({ path: "/login" });
+        return;
+    }
+    // 否则正常访问
+    next();
+});
 
 export default router
