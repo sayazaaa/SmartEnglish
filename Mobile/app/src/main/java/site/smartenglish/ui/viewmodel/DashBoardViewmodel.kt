@@ -4,6 +4,7 @@ import androidx.compose.runtime.MutableState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -42,27 +43,55 @@ class DashBoardViewmodel @Inject constructor(
     val currentWordBookId = _currentWordBookId.asStateFlow()
 
 
-    fun getDashBoardData() {
-        viewModelScope.launch {
-            try {
-                val profile = userRepository.getProfile()
-                val learnedListSize = learnedRepository.getLearnedWordList()?.size?:0
-                val usingTime = usingRepository.getUsingTime("learn")
-                val wordbook = profile.wordbook?: WordBook()
+   fun getDashBoardData() {
+       viewModelScope.launch {
+           // 使用coroutineScope并行执行所有数据获取任务
+           kotlinx.coroutines.coroutineScope {
+               val profileDeferred = async {
+                   try {
+                       userRepository.getProfile()
+                   } catch (e: Exception) {
+                       e.printStackTrace()
+                       null
+                   }
+               }
 
-                _wordbookUrl.value = wordbook.cover?:""
-                _wordbookTotal.value = wordbook.wordcount?:0
-                _wordbookLearned.value = _wordbookTotal.value - (profile.new_word_count?:0)
+               val learnedListDeferred = async {
+                   try {
+                       learnedRepository.getLearnedWordList()?.size ?: 0
+                   } catch (e: Exception) {
+                       e.printStackTrace()
+                       0
+                   }
+               }
 
-                _totalWord.value = learnedListSize
-                _totalTime.value = usingTime?:0
+               val usingTimeDeferred = async {
+                   try {
+                       usingRepository.getUsingTime("learn") ?: 0
+                   } catch (e: Exception) {
+                       e.printStackTrace()
+                       0
+                   }
+               }
 
-                _currentWordBookId.value = profile.wordbook?.id?:0
-            }catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
-    }
+               // 等待所有结果并一次性更新UI
+               val profile = profileDeferred.await()
+               profile?.let {
+                   val wordbook = it.wordbook ?: WordBook()
+
+                   // 批量更新状态，减少UI重绘
+                   _wordbookUrl.value = wordbook.cover ?: ""
+                   _wordbookTotal.value = wordbook.wordcount ?: 0
+                   _wordbookLearned.value = (wordbook.wordcount ?: 0) - (it.new_word_count ?: 0)
+                   _currentWordBookId.value = it.wordbook?.id ?: 0
+               }
+
+               // 更新学习数据
+               _totalWord.value = learnedListDeferred.await()
+               _totalTime.value = usingTimeDeferred.await()
+           }
+       }
+   }
 
 
 

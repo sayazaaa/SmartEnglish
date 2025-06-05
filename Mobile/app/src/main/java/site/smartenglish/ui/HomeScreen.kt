@@ -146,7 +146,7 @@ fun HomeScreen(
     }
 
     LaunchedEffect(Unit) {
-
+        userViewmodel.getProfile()
     }
 
 
