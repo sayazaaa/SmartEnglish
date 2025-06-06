@@ -33,6 +33,9 @@ public class LearnedController {
         }
         try{
             String newWord = learnedService.UpdateLearned(dtoUpdateLearned, jwtUtils.getUserIdFromToken(token));
+            if(newWord.isEmpty()){
+                return ResponseEntity.ok(new PDTOUpdateLearned(newWord,"final"));
+            }
             return ResponseEntity.ok(new PDTOUpdateLearned(newWord,"success"));
         }catch(AccountException e){
             return new ResponseEntity<>(HttpStatus.NOT_FOUND);

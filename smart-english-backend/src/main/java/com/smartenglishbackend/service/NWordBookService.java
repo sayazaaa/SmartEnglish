@@ -5,6 +5,8 @@ import com.smartenglishbackend.customexceptions.MyResourceNotFoundException;
 import com.smartenglishbackend.customexceptions.RequestFormatException;
 import com.smartenglishbackend.dto.request.DTONWordBook;
 import com.smartenglishbackend.dto.request.DTOUpdateNWordBook;
+import com.smartenglishbackend.esentity.Word;
+import com.smartenglishbackend.esrepo.WordRepository;
 import com.smartenglishbackend.jpaentity.NWordBook;
 import com.smartenglishbackend.jparepo.NWordBookRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +21,8 @@ import java.util.Optional;
 public class NWordBookService {
     @Autowired
     private NWordBookRepository nWordBookRepository;
+    @Autowired
+    private WordRepository wordRepository;
     public List<NWordBook> getNWordBooks(Integer userId) {
         List<NWordBook> nWordBooks = nWordBookRepository.findByAccountId(userId);
         for(NWordBook nWordBook : nWordBooks) {
@@ -66,6 +70,10 @@ public class NWordBookService {
         }
         if(dtoUpdateNWordBook.getMethod().equals("add")){
             if(!nWordBookEntity.getContent().contains(dtoUpdateNWordBook.getWord())){
+                Word word = wordRepository.findByWord(dtoUpdateNWordBook.getWord());
+                if(word == null){
+                    throw new MyResourceNotFoundException("Word not found");
+                }
                 nWordBookEntity.getContent().add(dtoUpdateNWordBook.getWord());
             }
         }else if(dtoUpdateNWordBook.getMethod().equals("delete")){
