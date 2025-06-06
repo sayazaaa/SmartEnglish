@@ -16,6 +16,7 @@ import site.smartenglish.remote.data.ChangeProfileResponse
 import site.smartenglish.remote.data.CreateFavoritesSetRequest
 import site.smartenglish.remote.data.CreateNWordBookRequest
 import site.smartenglish.remote.data.FeedBackRequest
+import site.smartenglish.remote.data.Get20NewWordResponse
 import site.smartenglish.remote.data.GetArticleResponse
 import site.smartenglish.remote.data.GetFavoritesListResponse
 import site.smartenglish.remote.data.GetFavoritesSetListResponse
@@ -254,6 +255,18 @@ interface ApiService {
     ): Response<Unit>
 
     /**
+     * 获取20个新单词接口
+     *
+     * @return
+     * [
+     *     "string"
+     * ]
+     */
+    @GET("wordbook/new20")
+    suspend fun get20NewWord(
+    ): Response<Get20NewWordResponse>
+
+    /**
      * 获取词书信息接口
      *
      * @param wordbookId 词书的ID
@@ -402,6 +415,20 @@ interface ApiService {
     suspend fun addNWord(
         @Body nWordInfo: AddNWordBookWordRequest
     ): Response<Unit>
+
+    /**
+     * 检查生词接口
+     *
+     * @param word 要检查的单词
+     * @param nWordBookId 要检查的生词本ID
+     *
+     * true/false
+     */
+    @GET("nwordbook/check")
+    suspend fun checkNWordBook(
+        @Query("word") word: String,
+        @Query("nwordbook_id") nWordBookId: Int
+    ): Response<Boolean?>
 
     /**
      * 获取文章详情接口

@@ -1,0 +1,105 @@
+package site.smartenglish.ui.viewmodel
+
+import androidx.compose.runtime.Updater
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import site.smartenglish.repository.NWordBookRepository
+import site.smartenglish.repository.WordBookRepository
+import site.smartenglish.repository.WordRepository
+import javax.inject.Inject
+
+@HiltViewModel
+class DictationViewModel @Inject constructor(
+    private val wordBookRepository: WordBookRepository,
+    private val nWordBookRepository: NWordBookRepository,
+    private val wordRepository: WordRepository
+) : ViewModel() {
+    private val _currentWords = MutableStateFlow(listOf<String>())
+    val currentWords = _currentWords.asStateFlow()
+
+    private val _currentWordIndex = MutableStateFlow(0)
+    val currentWordIndex = _currentWordIndex.asStateFlow()
+
+    private val _currentSymbol = MutableStateFlow("")
+    val currentSymbol = _currentSymbol.asStateFlow()
+
+    private val _isCurrentFavourite = MutableStateFlow(false)
+    val isCurrentFavourite = _isCurrentFavourite.asStateFlow()
+
+    private val _currentMeanings = MutableStateFlow(listOf<String>())
+    val currentMeanings = _currentMeanings.asStateFlow()
+
+    private val _currentWordTypes = MutableStateFlow(listOf<String>())
+    val currentWordType = _currentWordTypes.asStateFlow()
+
+    private val _currentSoundType = MutableStateFlow("")
+    val currentSoundType = _currentSoundType.asStateFlow()
+
+    private val _currentSoundUrl = MutableStateFlow("")
+    val currentSoundUrl = _currentSoundUrl.asStateFlow()
+
+    val currentWord: String
+        get() = _currentWords.value.getOrNull(_currentWordIndex.value) ?: ""
+
+    fun moveToLastWord() {
+        if (_currentWords.value.isNotEmpty() && _currentWordIndex.value > 0) {
+            _currentWordIndex.value --
+            viewModelScope.launch {
+                UpdateCurrent()
+            }
+        }
+    }
+
+    fun moveToNextWord() {
+        if (_currentWords.value.isNotEmpty() && _currentWordIndex.value < _currentWords.value.size - 1) {
+            _currentWordIndex.value ++
+            viewModelScope.launch {
+                UpdateCurrent()
+            }
+        }
+    }
+
+    private suspend fun UpdateCurrent() {
+        if (_currentWords.value.isNotEmpty()) {
+            val wordInfo= wordRepository.getWordInfo(_currentWords.value[_currentWordIndex.value])
+            _currentSymbol.value = wordInfo.phonetic?: ""
+            _isCurrentFavourite.value = nWordBookRepository.checkNWordBook(currentWord,0) // 假设0是默认的生词本ID
+            _currentMeanings.value = wordInfo.explanations ?: emptyList()
+            _currentWordTypes.value = emptyList<String>()//TODO 真有这个吗？
+            _currentSoundType.value = "日"//TODO 真有这个吗？
+            _currentSoundUrl.value = wordInfo.pronunciation ?: ""
+        }
+    }
+
+    // 获取20新词
+    fun fetchNewWords() {
+        viewModelScope.launch {
+            try {
+                _currentWords.value =  wordBookRepository.get20NewWords()?.filterNotNull()
+                    ?.filter {
+                        it.isNotEmpty() && it.length > 1
+                    }?: emptyList()
+                _currentWordIndex.value = 0
+                UpdateCurrent()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    // 添加到生词本
+    fun switchWordInNWordBook(word: String) {
+        viewModelScope.launch {
+            try {
+                nWordBookRepository.addNWord(word, 0) // 假设0是默认的生词本ID
+                UpdateCurrent()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+}

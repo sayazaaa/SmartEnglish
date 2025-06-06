@@ -15,34 +15,22 @@ import androidx.compose.ui.text.font.*
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
+import androidx.hilt.navigation.compose.hiltViewModel
+import site.smartenglish.ui.viewmodel.DictationViewModel
 
 @Composable
-fun DictationScreen() {
+fun DictationScreen(
+    dictationViewModel: DictationViewModel = hiltViewModel()
+) {
     // 单词数据
-    val words = listOf(
-        "resort",
-        "genshin"
-    )
-    val symbols = listOf(
-        "/rɪˈzɔːrt/",
-        "yuanshen"
-    )
-    val favourites = listOf(
-        false,
-        false
-    )
-    val meanings = listOf(
-        listOf("度假胜地", "求助于"),
-        listOf("原神")
-    )
-    val wordTypes = listOf(
-        listOf("n.","v."),
-        listOf("n.")
-    )
-    val soundTypes = listOf(
-        "美",
-        "日"
-    )
+    val words = dictationViewModel.currentWords.collectAsState().value
+    val currentWord= dictationViewModel.currentWord
+    val symbol = dictationViewModel.currentSymbol.collectAsState().value
+    val favourite = dictationViewModel.isCurrentFavourite.collectAsState().value
+    val meanings = dictationViewModel.currentMeanings.collectAsState().value
+    val wordTypes = dictationViewModel.currentWordType.collectAsState().value
+    val soundType = dictationViewModel.currentSoundType.collectAsState().value
+    val soundUrl = dictationViewModel.currentSoundUrl.collectAsState().value
 
     var currentWordIndex by remember { mutableIntStateOf(0) }
     var isWordVisible by remember { mutableStateOf(false) }
@@ -68,9 +56,9 @@ fun DictationScreen() {
         Text(text = "听写", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = textColor)
 
         Row {
-            IconButton(onClick = { /* TODO 收藏逻辑 */ }) {
+            IconButton(onClick = { dictationViewModel.switchWordInNWordBook(currentWord) }) {
                 Icon(
-                    imageVector = if (favourites[currentWordIndex]) Icons.Filled.Star else Icons.Filled.StarOutline,
+                    imageVector = if (favourite) Icons.Filled.Star else Icons.Filled.StarOutline,
                     contentDescription = "收藏",
                     tint = textColor
                 )
@@ -118,22 +106,29 @@ fun DictationScreen() {
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = soundTypes[currentWordIndex],
+                                    text = soundType,
                                     color = Color.LightGray,
                                     fontSize = 14.sp,
                                 )
-                                Icon(
-                                    imageVector = Icons.AutoMirrored.Filled.VolumeUp,
-                                    contentDescription = "播放读音",
-                                    tint = textColor,
-                                    modifier = Modifier.size(16.dp)
-                                )
+                                IconButton(
+                                    onClick = {
+                                        // TODO 播放读音逻辑
+                                    },
+                                    modifier = Modifier.padding(0.dp, 0.dp, 4.dp, 0.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                                        contentDescription = "播放读音",
+                                        tint = textColor,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
                             }
                         }
                     }
                     Spacer(modifier=Modifier.width(10.dp))
                     Text(
-                        text = symbols[currentWordIndex],
+                        text = symbol,
                         fontSize = 14.sp,
                         color = darkTextColor,
                         textAlign = TextAlign.Start,
@@ -141,11 +136,11 @@ fun DictationScreen() {
                     )
                 }
                 Spacer(modifier = Modifier.height(8.dp))
-                meanings[currentWordIndex].forEachIndexed { index, option ->
+                meanings.forEachIndexed { index, option ->
                     Spacer(modifier = Modifier.height(12.dp))
                     Row {
                         Text(
-                            text = wordTypes[currentWordIndex][index],
+                            text = wordTypes[index],
                             color = darkTextColor,
                             fontSize = 17.sp
                         )
@@ -209,7 +204,7 @@ fun DictationScreen() {
                 )
             }
             IconButton(onClick = {
-                if (currentWordIndex > 0) currentWordIndex--
+                dictationViewModel.moveToLastWord()
             }) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -228,7 +223,7 @@ fun DictationScreen() {
                 )
             }
             IconButton(onClick = {
-                if (currentWordIndex < words.size - 1) currentWordIndex++
+                dictationViewModel.moveToNextWord()
             }) {
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.ArrowForward,

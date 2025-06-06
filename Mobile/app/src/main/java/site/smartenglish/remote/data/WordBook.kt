@@ -4,6 +4,8 @@ typealias GetWordBookInfoResponse = List<String?>?
 
 typealias GetWordBookListResponse = List<GetWordBookListResponseElement?>?
 
+typealias  Get20NewWordResponse = List<String?>?
+
 data class GetWordBookListResponseElement(
     val id: Int? = null,
     val name: String? = null,
