@@ -12,7 +12,7 @@ import Statistic from "@/views/Statistic.vue";
 const routes = [
    {
         path: '/',
-        redirect:'/wordsetmanager'
+        redirect:'/login'
     },
 
     {

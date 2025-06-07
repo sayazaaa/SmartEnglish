@@ -1,404 +1,210 @@
 <template>
-  <el-container class="wordset-manager-container">
-    <el-container>
-       <!-- 右侧主内容 -->
-      <el-main class="main-content">
-        <!-- 顶部操作栏 -->
-        <div class="top-bar">
-          <el-button type="primary" @click="openCreateDialog">新建词书</el-button>
-          <el-button type="danger" @click="openDeleteDialog">删除</el-button>
-        </div>
+  <el-container style="height:100vh">
 
-        <!-- 词书列表表格 -->
-        <el-table
-            :data="wordBooks"
-            style="width: 100%;"
-            @selection-change="handleSelectionChange"
-            border
-        >
-          <el-table-column type="selection" width="55" />
-          <el-table-column prop="id" label="ID" width="100" align="center" />
-          <el-table-column prop="name" label="词书名称" align="center" />
-          <el-table-column label="操作" align="center" width="220">
-            <template #default="scope">
-              <el-button
-                  type="text"
-                  size="small"
-                  @click="handleImport(scope.row)"
-              >
-                导入
-              </el-button>
-              <el-button
-                  type="text"
-                  size="small"
-                  @click="handleManageWords(scope.row)"
-              >
-                管理单词
-              </el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+    <el-main class="main-content">
+      <!-- 顶部工具栏 -->
+      <div class="toolbar">
+        <el-button type="primary" @click="openCreateDialog">新建词书</el-button>
+        <el-button
+            type="danger"
+            :disabled="!selectedIds.length"
+            @click="handleBatchDelete"
+        >删除</el-button>
+      </div>
 
-        <div class="footer-bar">
-          <div class="total-info">共 {{ total }} 项数据</div>
-          <el-pagination
-              background
-              layout="prev, pager, next, jumper"
-              :total="total"
-              :current-page="currentPage"
-              @current-change="handlePageChange"
+      <!-- 词书列表 -->
+      <el-table
+          :data="pagedWordbooks"
+          @selection-change="onSelectionChange"
+          border
+          stripe
+          style="width: 100%"
+      >
+        <el-table-column type="selection" width="55"></el-table-column>
+        <el-table-column prop="id" label="ID" width="80"></el-table-column>
+        <el-table-column prop="name" label="词书名称"></el-table-column>
+        <el-table-column prop="wordcount" label="单词数量" width="120"></el-table-column>
+        <el-table-column label="操作" width="120">
+          <template #default="{ row }">
+            <el-button
+                type="text"
+                @click="goManageWords(row)"
+            >管理单词</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+
+      <!-- 分页（去掉 page-sizes，下方只有总数/页码/跳转）-->
+      <el-pagination
+          class="pagination"
+          background
+          :total="total"
+          :page-size="pageSize"
+          :current-page="page"
+          @current-change="onPageChange"
+          layout="total, prev, pager, next, jumper"
+      />
+    </el-main>
+
+    <!-- 新建词书对话框 -->
+    <el-dialog
+        title="新建词书"
+        v-model="createDialogVisible"
+        width="500px"
+    >
+      <el-form :model="form" label-width="80px">
+        <el-form-item label="名称">
+          <el-input v-model="form.name" placeholder="请输入词书名称" />
+        </el-form-item>
+        <el-form-item label="封面 URL">
+          <el-input v-model="form.cover" placeholder="请输入封面图片 URL" />
+        </el-form-item>
+        <el-form-item label="内容">
+          <el-input
+              type="textarea"
+              v-model="contentString"
+              autosize
+              placeholder="请用分号分隔单词，例如：apple; banana; orange"
           />
-        </div>
-
-        <!-- 新建词书对话框 -->
-        <el-dialog
-            title="创建词书"
-            :visible.sync="createDialogVisible"
-            width="400px"
-            :before-close="() => (createDialogVisible = false)"
-        >
-          <el-form
-              ref="createFormRef"
-              :model="newWordBook"
-              :rules="rules"
-              label-width="0px"
-          >
-            <el-form-item prop="name">
-              <el-input v-model="newWordBook.name" placeholder="词书名称" />
-            </el-form-item>
-
-              <el-form-item prop="cover">
-                <el-input v-model="newWordBook.cover" placeholder="封面URL" />
-              </el-form-item>
-              <el-form-item prop="content">
-                <el-input
-                  type="textarea"
-                  v-model="newWordBook.content"
-                  placeholder="初始单词列表，逗号分隔"
-                />
-              </el-form-item>
-          </el-form>
-          <span slot="footer" class="dialog-footer">
-            <el-button @click="createDialogVisible = false">取消</el-button>
-            <el-button type="primary" @click="confirmCreate">确认创建</el-button>
-          </span>
-        </el-dialog>
-
-        <!-- 删除确认对话框 -->
-        <el-dialog
-            title="提示"
-            :visible.sync="deleteDialogVisible"
-            width="350px"
-            :before-close="() => (deleteDialogVisible = false)"
-        >
-          <span>确定要删除所选词书吗？</span>
-          <span slot="footer" class="dialog-footer">
-            <el-button @click="deleteDialogVisible = false">取消</el-button>
-            <el-button type="primary" @click="confirmDelete"
-            >确认删除</el-button
-            >
-          </span>
-        </el-dialog>
-      </el-main>
-    </el-container>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="createDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmCreate">创建</el-button>
+      </template>
+    </el-dialog>
   </el-container>
 </template>
 
-<script setup>
-import { ref, reactive, onMounted, watch } from "vue";
-import { useRouter, useRoute } from "vue-router";
-import axios from "axios";
-import { ElMessage } from "element-plus";
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import axios from 'axios'
+import { ElMessage } from 'element-plus'
 
-/** 侧边栏高亮 */
-const route = useRoute();
-const activeMenu = ref(route.path);
-watch(
-    () => route.path,
-    (newPath) => {
-      activeMenu.value = newPath;
-    }
-);
-
-/** 路由实例 */
-const router = useRouter();
-
-/** 分页参数 */
-const currentPage = ref(1);
-const total = ref(0);
-
-/** 词书列表数组 [{id, name, cover, content}] */
-const wordBooks = ref([]);
-
-/** 选中行 */
-const selectedWordBooks = ref([]);
-
-/** “新建词书” 对话框相关 */
-const createDialogVisible = ref(false);
-const newWordBook = reactive({
-  name: "",
-  cover: "",
-  content: []
-});
-const createFormRef = ref(null);
-const rules = {
-  name: [{ required: true, message: "请输入词书名称", trigger: "blur" }],
-   cover: [{ required: true, message: "请输入封面地址", trigger: "blur" }],
-   content: [{ type: "array", required: true, message: "请选择初始单词", trigger: "change" }],
-};
-
-/** “删除词书” 对话框 */
-const deleteDialogVisible = ref(false);
-
-/**
- * 退出登录
- */
-function onLogout() {
-  localStorage.removeItem("admin_token");
-  ElMessage.success("已退出登录");
-  router.push({ path: "/login" });
+interface WordbookItem {
+  id: number
+  name: string
+  cover: string
+  wordcount: number
 }
 
-/**
- * 拉取词书列表（带分页）
- * 假定后端接口：GET /wordbook?page=<currentPage>
- * 返回 JSON 示例： { total: 101, list: [ {id, name, cover, content}, ... ] }
- */
-async function fetchWordBooks() {
+// 路由实例，用来跳转“管理单词”页面
+const router = useRouter()
+
+// 全量数据 & 选中 ID 列表
+const wordbooks = ref<WordbookItem[]>([])
+const selectedIds = ref<number[]>([])
+
+// 分页状态
+const page = ref(1)
+const pageSize = 10
+const total = computed(() => wordbooks.value.length)
+const pagedWordbooks = computed(() => {
+  const start = (page.value - 1) * pageSize
+  return wordbooks.value.slice(start, start + pageSize)
+})
+
+// 新建对话框 & 表单
+const createDialogVisible = ref(false)
+const form = ref({ name: '', cover: '' })
+const contentString = ref('')
+
+/** 初始拉数据 */
+async function fetchWordbooks() {
   try {
-    const resp = await axios.get("/wordbook", {
-      params: {
-        page: currentPage.value,
-      },
-    });
-    if (resp.status === 200) {
-      // 根据后端实际返回字段改成 resp.data.xxx
-      total.value = resp.data.total || 0;
-      wordBooks.value = resp.data.list || [];
-    } else {
-      ElMessage.error(`获取词书列表失败 (状态码 ${resp.status})`);
-    }
+    const res = await axios.get<WordbookItem[]>('/wordbook')
+    wordbooks.value = res.data
   } catch (err) {
-    console.error("fetchWordBooks 异常：", err);
-    ElMessage.error("网络异常，无法获取词书列表");
+    console.error(err)
+    ElMessage.error('获取词书列表失败')
   }
 }
 
-/**
- * 点击分页页码
- */
-function handlePageChange(page) {
-  currentPage.value = page;
-  fetchWordBooks();
+/** 翻页 */
+function onPageChange(p: number) {
+  page.value = p
 }
 
-/**
- * 表格选中行变化
- */
-function handleSelectionChange(val) {
-  selectedWordBooks.value = val;
+/** 选中项变化 */
+function onSelectionChange(selection: WordbookItem[]) {
+  selectedIds.value = selection.map(i => i.id)
 }
 
-/**
- * 点击 “新建词书”
- */
+/** 跳转到单词管理 */
+function goManageWords(row: WordbookItem) {
+  router.push({
+    path: '/wordmanager',
+    query: { wordbookId: String(row.id) }
+  })
+}
+
+/** 批量删除 */
+async function handleBatchDelete() {
+  if (!selectedIds.value.length) return
+  try {
+    await Promise.all(
+        selectedIds.value.map(id =>
+            axios.delete('/wordbook', { params: { id } })
+        )
+    )
+    ElMessage.success('删除成功')
+    await fetchWordbooks()
+  } catch (err) {
+    console.error(err)
+    ElMessage.error('删除失败')
+  }
+}
+
+/** 打开新建对话框 */
 function openCreateDialog() {
-  newWordBook.name = "";
-   newWordBook.cover = "";
-   newWordBook.content = [];
-  createDialogVisible.value = true;
+  form.value = { name: '', cover: '' }
+  contentString.value = ''
+  createDialogVisible.value = true
 }
 
-/**
- * 点击 “确认创建” 时，调用 POST /wordbook
- */
+/** 确认新建 */
 async function confirmCreate() {
-  createFormRef.value.validate(async (valid) => {
-    if (!valid) return;
-
-    try {
-      const bodyPayload = {
-        name: newWordBook.name,
-        cover: newWordBook.cover,
-        content: newWordBook.content,
-      };
-      const resp = await axios.post("/wordbook", bodyPayload);
-
-      if (resp.status === 200) {
-        ElMessage.success("词书创建成功");
-        createDialogVisible.value = false;
-        // 刷新列表，从第一页开始看
-        currentPage.value = 1;
-        fetchWordBooks();
-      } else {
-        const msg =
-            (resp.data && resp.data.message) ||
-            `创建失败 (状态码 ${resp.status})`;
-        ElMessage.error(msg);
-      }
-    } catch (err) {
-      console.error("confirmCreate 异常：", err);
-      ElMessage.error("网络异常，创建失败");
-    }
-  });
-}
-
-/**
- * 点击 “删除” 按钮
- */
-function openDeleteDialog() {
-  if (selectedWordBooks.value.length === 0) {
-    ElMessage.warning("请先选择要删除的词书");
-    return;
+  // 简单校验
+  if (!form.value.name.trim() || !form.value.cover.trim()) {
+    return ElMessage.warning('名称和封面 URL 都是必填项')
   }
-  deleteDialogVisible.value = true;
-}
-
-/**
- * 确认删除所选词书
- * 根据接口文档：DELETE /wordbook?id=<id>
- * 后端只接收一个 id，所以前端这里需要循环调用或者并发调用。
- */
-async function confirmDelete() {
+  // 将分号分隔的字符串拆成数组
+  const contentArr = contentString.value
+      .split(';')
+      .map(w => w.trim())
+      .filter(w => w)
+  const payload = {
+    name: form.value.name.trim(),
+    cover: form.value.cover.trim(),
+    content: contentArr
+  }
   try {
-    // 并发删除所有选中行
-    const deletePromises = selectedWordBooks.value.map((row) =>
-        axios.delete("/wordbook", { params: { id: row.id } })
-    );
-    const results = await Promise.all(deletePromises);
-
-    // 检查是否全都删除成功（HTTP 200）
-    const allSuccess = results.every((resp) => resp.status === 200);
-    if (allSuccess) {
-      ElMessage.success("删除成功");
-      deleteDialogVisible.value = false;
-      selectedWordBooks.value = [];
-      // 如果当前页刚好被删空，向前翻一页
-      if (
-          wordBooks.value.length === results.length &&
-          currentPage.value > 1
-      ) {
-        currentPage.value -= 1;
-      }
-      fetchWordBooks();
-    } else {
-      ElMessage.error("部分删除失败，请重试");
-    }
+    await axios.post('/wordbook', payload)
+    ElMessage.success('创建成功')
+    createDialogVisible.value = false
+    await fetchWordbooks()
   } catch (err) {
-    console.error("confirmDelete 异常：", err);
-    ElMessage.error("网络异常，删除失败");
+    console.error(err)
+    ElMessage.error('创建失败，请稍后重试')
   }
 }
 
-/**
- * 点击 “导入” 按钮：跳转到 单词管理 (WordManager.vue)
- * 路由示例：/wordsets/:wordsetId/words
- * 下面假定路由名称是 WordManager，path 配置为 /wordsets/:wordsetId/words
- */
-function handleImport(row) {
-  router.push({
-    name: "wordmanager",
-    params: { wordsetId: row.id },
-  });
-}
-
-/**
- * 点击 “管理单词” 按钮：同样跳转到单词管理
- */
-function handleManageWords(row) {
-  router.push({
-    name: "WordManager",
-    params: { wordsetId: row.id },
-  });
-}
-
-onMounted(() => {
-  fetchWordBooks();
-});
+// 页面加载时先拉一次
+onMounted(fetchWordbooks)
 </script>
 
 <style scoped>
-.wordset-manager-container {
-  height: 100vh;
-  background-color: #f9f6f2;
-}
-
-.header {
-  background-color: #2d3a4b;
-  color: #fff;
-  padding: 0 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.header-left .logo {
-  font-size: 18px;
-  color: #fff;
-}
-
-.header-right {
-  color: #fff;
-  cursor: pointer;
-}
-
-.sidebar {
-  background-color: #2d3a4b;
-  color: #fff;
-  padding-top: 20px;
-}
-
-.user-info {
-  text-align: center;
-  margin-bottom: 20px;
-  color: #fff;
-}
-
-.avatar {
-  margin-bottom: 8px;
-}
-
-.user-text .username {
-  font-size: 14px;
-  margin: 0;
-}
-
-.user-text .status {
-  font-size: 12px;
-  color: #9fa6b7;
-  margin: 0;
-}
-
-.el-menu-vertical-demo {
-  border-right: none;
-}
-
 .main-content {
-  padding: 20px;
   background-color: #faf6f2;
+  padding: 20px;
+  height: 100%;
 }
-
-.top-bar {
+.toolbar {
   margin-bottom: 16px;
 }
-
-.footer-bar {
-  margin-top: 12px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.total-info {
-  color: #606266;
-  font-size: 14px;
-}
-
-.dialog-footer {
+.pagination {
+  margin-top: 16px;
   text-align: right;
-}
-
-.el-dialog__body {
-  padding: 20px 30px;
 }
 </style>

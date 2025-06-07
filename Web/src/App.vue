@@ -1,44 +1,30 @@
-<!-- src/App.vue -->
 <template>
-  <el-container style="height: 100vh">
-    <!-- 只要当前不是 /login，就渲染 Header -->
+  <el-container style="height:100vh">
+    <!-- 1. Header：非 /login 时显示 -->
     <el-header v-if="!isLoginRoute" class="header">
       <div class="header-left">
         <span class="logo">管理系统</span>
       </div>
       <div class="header-right">
-        <el-dropdown>
+        <el-dropdown @command="handleLogout">
           <span class="el-dropdown-link">
-            <i class="el-icon-user"></i>
-            admin
+            <i class="el-icon-user"></i> {{ username }}
             <i class="el-icon-arrow-down el-icon--right"></i>
           </span>
           <el-dropdown-menu slot="dropdown">
-            <el-dropdown-item @click="handleLogout">退出登录</el-dropdown-item>
+            <el-dropdown-item command="logout">退出登录</el-dropdown-item>
           </el-dropdown-menu>
         </el-dropdown>
       </div>
     </el-header>
 
     <el-container>
-      <!-- 只要当前不是 /login，就渲染 Sidebar -->
-      <el-aside
-          v-if="!isLoginRoute"
-          width="200px"
-          class="sidebar"
-      >
+      <!-- 2. Aside：非 /login 时显示 -->
+      <el-aside v-if="!isLoginRoute" width="200px" class="sidebar">
         <div class="user-info">
-          <el-avatar
-              size="large"
-              src="https://via.placeholder.com/80x80.png?text=头像"
-              class="avatar"
-          />
-          <div class="user-text">
-            <p class="username">测试用户</p>
-            <p class="status">
-              <i class="el-icon-circle-online"></i> 在线
-            </p>
-          </div>
+          <el-avatar size="large" :src="avatarUrl" />
+          <p class="username">{{ username }}</p>
+          <p class="status"><i class="el-icon-circle-check"></i> 在线</p>
         </div>
         <el-menu
             :default-active="activeMenu"
@@ -48,30 +34,25 @@
             active-text-color="#409EFF"
             router
         >
-          <el-menu-item index="/wordsets">
-            <i class="el-icon-reading"></i>
-            <span>词书管理</span>
+          <el-menu-item index="/wordsetmanager">
+            <i class="el-icon-reading"></i><span>词书管理</span>
           </el-menu-item>
-          <el-menu-item index="/articles">
-            <i class="el-icon-folder-opened"></i>
-            <span>阅读材料管理</span>
+          <el-menu-item index="/wordmanager">
+            <i class="el-icon-document"></i><span>单词管理</span>
           </el-menu-item>
-          <el-menu-item index="/wordsets/1/words">
-            <i class="el-icon-document"></i>
-            <span>单词管理</span>
+          <el-menu-item index="/articlemanager">
+            <i class="el-icon-document"></i><span>阅读材料管理</span>
           </el-menu-item>
           <el-menu-item index="/statistic">
-            <i class="el-icon-data-analysis"></i>
-            <span>数据分析</span>
+            <i class="el-icon-data-analysis"></i><span>数据分析</span>
           </el-menu-item>
           <el-menu-item index="/feedback">
-            <i class="el-icon-message"></i>
-            <span>用户反馈</span>
+            <i class="el-icon-message"></i><span>用户反馈</span>
           </el-menu-item>
         </el-menu>
       </el-aside>
 
-      <!-- 主内容区，无论是否登录，都渲染子路由 -->
+      <!-- 3. Main：路由组件都渲染在这里 -->
       <el-main class="main-content">
         <router-view />
       </el-main>
@@ -80,80 +61,59 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { ElMessage } from "element-plus";
+import { computed, ref, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { ElMessage } from 'element-plus';
 
 const route = useRoute();
 const router = useRouter();
 
+// 判断当前是不是登录页
+const isLoginRoute = computed(() => route.path === '/login');
 
-const isLoginRoute = computed(() => route.path === "/login");
-
-
+// 侧边栏高亮项
 const activeMenu = ref(route.path);
-watch(
-    () => route.path,
-    (newPath) => {
-      activeMenu.value = newPath;
-    }
-);
+watch(() => route.path, p => (activeMenu.value = p));
 
-/** 退出登录 */
-function handleLogout() {
-  localStorage.removeItem("admin_token");
-  ElMessage.success("已退出登录");
-  router.push("/login");
+// 示例用户信息
+const username = ref('测试用户');
+const avatarUrl = ref('https://via.placeholder.com/80');
+
+// 退出登录
+function handleLogout(cmd) {
+  if (cmd === 'logout') {
+    localStorage.removeItem('admin_token');
+    ElMessage.success('已退出登录');
+    router.push('/login');
+  }
 }
 </script>
 
 <style scoped>
 .header {
-  background-color: #2d3a4b;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #2d3a4b;
   color: #fff;
   padding: 0 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
 }
-.header-left .logo {
-  font-size: 18px;
-  color: #fff;
-}
-.header-right {
-  color: #fff;
-  cursor: pointer;
-}
-
+.logo { font-size: 18px; }
 .sidebar {
-  background-color: #2d3a4b;
+  background: #2d3a4b;
   color: #fff;
-  padding-top: 20px;
 }
-
 .user-info {
   text-align: center;
-  margin-bottom: 20px;
+  padding: 20px 0;
   color: #fff;
 }
-.avatar {
-  margin-bottom: 8px;
-}
-.user-text .username {
-  font-size: 14px;
-  margin: 0;
-}
-.user-text .status {
-  font-size: 12px;
-  color: #9fa6b7;
-  margin: 0;
-}
-.el-menu-vertical-demo {
-  border-right: none;
-}
-
+.username { margin: 8px 0 4px; font-size: 14px; }
+.status { font-size: 12px; color: #9fa6b7; }
 .main-content {
+  background: #faf6f2;
   padding: 20px;
-  background-color: #faf6f2;
+  overflow: auto;
 }
+.el-menu-vertical-demo { border-right: none; }
 </style>

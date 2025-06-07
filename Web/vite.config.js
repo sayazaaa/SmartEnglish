@@ -5,17 +5,16 @@ import path from 'path';
 export default defineConfig({
   plugins: [vue()],
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, 'src'),
-    },
+    alias: { '@': path.resolve(__dirname, 'src') }
   },
   server: {
     proxy: {
+      // 所有 /api 开头的请求都会被代理到后端
       '/api': {
-        target: process.env.VITE_API_BASE_URL,
+        target: 'http://175.178.5.83:8080',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
-      },
-    },
-  },
+        rewrite: (p) => p.replace(/^\/api/, '')  // 去掉 /api 前缀
+      }
+    }
+  }
 });
