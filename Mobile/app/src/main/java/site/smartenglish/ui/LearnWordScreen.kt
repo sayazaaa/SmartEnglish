@@ -47,6 +47,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -77,6 +78,7 @@ import site.smartenglish.ui.compose.FavBottomSheetsItemData
 import site.smartenglish.ui.theme.Grey
 import site.smartenglish.ui.theme.LightGrey
 import site.smartenglish.ui.theme.White
+import site.smartenglish.ui.viewmodel.AudioPlayerViewModel
 import site.smartenglish.ui.viewmodel.BackgroundImageViewmodel
 import site.smartenglish.ui.viewmodel.LearnViewmodel
 import site.smartenglish.ui.viewmodel.LearnWordInfo
@@ -95,6 +97,7 @@ fun LearnWordScreen(
     bgViewmodel: BackgroundImageViewmodel = hiltViewModel(),
     nWordBookViewmodel: NWordBookViewmodel = hiltViewModel(),
     imageViewmodel: UploadImageViewmodel = hiltViewModel(),
+    audioPlayerViewModel: AudioPlayerViewModel = hiltViewModel(),
     snackBarViewmodel: SnackBarViewmodel = hiltViewModel(LocalActivity.current as ViewModelStoreOwner)
 ) {
     val bitmap = bgViewmodel.backgroundBitmap.collectAsState().value
@@ -108,6 +111,11 @@ fun LearnWordScreen(
     var showDetailScreen by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
+
+    // 获取播放状态
+    val isPlaying = audioPlayerViewModel.isPlaying.collectAsState().value
+
+
     // 创建收藏夹对话框状态
     val isFav = nWordBookViewmodel.isNWordBook.collectAsState().value
     val favList = nWordBookViewmodel.nWordBookList.collectAsState().value
@@ -248,6 +256,12 @@ fun LearnWordScreen(
         if (snackBar.isNotEmpty()) {
             snackBarViewmodel.showSnackbar(snackBar)
             learnViewmodel.clearSnackBar() // 清除 snackbar 内容
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            audioPlayerViewModel.stopAudio()
         }
     }
 
@@ -397,7 +411,10 @@ fun LearnWordScreen(
                         when (wordDetail.stage) {
                             0 -> {
                                 // 阶段0：给英文选中文
-                                Stage0(wordDetail, onCorrect, onWrong)
+                                LaunchedEffect (Unit){
+                                    audioPlayerViewModel.playAudio(wordDetail.word.pronunciation?:"")
+                                }
+                                Stage0(wordDetail,{ audioPlayerViewModel.playAudio(it) }, onCorrect, onWrong)
                             }
 
                             1 -> {
@@ -406,7 +423,10 @@ fun LearnWordScreen(
                             }
 
                             2 -> {
-                                Stage2(wordDetail, onCorrect, onWrong)
+                                LaunchedEffect (Unit){
+                                    audioPlayerViewModel.playAudio(wordDetail.word.pronunciation?:"")
+                                }
+                                Stage2(wordDetail,{ audioPlayerViewModel.playAudio(it) }, onCorrect, onWrong)
                             }
 
                             3 -> {
@@ -421,6 +441,9 @@ fun LearnWordScreen(
                     } else {
                         // detail screen
                         // 单词展示区
+                        LaunchedEffect (Unit){
+                            audioPlayerViewModel.playAudio(wordDetail.word.pronunciation?:"")
+                        }
                         Column(
                             modifier = Modifier.padding(start = 13.dp)
                         ) {
@@ -442,6 +465,9 @@ fun LearnWordScreen(
                                             color = Color.White.copy(alpha = 0.1f),
                                             shape = RoundedCornerShape(100.dp)
                                         )
+                                        .clickable {
+                                            audioPlayerViewModel.playAudio(wordDetail.word.pronunciation?:"")
+                                        }
                                         .padding(horizontal = 8.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(2.dp)
@@ -793,6 +819,7 @@ fun LearnWordScreen(
 @Composable
 private fun ColumnScope.Stage0(
     wordDetail: LearnWordInfo,
+    playAudio: (String) -> Unit,
     onCorrect: () -> Unit,
     onWrong: () -> Unit
 ) {
@@ -844,6 +871,9 @@ private fun ColumnScope.Stage0(
                         color = Color.White.copy(alpha = 0.1f),
                         shape = RoundedCornerShape(100.dp)
                     )
+                    .clickable {
+                        playAudio(wordDetail.word.pronunciation?:"")
+                    }
                     .padding(horizontal = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(2.dp)
@@ -1088,6 +1118,7 @@ private fun ColumnScope.Stage1(
 @Composable
 private fun ColumnScope.Stage2(
     wordDetail: LearnWordInfo,
+    playAudio: (String) -> Unit,
     onCorrect: () -> Unit,
     onWrong: () -> Unit
 ) {
@@ -1113,6 +1144,9 @@ private fun ColumnScope.Stage2(
                         color = Color.White.copy(alpha = 0.1f),
                         shape = RoundedCornerShape(100.dp)
                     )
+                    .clickable {
+                        playAudio(wordDetail.word.pronunciation ?: "")
+                    }
                     .padding(horizontal = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(2.dp)
