@@ -8,9 +8,11 @@ import com.smartenglishbackend.dto.response.PDTOWordBookBasic;
 import com.smartenglishbackend.jpaentity.Account;
 import com.smartenglishbackend.jpaentity.Learned;
 import com.smartenglishbackend.jpaentity.WordBook;
+import com.smartenglishbackend.jpaentity.WordSet;
 import com.smartenglishbackend.jparepo.AccountRepository;
 import com.smartenglishbackend.jparepo.LearnedRepository;
 import com.smartenglishbackend.jparepo.WordBookRepository;
+import com.smartenglishbackend.jparepo.WordSetRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -32,6 +34,8 @@ public class UserService {
     private WordBookRepository wordBookRepository;
     @Autowired
     private LearnedRepository learnedRepository;
+    @Autowired
+    private WordSetRepository wordSetRepository;
     public ResponseEntity<PDTOUser> getUser(Integer userId) {
         Optional<Account> accountOptional = accountRepository.findById(userId);
         if (accountOptional.isEmpty()) {
@@ -44,7 +48,6 @@ public class UserService {
                 account.getNewWordCount()==null?0:account.getNewWordCount(),filtered.size());
         if(account.getWordbookId() != null){
             Optional<WordBook> wordBookOptional = wordBookRepository.findById(account.getWordbookId());
-
             if(wordBookOptional.isPresent()){
                 WordBook wordBook = wordBookOptional.get();
                 List<String> list = wordBook.getContent();
@@ -75,6 +78,11 @@ public class UserService {
                 newList.add(learnedItem.getWord());
             }
             List<String> result = list.stream().filter(e->!newList.contains(e)).toList();
+            WordSet wordSet = wordSetRepository.findByAccountId(account.getId());
+            if(wordSet == null){
+                throw new MyResourceNotFoundException("WordSet not found");
+            }
+            wordSet.getSetpre().clear();
             account.setNewWordCount(result.size());
         }
         try{

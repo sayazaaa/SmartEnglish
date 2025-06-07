@@ -6,6 +6,7 @@ import WordSetManager from "@/views/WordSetManager.vue";
 import WordManager from "@/views/WordManager.vue";
 import ArticleManager from "@/views/ArticleManager.vue";
 import FeedBack from "@/views/FeedBack.vue";
+import Statistic from "@/views/Statistic.vue";
 
 
 const routes = [
@@ -14,11 +15,11 @@ const routes = [
         redirect:'/wordsetmanager'
     },
 
-    /*{
-        path: '/',
+    {
+        path: '/login',
         name: 'Login',
         component: Login
-    },*/
+    },
 
    {
         path: '/wordsetmanager',
@@ -42,6 +43,12 @@ const routes = [
         path: '/feedback',
         name:'Feedback',
         component: FeedBack
+    },
+
+    {
+        path:'/statistic',
+        name:'Statistic',
+        component: Statistic
     }
 ]
 
@@ -49,5 +56,21 @@ const router = createRouter({
     routes,
     history:createWebHashHistory()
 })
+
+router.beforeEach((to, from, next) => {
+    const token = localStorage.getItem("admin_token");
+    // 如果去的是 /login，不做拦截
+    if (to.path === "/login") {
+        next();
+        return;
+    }
+    // 如果没有 token，就跳到登录页
+    if (!token) {
+        next({ path: "/login" });
+        return;
+    }
+    // 否则正常访问
+    next();
+});
 
 export default router

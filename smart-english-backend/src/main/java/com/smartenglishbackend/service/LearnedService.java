@@ -4,11 +4,10 @@ import com.smartenglishbackend.customexceptions.AccountException;
 import com.smartenglishbackend.customexceptions.RequestFormatException;
 import com.smartenglishbackend.dto.request.DTOUpdateLearned;
 import com.smartenglishbackend.dto.response.PDTOLearned;
-import com.smartenglishbackend.jpaentity.Account;
-import com.smartenglishbackend.jpaentity.Learned;
-import com.smartenglishbackend.jpaentity.LearnedId;
+import com.smartenglishbackend.jpaentity.*;
 import com.smartenglishbackend.jparepo.AccountRepository;
 import com.smartenglishbackend.jparepo.LearnedRepository;
+import com.smartenglishbackend.jparepo.WordSetRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
 import org.springframework.http.HttpStatus;
@@ -28,6 +27,8 @@ public class LearnedService {
     private AccountRepository accountRepository;
     @Autowired
     private WordGenerator wordGenerator;
+    @Autowired
+    private WordSetRepository wordSetRepository;
     @Transactional
     public String UpdateLearned(DTOUpdateLearned dtoUpdateLearned, Integer userId) {
         Optional<Learned> learnedOptional = learnedRepository.findById(new LearnedId(dtoUpdateLearned.getWord(), userId));
@@ -44,7 +45,20 @@ public class LearnedService {
             Account account = accountOptional.get();
             Pair<String, Integer> res = wordGenerator.GetNewWord(userId, account.getWordbook_p());
             account.setWordbook_p(res.getSecond());
-            account.setNewWordCount(account.getNewWordCount()+1);
+            WordSet wordSet = wordSetRepository.findByAccountId(account.getId());
+            if(wordSet == null){
+                throw new AccountException("Word set not found");
+            }
+            List<SWord> toRemove = wordSet.getSetpre().stream().
+                    filter(sWord -> sWord.getWord().equals(dtoUpdateLearned.getWord())).toList();
+            for (SWord sWord : toRemove) {
+                wordSet.getSetpre().remove(sWord);
+            }
+            if(!res.getFirst().isEmpty()){
+                wordSet.getSetpre().add(new SWord(res.getFirst(), 0));
+            }
+            if(learnedOptional.isEmpty())account.setNewWordCount(account.getNewWordCount() - 1);
+            wordSetRepository.save(wordSet);
             accountRepository.save(account);
             return res.getFirst();
         }else if(dtoUpdateLearned.getStatus().equals("review")){

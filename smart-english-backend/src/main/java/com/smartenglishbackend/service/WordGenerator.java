@@ -51,13 +51,17 @@ public class WordGenerator {
             account.setWordbook_p(0);
         }
         Integer wordP = nowP;
-        while(words.get(wordP)!=null && learnedRepository.findById(new LearnedId(words.get(wordP),userId)).isPresent()){
-            wordP++;
+        try{
+            while(words.get(wordP)!=null && learnedRepository.findById(new LearnedId(words.get(wordP),userId)).isPresent()){
+                wordP++;
+            }
+            String newWord = words.get(wordP);
+            if(newWord == null){newWord = "";}
+            else wordP++;
+            return Pair.of(newWord,wordP);
+        } catch(IndexOutOfBoundsException e){
+            return Pair.of("",wordP);
         }
-        String newWord = words.get(wordP);
-        if(newWord == null){newWord = "";}
-        else wordP++;
-        return Pair.of(newWord,wordP);
     }
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public List<String> GetReviewWord(int userId, int maxCount) {
