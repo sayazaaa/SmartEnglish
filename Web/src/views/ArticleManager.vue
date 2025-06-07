@@ -1,128 +1,249 @@
 <template>
-  <el-container style="height: 100vh">
-    <el-main class="main-content">
-      <!-- 操作按钮 -->
-      <div style="margin-bottom: 20px;">
-        <el-button type="primary" @click="openNew">新建文章</el-button>
-        <el-button
-            type="danger"
-            :disabled="multipleSelection.length === 0"
-            @click="deleteArticles"
-        >
-          删除
-        </el-button>
-      </div>
+  <el-container style="height:100vh">
+    <!-- 主操作按钮 -->
+    <el-header style="padding: 16px 0; background: #fff; display: flex; gap: 10px;">
+      <el-button type="primary" @click="openCreateDialog">新建文章</el-button>
+      <el-button type="danger" :disabled="!hasSelection" @click="handleBatchDelete">删除</el-button>
+    </el-header>
 
-      <!-- 数据表格 -->
+    <el-main class="main-content">
       <el-table
-          :data="pagedData"
           v-loading="loading"
-          @selection-change="handleSelectionChange"
-          style="width: 100%;"
-      >
+          :data="articles"
+          @selection-change="onSelectionChange"
+          stripe
+          style="width: 100%">
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column prop="id" label="ID" width="200"/>
         <el-table-column prop="title" label="阅读材料名称" />
-        <el-table-column label="操作" width="200">
+        <el-table-column label="操作" width="120">
           <template #default="{ row }">
-            <el-button type="text" @click="editArticle(row)">编辑文章</el-button>
-            <el-button type="text" @click="importWords(row)">导入</el-button>
+            <el-link type="primary" @click="openViewDialog(row.id)">查看</el-link>
           </template>
         </el-table-column>
       </el-table>
 
-      <!-- 分页与总数 -->
-      <div
-          style="margin-top: 20px; display: flex; justify-content: space-between; align-items: center;"
-      >
-        <div>共 {{ total }} 项数据</div>
-        <el-pagination
-            background
-            :page-size="pageSize"
-            :current-page="page"
-            :total="total"
-            @current-change="handlePageChange"
-            layout="prev, pager, next, jumper"
-        />
+      <div style="margin: 16px 0;">
+        共 {{ total }} 项数据
       </div>
     </el-main>
+
+    <!-- 查看弹窗 -->
+    <el-dialog
+        title="文章详情"
+        v-model="viewVisible"
+        width="60%">
+      <el-descriptions column="1" border>
+        <el-descriptions-item label="ID">{{ viewForm.id }}</el-descriptions-item>
+        <el-descriptions-item label="标题">{{ viewForm.title }}</el-descriptions-item>
+        <el-descriptions-item label="封面">
+          <img :src="viewForm.cover" alt="封面" style="max-width:100%;"/>
+        </el-descriptions-item>
+        <el-descriptions-item label="内容">{{ viewForm.content }}</el-descriptions-item>
+        <el-descriptions-item label="日期">{{ viewForm.date }}</el-descriptions-item>
+        <el-descriptions-item label="标签">
+          <el-tag
+              v-for="tag in viewForm.tags"
+              :key="tag"
+              style="margin-right:6px;"
+          >{{ tag }}</el-tag>
+        </el-descriptions-item>
+      </el-descriptions>
+      <template #footer>
+        <el-button @click="viewVisible = false">关闭</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 新建弹窗 -->
+    <el-dialog
+        title="新建文章"
+        v-model="createVisible"
+        width="60%"
+        @close="resetCreateForm">
+      <el-form
+          ref="createFormRef"
+          :model="createForm"
+          :rules="createRules"
+          label-width="100px">
+        <el-form-item label="标题" prop="title">
+          <el-input v-model="createForm.title" />
+        </el-form-item>
+        <el-form-item label="封面链接" prop="cover">
+          <el-input v-model="createForm.cover" placeholder="请填完整 URL" />
+        </el-form-item>
+        <el-form-item label="内容" prop="content">
+          <el-input
+              type="textarea"
+              v-model="createForm.content"
+              autosize
+          />
+        </el-form-item>
+        <el-form-item label="日期" prop="date">
+          <el-date-picker
+              v-model="createForm.date"
+              type="date"
+              placeholder="选择日期"
+              style="width:100%;"
+          />
+        </el-form-item>
+        <el-form-item label="标签" prop="tags">
+          <el-select
+              v-model="createForm.tags"
+              multiple
+              placeholder="请添加标签"
+              collapse-tags>
+            <el-option
+                v-for="tag in possibleTags"
+                :key="tag"
+                :label="tag"
+                :value="tag"/>
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="createVisible = false">取 消</el-button>
+        <el-button type="primary" @click="submitCreate">确 定</el-button>
+      </template>
+    </el-dialog>
   </el-container>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, reactive, onMounted } from 'vue';
 import axios from 'axios';
-import { ElMessage } from 'element-plus';
+import {
+  ElMessage,
+  ElButton,
+  ElContainer,
+  ElHeader,
+  ElMain,
+  ElTable,
+  ElTableColumn,
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElDatePicker,
+  ElSelect,
+  ElOption,
+  ElDescriptions,
+  ElDescriptionsItem,
+  ElTag,
+  ElLink
+} from 'element-plus';
 
-const router = useRouter();
-
-// 数据状态
+// 列表数据
 const articles = ref([]);
 const loading = ref(false);
-const page = ref(1);
-const pageSize = ref(10);
 const total = ref(0);
+// 选中项
 const multipleSelection = ref([]);
+const hasSelection = ref(false);
 
-// 拉取文章列表 —— 注意：只传 query_string，不带 page/pageSize
+// 查看弹窗
+const viewVisible = ref(false);
+const viewForm = reactive({
+  id: '',
+  title: '',
+  cover: '',
+  content: '',
+  date: '',
+  tags: []
+});
+
+// 新建弹窗 & 表单
+const createVisible = ref(false);
+const createFormRef = ref(null);
+const createForm = reactive({
+  title: '',
+  cover: '',
+  content: '',
+  date: '',
+  tags: []
+});
+// 示例标签，你可以动态加载或自定义
+const possibleTags = ['阅读','听力','语法','单词'];
+const createRules = {
+  title: [{ required: true, message: '请输入标题', trigger: 'blur' }],
+  cover: [{ required: true, message: '请输入封面链接', trigger: 'blur' }],
+  content: [{ required: true, message: '请输入内容', trigger: 'blur' }],
+  date: [{ required: true, message: '请选择日期', trigger: 'change' }],
+  tags: [{ type: 'array', required: true, message: '请至少选择一个标签', trigger: 'change' }]
+};
+
+function onSelectionChange(val) {
+  multipleSelection.value = val;
+  hasSelection.value = val.length > 0;
+}
+
+// 拉取文章列表
 async function fetchArticles() {
   loading.value = true;
   try {
     const res = await axios.get('/article/search', {
       params: { query_string: '' }
     });
-    articles.value = res.data;
-    total.value = res.data.length;
-  } catch (err) {
+    // 文档：返回一个数组
+    articles.value = res.data || [];
+    total.value = articles.value.length;
+  } catch {
     ElMessage.error('网络异常，无法获取文章列表');
   } finally {
     loading.value = false;
   }
 }
 
-// 计算当前页要展示的数据切片
-const pagedData = computed(() => {
-  const start = (page.value - 1) * pageSize.value;
-  return articles.value.slice(start, start + pageSize.value);
-});
-
-// 处理表格多选
-function handleSelectionChange(val) {
-  multipleSelection.value = val;
-}
-
-// 分页切换事件
-function handlePageChange(newPage) {
-  page.value = newPage;
-}
-
-// 新建文章
-function openNew() {
-  router.push('/articlemanager/new');
-}
-
-// 编辑文章
-function editArticle(row) {
-  router.push(`/articlemanager/edit/${row.id}`);
-}
-
-// 导入单词
-function importWords(row) {
-  router.push(`/articlemanager/import/${row.id}`);
-}
-
-// 删除选中文章
-async function deleteArticles() {
-  const ids = multipleSelection.value.map((item) => item.id);
+// 打开查看
+async function openViewDialog(id) {
   try {
-    await Promise.all(
-        ids.map((id) =>
-            axios.delete('/article', {
-              params: { id }
-            })
-        )
-    );
+    const res = await axios.get('/article', { params: { id } });
+    Object.assign(viewForm, res.data);
+    viewVisible.value = true;
+  } catch {
+    ElMessage.error('获取文章详情失败');
+  }
+}
+
+// 打开新建
+function openCreateDialog() {
+  resetCreateForm();
+  createVisible.value = true;
+}
+
+// 重置新建表单
+function resetCreateForm() {
+  createFormRef.value?.resetFields();
+  createForm.title = '';
+  createForm.cover = '';
+  createForm.content = '';
+  createForm.date = '';
+  createForm.tags = [];
+}
+
+// 提交新建
+async function submitCreate() {
+  try {
+    await createFormRef.value.validate();
+    await axios.post('/article', {
+      title: createForm.title,
+      cover: createForm.cover,
+      content: createForm.content,
+      date: createForm.date,
+      tags: createForm.tags
+    });
+    ElMessage.success('文章创建成功');
+    createVisible.value = false;
+    fetchArticles();
+  } catch (err) {
+    if (err === 'validate') return;
+    ElMessage.error('新建文章失败');
+  }
+}
+
+// 删除单篇
+async function deleteArticle(id) {
+  try {
+    await axios.delete('/article', { params: { id } });
     ElMessage.success('删除成功');
     fetchArticles();
   } catch {
@@ -130,13 +251,26 @@ async function deleteArticles() {
   }
 }
 
-// 初始拉数据
+// 批量删除
+async function handleBatchDelete() {
+  const ids = multipleSelection.value.map(r => r.id);
+  try {
+    await Promise.all(
+        ids.map(id => axios.delete('/article', { params: { id } }))
+    );
+    ElMessage.success('批量删除成功');
+    fetchArticles();
+  } catch {
+    ElMessage.error('批量删除失败');
+  }
+}
+
 onMounted(fetchArticles);
 </script>
 
 <style scoped>
 .main-content {
-  padding: 20px;
-  background-color: #faf6f2;
+  padding: 16px;
+  background: #f8f8f8;
 }
 </style>
