@@ -16,7 +16,7 @@ class LearnedRepository @Inject constructor(
         return api.getLearnedWords().handleResponse("获取已学单词失败") as GetLearnedResponse
     }
 
-    suspend fun updateLearnedWordList(
+    suspend fun updateLearnedWord(
         word: String,
         reviewDate: String,
         status: String

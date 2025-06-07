@@ -32,6 +32,18 @@ class AuthInterceptor @Inject constructor(
         Log.d("AuthInterceptor", "Headers: ${request.headers}")
         request.body?.let {
             Log.d("AuthInterceptor", "Body size: ${it.contentLength()} bytes, Type: ${it.contentType()}")
+            val requestBody = request.body
+            if (requestBody != null && request.method == "POST" || request.method == "PUT" || request.method == "PATCH") {
+                try {
+                    val buffer = okio.Buffer()
+                    requestBody?.writeTo(buffer)
+                    val charset = it.contentType()?.charset(Charsets.UTF_8) ?: Charsets.UTF_8
+                    val bodyString = buffer.readString(charset)
+                    Log.d("AuthInterceptor", "Body content: $bodyString")
+                } catch (e: Exception) {
+                    Log.e("AuthInterceptor", "Failed to read request body", e)
+                }
+            }
         }
         return chain.proceed(request)
     }

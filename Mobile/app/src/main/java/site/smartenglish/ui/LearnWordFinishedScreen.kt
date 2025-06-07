@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.*
 import androidx.hilt.navigation.compose.hiltViewModel
 import site.smartenglish.ui.viewmodel.BackgroundImageViewmodel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LearnWordFinishedScreen(
     bgViewmodel: BackgroundImageViewmodel = hiltViewModel()

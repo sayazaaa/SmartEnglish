@@ -1,6 +1,7 @@
 package site.smartenglish.ui
 
 import android.util.Log
+import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
@@ -44,6 +45,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -59,6 +61,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.ViewModelStoreOwner
 import kotlinx.coroutines.delay
 import site.smartenglish.R
 import site.smartenglish.ui.theme.LightGrey
@@ -66,6 +69,7 @@ import site.smartenglish.ui.theme.White
 import site.smartenglish.ui.viewmodel.BackgroundImageViewmodel
 import site.smartenglish.ui.viewmodel.LearnViewmodel
 import site.smartenglish.ui.viewmodel.LearnWordInfo
+import site.smartenglish.ui.viewmodel.SnackBarViewmodel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -75,19 +79,43 @@ fun LearnWordScreen(
     ) -> Unit = {},
     navigateBack: () -> Unit = {},
     learnViewmodel: LearnViewmodel = hiltViewModel(),
-    bgViewmodel: BackgroundImageViewmodel = hiltViewModel()
+    bgViewmodel: BackgroundImageViewmodel = hiltViewModel(),
+    snackBarViewmodel: SnackBarViewmodel = hiltViewModel(LocalActivity.current as ViewModelStoreOwner)
 ) {
     val bitmap = bgViewmodel.backgroundBitmap.collectAsState().value
-    val wordDetailList = learnViewmodel.wordDetailList.collectAsState().value
-    val currentWordIndex = learnViewmodel.currentWordIndex.collectAsState().value
+    val wordDetail = learnViewmodel.wordDetail.collectAsState().value
     val learnedNum = learnViewmodel.learnedWordNum.collectAsState().value
     val isLoading = learnViewmodel.isLoading.collectAsState().value
+    val navigateBackSelection = learnViewmodel.navigateBackSelection.collectAsState().value
+    val navigateToFinished = learnViewmodel.navigateToFinish.collectAsState().value
+    val snackBar = learnViewmodel.snackBar.collectAsState().value
 
     var showDetailScreen by remember { mutableStateOf(false) }
 
-
     LaunchedEffect(Unit) {
         learnViewmodel.getWordSetDetail()
+    }
+
+    LaunchedEffect(navigateBackSelection) {
+        if (navigateBackSelection) {
+            navigateBack()
+        }
+    }
+
+    LaunchedEffect(navigateToFinished){
+        if (navigateToFinished) {
+            // 获取已学单词列表
+            val learnedWords = learnViewmodel.getLearnedWordList()
+            // 导航到学习完成页面
+            navigateToLearnWordFinished(learnedWords)
+        }
+    }
+
+    LaunchedEffect(snackBar) {
+        if (snackBar.isNotEmpty()) {
+            snackBarViewmodel.showSnackbar(snackBar)
+            learnViewmodel.clearSnackBar() // 清除 snackbar 内容
+        }
     }
 
     // 背景图片容器
@@ -126,7 +154,7 @@ fun LearnWordScreen(
                         IconButton(
                             onClick =
                                 {
-                                    //TODO
+                                    navigateBack()
                                 }) {
                             Icon(
                                 imageVector = Icons.AutoMirrored.Filled.KeyboardArrowLeft,
@@ -148,7 +176,7 @@ fun LearnWordScreen(
                 }, actions = {
                     IconButton(
                         onClick = {
-                            navigateBack()
+                            //TODO
                         }) {
                         Icon(
                             painter = painterResource(R.drawable.kid_star),
@@ -173,7 +201,7 @@ fun LearnWordScreen(
             ) {
                 CircularProgressIndicator(color = White)
             }
-        } else if (wordDetailList.isEmpty()) {
+        } else if (wordDetail == LearnWordInfo()) {
             // 显示空状态
             Box(
                 modifier = Modifier
@@ -188,9 +216,6 @@ fun LearnWordScreen(
                 )
             }
         } else {
-            AnimatedContent(
-                targetState = showDetailScreen, label = "Screen Transition"
-            ) { isDetailScreen ->
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -198,37 +223,37 @@ fun LearnWordScreen(
                         .padding(padding)
                         .background(Color.Transparent)
                 ) {
-                    if (!isDetailScreen) {
+                    if (!showDetailScreen) {
                         val onCorrect = {
-                            learnViewmodel.passWord(currentWordIndex)
+                            learnViewmodel.passWord()
                             showDetailScreen = true
                         }
                         val onWrong = {
-                            learnViewmodel.failWord(currentWordIndex)
+                            learnViewmodel.failWord()
                             showDetailScreen = true
                         }
-                        Log.d("LearnWordScreen", "Current word index: $currentWordIndex")
-                        when (wordDetailList[currentWordIndex].stage) {
+                        when (wordDetail.stage) {
                             0 -> {
                                 // 阶段0：给英文选中文
-                                Stage0(wordDetailList, currentWordIndex, onCorrect, onWrong)
+                                Stage0(wordDetail, onCorrect, onWrong)
                             }
 
                             1 -> {
                                 // 阶段1：给中文选英文
-                                Stage1(wordDetailList, currentWordIndex, onCorrect, onWrong)
+                                Stage1(wordDetail, onCorrect, onWrong)
                             }
 
                             2 -> {
-                                Stage2(wordDetailList, currentWordIndex, onCorrect, onWrong)
+                                Stage2(wordDetail, onCorrect, onWrong)
                             }
 
                             3 -> {
-                                Stage3(wordDetailList, currentWordIndex, onCorrect, onWrong)
+                                Stage3(wordDetail, onCorrect, onWrong)
                             }
 
                             else -> {
-                                Text("ERROR")
+                                Log.e("LearnWordScreen", "未知阶段: ${wordDetail.stage}")
+                                learnViewmodel.nextWord()
                             }
                         }
                     } else {
@@ -238,7 +263,7 @@ fun LearnWordScreen(
                             modifier = Modifier.padding(start = 13.dp)
                         ) {
                             Text(
-                                text = wordDetailList[currentWordIndex].word.word?:"",
+                                text = wordDetail.word.word ?: "",
                                 color = White,
                                 fontSize = 46.sp,
                                 fontWeight = FontWeight.Bold,
@@ -274,13 +299,13 @@ fun LearnWordScreen(
                                 Spacer(modifier = Modifier.width(10.dp))
                                 // 音标
                                 Text(
-                                    text = wordDetailList[currentWordIndex].word.phonetic ?: "",
+                                    text = wordDetail.word.phonetic ?: "",
                                     color = LightGrey,
                                     fontSize = 14.sp,
                                 )
                             }
                             Spacer(modifier = Modifier.height(20.dp))
-                            wordDetailList[currentWordIndex].word.explanations?.forEach {
+                            wordDetail.word.explanations?.forEach {
                                 val parts = it.split(".")
                                 Row(
                                     verticalAlignment = Alignment.Bottom,
@@ -290,11 +315,15 @@ fun LearnWordScreen(
                                         color = LightGrey,
                                         fontSize = 16.sp,
                                     )
-                                    Text(
-                                        text = parts[1],
-                                        color = White,
-                                        fontSize = 16.sp,
-                                    )
+                                    if (
+                                        parts.size > 1
+                                    ){
+                                        Text(
+                                            text = parts[1],
+                                            color = White,
+                                            fontSize = 16.sp,
+                                        )
+                                    }
                                 }
                                 Spacer(Modifier.height(12.dp))
                             }
@@ -303,15 +332,15 @@ fun LearnWordScreen(
 
                         // 判断各部分是否有数据
                         val hasExamples =
-                            !wordDetailList[currentWordIndex].word.examples.isNullOrEmpty()
+                            !wordDetail.word.examples.isNullOrEmpty()
                         val hasSynonyms =
-                            !(wordDetailList[currentWordIndex].word.synonyms?.a.isNullOrEmpty() &&
-                                    wordDetailList[currentWordIndex].word.synonyms?.v.isNullOrEmpty() &&
-                                    wordDetailList[currentWordIndex].word.synonyms?.n.isNullOrEmpty())
+                            !(wordDetail.word.synonyms?.a.isNullOrEmpty() &&
+                                    wordDetail.word.synonyms?.v.isNullOrEmpty() &&
+                                    wordDetail.word.synonyms?.n.isNullOrEmpty())
                         val hasAntonyms =
-                            !(wordDetailList[currentWordIndex].word.antonyms?.a.isNullOrEmpty() &&
-                                    wordDetailList[currentWordIndex].word.antonyms?.v.isNullOrEmpty() &&
-                                    wordDetailList[currentWordIndex].word.antonyms?.n.isNullOrEmpty())
+                            !(wordDetail.word.antonyms?.a.isNullOrEmpty() &&
+                                    wordDetail.word.antonyms?.v.isNullOrEmpty() &&
+                                    wordDetail.word.antonyms?.n.isNullOrEmpty())
 
                         // 根据有数据的部分创建tab列表
                         val availableTabs = mutableListOf<String>()
@@ -319,7 +348,7 @@ fun LearnWordScreen(
                         if (hasSynonyms) availableTabs.add("同义词")
                         if (hasAntonyms) availableTabs.add("反义词")
 
-                        var selectedTabIndex by remember { mutableStateOf(0) }
+                        var selectedTabIndex by remember { mutableIntStateOf(0) }
                         val scrollState = rememberScrollState()
 
                         if (availableTabs.isNotEmpty()) {
@@ -327,8 +356,8 @@ fun LearnWordScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .weight(1f)
-                                    .verticalScroll(scrollState)
                                     .background(Color.White.copy(0.1f), RoundedCornerShape(10.dp))
+                                    .verticalScroll(scrollState)
                             ) {
                                 // 顶部Tab栏
                                 Row(
@@ -402,7 +431,7 @@ fun LearnWordScreen(
                                             when (availableTabs[tabIndex]) {
                                                 "例句" -> { // 例句
                                                     Column {
-                                                        wordDetailList[currentWordIndex].word.examples?.forEach { example ->
+                                                        wordDetail.word.examples?.forEach { example ->
                                                             Text(
                                                                 text = example?.english ?: "",
                                                                 color = White,
@@ -419,7 +448,7 @@ fun LearnWordScreen(
                                                 }
 
                                                 "同义词" -> { // 同义词
-                                                    if (wordDetailList[currentWordIndex].word.synonyms?.a?.isNotEmpty() == true) {
+                                                    if (wordDetail.word.synonyms?.a?.isNotEmpty() == true) {
                                                         Text(
                                                             text = "a.",
                                                             color = White,
@@ -427,7 +456,7 @@ fun LearnWordScreen(
                                                             modifier = Modifier.padding(vertical = 2.dp),
                                                             fontWeight = FontWeight.Bold
                                                         )
-                                                        wordDetailList[currentWordIndex].word.synonyms?.a?.forEach { synonym ->
+                                                        wordDetail.word.synonyms?.a?.forEach { synonym ->
                                                             Text(
                                                                 text = synonym,
                                                                 color = White,
@@ -440,7 +469,7 @@ fun LearnWordScreen(
                                                         }
                                                     }
 
-                                                    if (wordDetailList[currentWordIndex].word.synonyms?.v?.isNotEmpty() == true) {
+                                                    if (wordDetail.word.synonyms?.v?.isNotEmpty() == true) {
                                                         Text(
                                                             text = "v.",
                                                             color = White,
@@ -448,7 +477,7 @@ fun LearnWordScreen(
                                                             modifier = Modifier.padding(vertical = 2.dp),
                                                             fontWeight = FontWeight.Bold
                                                         )
-                                                        wordDetailList[currentWordIndex].word.synonyms?.v?.forEach { synonym ->
+                                                        wordDetail.word.synonyms?.v?.forEach { synonym ->
                                                             Text(
                                                                 text = synonym,
                                                                 color = White,
@@ -461,7 +490,7 @@ fun LearnWordScreen(
                                                         }
                                                     }
 
-                                                    if (wordDetailList[currentWordIndex].word.synonyms?.n?.isNotEmpty() == true) {
+                                                    if (wordDetail.word.synonyms?.n?.isNotEmpty() == true) {
                                                         Text(
                                                             text = "n.",
                                                             color = White,
@@ -469,7 +498,7 @@ fun LearnWordScreen(
                                                             modifier = Modifier.padding(vertical = 2.dp),
                                                             fontWeight = FontWeight.Bold
                                                         )
-                                                        wordDetailList[currentWordIndex].word.synonyms?.n?.forEach { synonym ->
+                                                        wordDetail.word.synonyms?.n?.forEach { synonym ->
                                                             Text(
                                                                 text = synonym,
                                                                 color = White,
@@ -484,7 +513,7 @@ fun LearnWordScreen(
                                                 }
 
                                                 "反义词" -> { // 反义词
-                                                    if (wordDetailList[currentWordIndex].word.antonyms?.a?.isNotEmpty() == true) {
+                                                    if (wordDetail.word.antonyms?.a?.isNotEmpty() == true) {
                                                         Text(
                                                             text = "a.",
                                                             color = White,
@@ -492,7 +521,7 @@ fun LearnWordScreen(
                                                             modifier = Modifier.padding(vertical = 2.dp),
                                                             fontWeight = FontWeight.Bold
                                                         )
-                                                        wordDetailList[currentWordIndex].word.antonyms?.a?.forEach { antonym ->
+                                                        wordDetail.word.antonyms?.a?.forEach { antonym ->
                                                             Text(
                                                                 text = antonym,
                                                                 color = White,
@@ -505,7 +534,7 @@ fun LearnWordScreen(
                                                         }
                                                     }
 
-                                                    if (wordDetailList[currentWordIndex].word.antonyms?.v?.isNotEmpty() == true) {
+                                                    if (wordDetail.word.antonyms?.v?.isNotEmpty() == true) {
                                                         Text(
                                                             text = "v.",
                                                             color = White,
@@ -513,7 +542,7 @@ fun LearnWordScreen(
                                                             modifier = Modifier.padding(vertical = 2.dp),
                                                             fontWeight = FontWeight.Bold
                                                         )
-                                                        wordDetailList[currentWordIndex].word.antonyms?.v?.forEach { antonym ->
+                                                        wordDetail.word.antonyms?.v?.forEach { antonym ->
                                                             Text(
                                                                 text = antonym,
                                                                 color = White,
@@ -526,7 +555,7 @@ fun LearnWordScreen(
                                                         }
                                                     }
 
-                                                    if (wordDetailList[currentWordIndex].word.antonyms?.n?.isNotEmpty() == true) {
+                                                    if (wordDetail.word.antonyms?.n?.isNotEmpty() == true) {
                                                         Text(
                                                             text = "n.",
                                                             color = White,
@@ -534,7 +563,7 @@ fun LearnWordScreen(
                                                             modifier = Modifier.padding(vertical = 2.dp),
                                                             fontWeight = FontWeight.Bold
                                                         )
-                                                        wordDetailList[currentWordIndex].word.antonyms?.n?.forEach { antonym ->
+                                                        wordDetail.word.antonyms?.n?.forEach { antonym ->
                                                             Text(
                                                                 text = antonym,
                                                                 color = White,
@@ -577,16 +606,8 @@ fun LearnWordScreen(
                             Button(
                                 onClick = {
                                     showDetailScreen = false
-                                    if (learnedNum == 10) {
-                                        // 已经学完10个单词
-                                        learnViewmodel.uploadLearnedWords()
-                                        navigateToLearnWordFinished(
-                                            learnViewmodel.wordDetailList.value.map { it.word.word ?: "" }
-                                        )
-                                    } else {
                                         // 继续学习下一个单词
                                         learnViewmodel.nextWord()
-                                    }
                                 },
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = Color.White.copy(alpha = 0.3f),
@@ -601,28 +622,31 @@ fun LearnWordScreen(
                             }
                         }
                     }
+
                 }
-            }
         }
     }
 }
 
 @Composable
 private fun ColumnScope.Stage0(
-    wordDetailList: MutableList<LearnWordInfo>,
-    currentWordIndex: Int,
+    wordDetail: LearnWordInfo,
     onCorrect: () -> Unit,
     onWrong: () -> Unit
 ) {
     // 用于跟踪选中的选项和反馈状态
-    var selectedOptionIndex by remember { mutableStateOf(-1) }
+    var selectedOptionIndex by remember { mutableIntStateOf(-1) }
     var isCorrect by remember { mutableStateOf(false) }
     var showFeedback by remember { mutableStateOf(false) }
 
     // 正确的选项索引
-    val correctIndex = wordDetailList[currentWordIndex].similarWords.indexOfFirst {
-        it.word == wordDetailList[currentWordIndex].word.word
+    val correctIndex = wordDetail.similarWords.indexOfFirst {
+        it.word == wordDetail.word.word
     }
+    Log.d(
+        "Stage0",
+        "Current word: ${wordDetail.word.word}, Correct index: $correctIndex"
+    )
 
     // 启动反馈效果后延迟执行
     LaunchedEffect(showFeedback) {
@@ -641,7 +665,7 @@ private fun ColumnScope.Stage0(
         modifier = Modifier.padding(start = 13.dp)
     ) {
         Text(
-            text = wordDetailList[currentWordIndex].word.word ?: "",
+            text = wordDetail.word.word ?: "",
             color = White,
             fontSize = 46.sp,
             fontWeight = FontWeight.Bold,
@@ -677,7 +701,7 @@ private fun ColumnScope.Stage0(
             Spacer(modifier = Modifier.width(10.dp))
             // 音标
             Text(
-                text = wordDetailList[currentWordIndex].word.phonetic ?: "",
+                text = wordDetail.word.phonetic ?: "",
                 color = LightGrey,
                 fontSize = 14.sp,
             )
@@ -691,7 +715,7 @@ private fun ColumnScope.Stage0(
         fontSize = 13.sp,
     )
 
-    wordDetailList[currentWordIndex].similarWords.forEachIndexed { index, option ->
+    wordDetail.similarWords.forEachIndexed { index, option ->
         Spacer(modifier = Modifier.height(13.dp))
 
         Box(
@@ -717,11 +741,15 @@ private fun ColumnScope.Stage0(
                             color = White,
                             fontSize = 16.sp,
                         )
-                        Text(
-                            text = part[1],
-                            color = LightGrey,
-                            fontSize = 16.sp,
-                        )
+                        if (
+                            part.size > 1
+                        ) {
+                            Text(
+                                text = part[1],
+                                color = LightGrey,
+                                fontSize = 16.sp,
+                            )
+                        }
                     }
                 }
             }
@@ -772,20 +800,23 @@ private fun ColumnScope.Stage0(
 
 @Composable
 private fun ColumnScope.Stage1(
-    wordDetailList: MutableList<LearnWordInfo>,
-    currentWordIndex: Int,
+    wordDetail: LearnWordInfo,
     onCorrect: () -> Unit,
     onWrong: () -> Unit
 ) {
     // 用于跟踪选中的选项和反馈状态
-    var selectedOptionIndex by remember { mutableStateOf(-1) }
+    var selectedOptionIndex by remember { mutableIntStateOf(-1) }
     var isCorrect by remember { mutableStateOf(false) }
     var showFeedback by remember { mutableStateOf(false) }
 
     // 正确的选项索引
-    val correctIndex = wordDetailList[currentWordIndex].similarWords.indexOfFirst {
-        it.word == wordDetailList[currentWordIndex].word.word
+    val correctIndex = wordDetail.similarWords.indexOfFirst {
+        it.word == wordDetail.word.word
     }
+    Log.d(
+        "Stage1",
+        "Current word: ${wordDetail.word.word}, Correct index: $correctIndex"
+    )
 
     // 启动反馈效果后延迟执行
     LaunchedEffect(showFeedback) {
@@ -804,8 +835,7 @@ private fun ColumnScope.Stage1(
         modifier = Modifier.padding(start = 13.dp)
     ) {
         // 显示中文释义
-        wordDetailList[currentWordIndex].word.explanations?.forEach {
-            val parts = it.split(".")
+        wordDetail.word.explanations?.forEach {
             Text(
                 text = it,
                 color = White,
@@ -822,7 +852,7 @@ private fun ColumnScope.Stage1(
         color = LightGrey,
         fontSize = 13.sp,
     )
-    wordDetailList[currentWordIndex].similarWords.forEachIndexed { index, option ->
+    wordDetail.similarWords.forEachIndexed { index, option ->
         Spacer(modifier = Modifier.height(13.dp))
 
         Box(
@@ -895,8 +925,7 @@ private fun ColumnScope.Stage1(
 
 @Composable
 private fun ColumnScope.Stage2(
-    wordDetailList: MutableList<LearnWordInfo>,
-    currentWordIndex: Int,
+    wordDetail: LearnWordInfo,
     onCorrect: () -> Unit,
     onWrong: () -> Unit
 ) {
@@ -905,7 +934,7 @@ private fun ColumnScope.Stage2(
         modifier = Modifier.padding(start = 13.dp)
     ) {
         Text(
-            text = wordDetailList[currentWordIndex].word.word ?: "",
+            text = wordDetail.word.word ?: "",
             color = White,
             fontSize = 46.sp,
             fontWeight = FontWeight.Bold,
@@ -941,7 +970,7 @@ private fun ColumnScope.Stage2(
             Spacer(modifier = Modifier.width(10.dp))
             // 音标
             Text(
-                text = wordDetailList[currentWordIndex].word.phonetic ?: "",
+                text = wordDetail.word.phonetic ?: "",
                 color = LightGrey,
                 fontSize = 14.sp,
             )
@@ -1002,8 +1031,7 @@ private fun ColumnScope.Stage2(
 
 @Composable
 private fun ColumnScope.Stage3(
-    wordDetailList: MutableList<LearnWordInfo>,
-    currentWordIndex: Int,
+    wordDetail: LearnWordInfo,
     onCorrect: () -> Unit,
     onWrong: () -> Unit
 ) {
@@ -1012,7 +1040,7 @@ private fun ColumnScope.Stage3(
         modifier = Modifier.padding(start = 13.dp)
     ) {
         // 显示中文释义
-        wordDetailList[currentWordIndex].word.explanations?.forEach {
+        wordDetail.word.explanations?.forEach {
             val parts = it.split(".")
             Row(
                 verticalAlignment = Alignment.Bottom
@@ -1023,12 +1051,14 @@ private fun ColumnScope.Stage3(
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Text(
-                    text = parts[1],
-                    color = White,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
-                )
+                if (parts.size > 1) {
+                    Text(
+                        text = parts[1],
+                        color = White,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
             }
             Spacer(modifier = Modifier.height(8.dp))
         }
