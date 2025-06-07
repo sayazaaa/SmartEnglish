@@ -69,13 +69,23 @@ class WordBookDetail(
 @Serializable
 object LearnedWord
 
-@Serializable
-class LearnWordFinished(
-    val wordList:List<String>
-)
 
 @Serializable
 object LearnWord
+
+@Serializable
+class LearnWordFinished(
+    val wordList: List<String>
+)
+
+
+@Serializable
+object ReviewWord
+
+@Serializable
+class ReviewWordFinished(
+    val wordList: List<String>
+)
 
 
 
@@ -145,6 +155,9 @@ fun MainNav(
             } },
             navigateToDashBoard = { navController.navigate(DashBoard) },
             navigateToLearnWord = { navController.navigate(LearnWord) },
+            navigateToReviewWord = {
+                navController.navigate(ReviewWord)
+            }
         ) }
         composable<Profile> { ProfileScreen(
             navigateBack = { navController.popBackStack()},
@@ -339,10 +352,37 @@ fun MainNav(
                 } }
             )
         }
+        composable<ReviewWordFinished> { backStackEntry ->
+            val wordFinished = backStackEntry.arguments?.let {
+                ReviewWordFinished(it.getStringArray("wordList")?.toList() ?: emptyList())
+            }
+            ReviewWordFinishedScreen(
+                words = wordFinished?.wordList ?: emptyList(),
+                navigationToHome = {
+                    navController.navigate(Home) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                navigationToReview = {
+                    navController.navigate(ReviewWord) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
+        }
         composable<LearnWord> {
             LearnWordScreen(
                 navigateToLearnWordFinished = { wordList ->
                     navController.navigate(LearnWordFinished(wordList))
+                },
+                navigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<ReviewWord> {
+            ReviewWordScreen(
+                navigateToReviewWordFinished = { wordList ->
+                    navController.navigate(ReviewWordFinished(wordList))
                 },
                 navigateBack = { navController.popBackStack() }
             )

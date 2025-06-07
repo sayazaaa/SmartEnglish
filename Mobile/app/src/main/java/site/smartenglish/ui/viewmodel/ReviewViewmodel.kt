@@ -16,7 +16,7 @@ import site.smartenglish.repository.WordSetRepository
 import javax.inject.Inject
 
 // 单词列表中每个单词所需数据
-data class LearnWordInfo(
+data class ReviewWordInfo(
     // 单词信息
     val word: GetWordResponse = GetWordResponse(),
     // 相似词 四个
@@ -28,21 +28,21 @@ data class LearnWordInfo(
 
 
 @HiltViewModel
-class LearnViewmodel @Inject constructor(
+class ReviewViewmodel @Inject constructor(
     private val wordRepository: WordRepository,
     private val wordSetRepository: WordSetRepository,
     private val learnedRepository: LearnedRepository,
 
-) : ViewModel() {
-    private val wordDetailList = MutableList<LearnWordInfo>(0) { LearnWordInfo() }
-    private val learnedList = MutableList<String>(0) { "" }
+    ) : ViewModel() {
+    private val wordDetailList = MutableList<ReviewWordInfo>(0) { ReviewWordInfo() }
+    private val reviewedList = MutableList<String>(0) { "" }
     private var currentWordIndex = 0
 
-    private val _wordDetail = MutableStateFlow<LearnWordInfo>(LearnWordInfo())
+    private val _wordDetail = MutableStateFlow<ReviewWordInfo>(ReviewWordInfo())
     val wordDetail = _wordDetail.asStateFlow()
 
-    private val _learnedWordNum = MutableStateFlow(0)
-    val learnedWordNum = _learnedWordNum.asStateFlow()
+    private val _reviewedWordNum = MutableStateFlow(0)
+    val reviewedWordNum = _reviewedWordNum.asStateFlow()
 
     private val _isLoading = MutableStateFlow(true)
     val isLoading = _isLoading.asStateFlow()
@@ -53,19 +53,22 @@ class LearnViewmodel @Inject constructor(
     private val _snackBar = MutableStateFlow("")
     val snackBar = _snackBar.asStateFlow()
 
-    private  val _navigateToFinish = MutableStateFlow(false)
+    private val _navigateToFinish = MutableStateFlow(false)
     val navigateToFinish = _navigateToFinish.asStateFlow()
 
     private suspend fun getWordDetail(word: String, stage: Int) {
         try {
             val wordInfo = wordRepository.getWordInfo(word)
             wordDetailList.add(
-                LearnWordInfo(
+                ReviewWordInfo(
                     word = wordInfo,
                     similarWords = getSimilarWords(word).toMutableList().apply {
                         add(wordInfo) // 添加当前单词作为选项之一
                         shuffle() // 打乱选项顺序
-                        Log.d("LearnViewmodel", "获取相似词: ${this.joinToString { it.word ?: "" }}")
+                        Log.d(
+                            "ReviewViewmodel",
+                            "获取相似词: ${this.joinToString { it.word ?: "" }}"
+                        )
                     },
                     stage = stage
                 )
@@ -80,7 +83,7 @@ class LearnViewmodel @Inject constructor(
         viewModelScope.launch {
             _isLoading.value = true
             try {
-                val list = wordSetRepository.getWordSet("learn")
+                val list = wordSetRepository.getWordSet("review")
                 if (list?.isEmpty() == true) {
                     _snackBar.value = "词书中没有可学单词！"
                     _navigateBackSelection.value = true
@@ -170,13 +173,13 @@ class LearnViewmodel @Inject constructor(
         // 如果stage达到4，上传单词并获取新词
         if (newStage == 4) {
             viewModelScope.launch {
-                uploadWord(0,currentWord)
+                uploadWord(0, currentWord)
             }
         }
     }
 
-    private suspend fun uploadWord(retry:Int,currentWord: LearnWordInfo) {
-        if (retry>3) {
+    private suspend fun uploadWord(retry: Int, currentWord: ReviewWordInfo) {
+        if (retry > 3) {
             _snackBar.value = "网络连接失败，请检查网络后重试"
             _navigateBackSelection.value = true
             return
@@ -187,43 +190,43 @@ class LearnViewmodel @Inject constructor(
             val response = learnedRepository.updateLearnedWord(
                 word = currentWord.word.word ?: "",
                 reviewDate = java.time.LocalDate.now().plusDays(1).toString(),
-                status = "learn"
+                status = "review"
             )
-            learnedList.add(currentWord.word.word ?: "")
-            _learnedWordNum.value += 1
-            Log.d("LearnViewmodel", "message: ${response.message}, new_word: ${response.new_word}")
+            reviewedList.add(currentWord.word.word ?: "")
+            _reviewedWordNum.value += 1
+            Log.d("ReviewViewmodel", "message: ${response.message}, new_word: ${response.new_word}")
             if (!response.new_word.isNullOrBlank()) {
                 // 添加新单词到学习列表
                 getWordDetail(response.new_word, 0)
                 // 从列表中移除当前已学完的单词
                 wordDetailList.removeIf { it.word.word == currentWord.word.word }
                 Log.d(
-                    "LearnViewmodel",
+                    "ReviewViewmodel",
                     "上传单词${currentWord.word.word}成功，添加新单词: ${response.new_word}"
                 )
 
-                if (_learnedWordNum.value == 10) {
-                    uploadLearnedWords()
+                if (_reviewedWordNum.value == 10) {
+                    uploadReviewedWords()
                     _navigateToFinish.value = true
                 }
             } else {
                 wordDetailList.removeIf { it.word.word == currentWord.word.word }
-                Log.d("LearnViewmodel", "没有新单词")
+                Log.d("ReviewViewmodel", "没有新单词")
                 if (wordDetailList.size == 0) {
                     // 如果列表为空，触发返回操作
                     _navigateToFinish.value = true
-                    _snackBar.value = "恭喜你，已学完词书所有单词！"
+                    _snackBar.value = "今天没有可以复习的单词了！"
                     return
                 }
-                if (_learnedWordNum.value == 10) {
-                    uploadLearnedWords()
+                if (_reviewedWordNum.value == 10) {
+                    uploadReviewedWords()
                     _navigateToFinish.value = true
                 }
             }
 
 
         } catch (e: Exception) {
-            Log.e("LearnViewmodel", "单词上传失败: ${e.message}")
+            Log.e("ReviewViewmodel", "单词上传失败: ${e.message}")
             // 上传失败，从服务器获取最新的 wordset 并进行
             var retryCount = 0
             var serverWordSet: GetWordSetResponse = emptyList()
@@ -232,11 +235,11 @@ class LearnViewmodel @Inject constructor(
             // 尝试最多3次获取
             while (retryCount < 3 && !success) {
                 try {
-                    serverWordSet = wordSetRepository.getWordSet("learn")
+                    serverWordSet = wordSetRepository.getWordSet("review")
                     success = true
                 } catch (e: Exception) {
                     retryCount++
-                    Log.w("LearnViewmodel", "获取词库失败，重试第${retryCount}次: ${e.message}")
+                    Log.w("ReviewViewmodel", "获取词库失败，重试第${retryCount}次: ${e.message}")
                     if (retryCount < 3) {
                         // 延迟一段时间再重试
                         kotlinx.coroutines.delay(1000)
@@ -257,7 +260,7 @@ class LearnViewmodel @Inject constructor(
 
             if (serverWords == localWords) {
                 // 如果单词列表一致，只需重试上传当前单词
-                uploadWord(retry+1,currentWord)
+                uploadWord(retry + 1, currentWord)
             } else {
                 // 单词列表不一致，需要重建列表
                 // 清空当前列表，准备重建
@@ -279,17 +282,17 @@ class LearnViewmodel @Inject constructor(
                             try {
                                 getWordDetail(word, serverStage)
                             } catch (e: Exception) {
-                                Log.e("LearnViewmodel", "同步单词详情失败: ${e.message}")
+                                Log.e("ReviewViewmodel", "同步单词详情失败: ${e.message}")
                             }
                         }
                     }
                 }
-                learnedList.add(currentWord.word.word ?: "")
-                _learnedWordNum.value += 1
+                reviewedList.add(currentWord.word.word ?: "")
+                _reviewedWordNum.value += 1
 
                 try {
                     wordSetRepository.updateWordSet(
-                        type = "learn",
+                        type = "review",
                         putWordSetRequest = wordDetailList.map {
                             PutWordSetRequestElement(
                                 word = it.word.word ?: "",
@@ -297,16 +300,14 @@ class LearnViewmodel @Inject constructor(
                             )
                         }
                     )
-                }catch (e: Exception) {
-                    Log.e("LearnViewmodel", "上传词库失败: ${e.message}")
+                } catch (e: Exception) {
+                    Log.e("ReviewViewmodel", "上传词库失败: ${e.message}")
                 }
             }
-        }finally {
+        } finally {
             _isLoading.value = false
         }
     }
-
-
 
 
     fun passWord() {
@@ -335,21 +336,21 @@ class LearnViewmodel @Inject constructor(
     }
 
     //学到10个触发上传
-    fun uploadLearnedWords() {
+    fun uploadReviewedWords() {
         viewModelScope.launch {
-            if (_learnedWordNum.value >= 10) {
+            if (_reviewedWordNum.value >= 10) {
                 try {
                     wordSetRepository.updateWordSet(
-                        type = "learn", putWordSetRequest = wordDetailList.map {
+                        type = "review", putWordSetRequest = wordDetailList.map {
                             PutWordSetRequestElement(
                                 word = it.word.word ?: "",
                                 stage = it.stage,
                             )
                         }
                     )
-                    _learnedWordNum.value = 0 // 重置已学单词数量
+                    _reviewedWordNum.value = 0 // 重置已学单词数量
                 } catch (e: Exception) {
-                    Log.e("LearnViewmodel", "上传已学单词失败: ${e.message}")
+                    Log.e("ReviewViewmodel", "上传已学单词失败: ${e.message}")
                 }
             }
         }
@@ -359,8 +360,8 @@ class LearnViewmodel @Inject constructor(
         _snackBar.value = ""
     }
 
-    fun getLearnedWordList(): List<String> {
-        return learnedList
+    fun getReviewedWordList(): List<String> {
+        return reviewedList
     }
 
 

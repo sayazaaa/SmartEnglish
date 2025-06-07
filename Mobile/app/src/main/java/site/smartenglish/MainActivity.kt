@@ -9,10 +9,7 @@ import androidx.compose.material3.Surface
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import dagger.hilt.android.AndroidEntryPoint
 import dagger.hilt.android.HiltAndroidApp
-import site.smartenglish.ui.LearnWordFinishedScreen
-import site.smartenglish.ui.LearnWordScreen
 import site.smartenglish.ui.MainScreen
-import site.smartenglish.ui.WordDetailScreen
 import site.smartenglish.ui.theme.SmartEnglishTheme
 
 @AndroidEntryPoint

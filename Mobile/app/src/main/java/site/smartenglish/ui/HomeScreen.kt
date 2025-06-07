@@ -87,6 +87,7 @@ fun HomeScreen(
     navigateToArticle: () -> Unit = {},
     navigateToDashBoard: () -> Unit = {},
     navigateToLearnWord: () -> Unit,
+    navigateToReviewWord: () -> Unit,
     //TODO 导航到听写
     //TODO 导航到单词详情
     homeViewmodel: HomeViewmodel = hiltViewModel(),
@@ -197,7 +198,7 @@ fun HomeScreen(
             bitmap = bitmap,
             blurRadius = 10.dp,
             onClick = {
-                //TODO
+                navigateToReviewWord()
             }
         ) { buttonContent("Review", reviewNum) }
 
