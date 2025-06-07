@@ -1,6 +1,7 @@
 package site.smartenglish.ui
 
 import android.graphics.Paint.Align
+import android.media.MediaPlayer
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,6 +12,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -31,13 +33,36 @@ fun DictationScreen(
     val wordTypes = dictationViewModel.currentWordType.collectAsState().value
     val soundType = dictationViewModel.currentSoundType.collectAsState().value
     val soundUrl = dictationViewModel.currentSoundUrl.collectAsState().value
+    val wordPlayedTime = dictationViewModel.currentWordPlayedTime.collectAsState().value
+    val currentWordIndex = dictationViewModel.currentWordIndex.collectAsState().value
 
-    var currentWordIndex by remember { mutableIntStateOf(0) }
     var isWordVisible by remember { mutableStateOf(false) }
     var isPlaying by remember { mutableStateOf(false) }
 
     val textColor=Color.White
+    val mediaPlayer = remember { MediaPlayer() }
     val darkTextColor = Color.White.copy(alpha = 0.7f)
+
+    if(isPlaying && !mediaPlayer.isPlaying) {
+        if(wordPlayedTime < 3) {
+            mediaPlayer.seekTo(0)
+            mediaPlayer.start()
+        } else {
+            dictationViewModel.moveToNextWord()
+        }
+    }
+
+    DisposableEffect(Unit) {
+        mediaPlayer.apply {
+            setDataSource(soundUrl)
+            prepareAsync() // 异步准备防止阻塞UI
+            setOnPreparedListener { mp -> /* 准备完成 */ }
+        }
+
+        onDispose {
+            mediaPlayer.release()
+        }
+    }
 
     Row(
         modifier = Modifier.fillMaxWidth()
@@ -112,7 +137,8 @@ fun DictationScreen(
                                 )
                                 IconButton(
                                     onClick = {
-                                        // TODO 播放读音逻辑
+                                        mediaPlayer.seekTo(0)
+                                        mediaPlayer.start()
                                     },
                                     modifier = Modifier.padding(0.dp, 0.dp, 4.dp, 0.dp)
                                 ) {
@@ -196,7 +222,7 @@ fun DictationScreen(
             horizontalArrangement = Arrangement.SpaceEvenly,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { /* 打开菜单 */ }) {
+            IconButton(onClick = { /* TODO 打开菜单 */ }) {
                 Icon(
                     imageVector = Icons.Default.Menu,
                     tint=textColor,
@@ -214,7 +240,12 @@ fun DictationScreen(
             }
             IconButton(onClick = {
                 isPlaying = !isPlaying
-                /* TODO 具体播放逻辑 */
+                if (isPlaying) {
+                    mediaPlayer.seekTo(0)
+                    mediaPlayer.start()
+                } else {
+                    mediaPlayer.pause()
+                }
             }) {
                 Icon(
                     imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,

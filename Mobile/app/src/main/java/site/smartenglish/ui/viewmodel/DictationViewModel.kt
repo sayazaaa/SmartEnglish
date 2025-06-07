@@ -42,12 +42,16 @@ class DictationViewModel @Inject constructor(
     private val _currentSoundUrl = MutableStateFlow("")
     val currentSoundUrl = _currentSoundUrl.asStateFlow()
 
+    private val _currentWordPlayedTime = MutableStateFlow(0)
+    val currentWordPlayedTime = _currentWordPlayedTime.asStateFlow()
+
     val currentWord: String
         get() = _currentWords.value.getOrNull(_currentWordIndex.value) ?: ""
 
     fun moveToLastWord() {
         if (_currentWords.value.isNotEmpty() && _currentWordIndex.value > 0) {
             _currentWordIndex.value --
+            _currentWordPlayedTime.value = 0
             viewModelScope.launch {
                 UpdateCurrent()
             }
@@ -57,6 +61,7 @@ class DictationViewModel @Inject constructor(
     fun moveToNextWord() {
         if (_currentWords.value.isNotEmpty() && _currentWordIndex.value < _currentWords.value.size - 1) {
             _currentWordIndex.value ++
+            _currentWordPlayedTime.value = 0
             viewModelScope.launch {
                 UpdateCurrent()
             }
@@ -101,5 +106,9 @@ class DictationViewModel @Inject constructor(
                 e.printStackTrace()
             }
         }
+    }
+
+    fun wordPlayed() {
+        _currentWordPlayedTime.value += 1
     }
 }
