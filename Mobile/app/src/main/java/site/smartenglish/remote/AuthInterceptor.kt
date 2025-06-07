@@ -29,7 +29,6 @@ class AuthInterceptor @Inject constructor(
         }
         // 输出完整的请求信息
         Log.d("AuthInterceptor", "Request: ${request.method} ${request.url}")
-        Log.d("AuthInterceptor", "Headers: ${request.headers}")
         request.body?.let {
             Log.d("AuthInterceptor", "Body size: ${it.contentLength()} bytes, Type: ${it.contentType()}")
             val requestBody = request.body

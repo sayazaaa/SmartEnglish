@@ -1,4 +1,4 @@
-package site.smartenglish.ui.viewmodel
+package site.smartenglish.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,10 +30,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import site.smartenglish.ui.theme.DarkGrey
-import site.smartenglish.ui.theme.Grey
-import site.smartenglish.ui.theme.LightGrey
 import site.smartenglish.ui.theme.Orange
 import site.smartenglish.ui.theme.White
+import site.smartenglish.ui.viewmodel.WordBookViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

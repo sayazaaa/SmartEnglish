@@ -17,5 +17,6 @@ data class CreateNWordBookRequest(
 
 data class AddNWordBookWordRequest(
     val word: String,
-    val nwordbook: Int
+    val nwordbook: Int,
+    val method:String
 )

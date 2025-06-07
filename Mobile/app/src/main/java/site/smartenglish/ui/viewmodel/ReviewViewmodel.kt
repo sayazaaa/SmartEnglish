@@ -6,7 +6,9 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import site.smartenglish.manager.DataStoreManager
 import site.smartenglish.remote.data.GetWordResponse
 import site.smartenglish.remote.data.GetWordSetResponse
 import site.smartenglish.remote.data.PutWordSetRequestElement
@@ -32,7 +34,7 @@ class ReviewViewmodel @Inject constructor(
     private val wordRepository: WordRepository,
     private val wordSetRepository: WordSetRepository,
     private val learnedRepository: LearnedRepository,
-
+    private val dataStoreManager: DataStoreManager
     ) : ViewModel() {
     private val wordDetailList = MutableList<ReviewWordInfo>(0) { ReviewWordInfo() }
     private val reviewedList = MutableList<String>(0) { "" }
@@ -55,6 +57,17 @@ class ReviewViewmodel @Inject constructor(
 
     private val _navigateToFinish = MutableStateFlow(false)
     val navigateToFinish = _navigateToFinish.asStateFlow()
+
+    // 当前学习目标数量
+    private val _targetLearnCount = MutableStateFlow(10)
+    val targetLearnCount = _targetLearnCount.asStateFlow()
+
+    init {
+        // 初始化时从DataStore读取设置
+        viewModelScope.launch {
+            _targetLearnCount.value = dataStoreManager.getLearnWordsCountSync()
+        }
+    }
 
     private suspend fun getWordDetail(word: String, stage: Int) {
         try {
@@ -85,7 +98,7 @@ class ReviewViewmodel @Inject constructor(
             try {
                 val list = wordSetRepository.getWordSet("review")
                 if (list?.isEmpty() == true) {
-                    _snackBar.value = "词书中没有可学单词！"
+                    _snackBar.value = "没有可复习单词！"
                     _navigateBackSelection.value = true
                     return@launch
                 }
@@ -132,53 +145,48 @@ class ReviewViewmodel @Inject constructor(
 
         // 更新当前单词信息
         _wordDetail.value = run {
-            // 过滤掉当前单词和stage为4的单词
-            val availableWords = wordDetailList.filterIndexed { index, wordInfo ->
+            // 创建包含原始索引的Pair列表
+            val eligibleEntries = wordDetailList.mapIndexed { index, wordInfo ->
+                index to wordInfo
+            }.filter { (index, wordInfo) ->
                 index != currentIndex && wordInfo.stage < 4
             }
 
-            // 如果没有可用单词，则返回当前单词
-            if (availableWords.isEmpty()) {
-                return@run wordDetailList[currentIndex]
+
+            if (eligibleEntries.isEmpty()) return@run wordDetailList[currentIndex]
+
+            // 计算权重线性增长
+            val weights = eligibleEntries.map { (_, wordInfo) ->
+                (wordInfo.stage + 1).toDouble()  // 改为线性权重
             }
 
-            // 根据stage计算权重
-            val weights = availableWords.mapIndexed { i, wordInfo ->
-                // stage越高权重越大，增加出现概率
-                val weight = (wordInfo.stage + 1) * (wordInfo.stage + 1) // 平方增长以加强差异
-                i to weight.toDouble()
-            }
-
-            // 计算总权重
-            val totalWeight = weights.sumOf { it.second }
-            // 生成0到totalWeight之间的随机数
+            val totalWeight = weights.sum()
             val random = Math.random() * totalWeight
-            // 根据权重随机选择单词
-            var cumulativeWeight = 0.0
-            var selectedIndex = 0 // 默认选第一个
 
-            for ((i, weight) in weights) {
-                cumulativeWeight += weight
-                if (random <= cumulativeWeight) {
-                    // 选中当前索引
-                    selectedIndex = i
+            var accumulated = 0.0
+            var selectedEntry = eligibleEntries.first() // 默认值
+
+            for (i in weights.indices) {
+                accumulated += weights[i]
+                if (random <= accumulated) {
+                    selectedEntry = eligibleEntries[i]
                     break
                 }
             }
 
-            // 找到选中单词在原列表中的索引
-            currentWordIndex = wordDetailList.indexOf(availableWords[selectedIndex])
-            wordDetailList[currentWordIndex]
+            // 直接使用Pair中存储的原始索引
+            currentWordIndex = selectedEntry.first
+            selectedEntry.second  // 返回单词对象
         }
         // 如果stage达到4，上传单词并获取新词
         if (newStage == 4) {
             viewModelScope.launch {
-                uploadWord(0, currentWord)
+                uploadWord(0, currentWord,currentIndex)
             }
         }
     }
 
-    private suspend fun uploadWord(retry: Int, currentWord: ReviewWordInfo) {
+    private suspend fun uploadWord(retry: Int, currentWord: ReviewWordInfo, removeIndex: Int) {
         if (retry > 3) {
             _snackBar.value = "网络连接失败，请检查网络后重试"
             _navigateBackSelection.value = true
@@ -199,18 +207,34 @@ class ReviewViewmodel @Inject constructor(
                 // 添加新单词到学习列表
                 getWordDetail(response.new_word, 0)
                 // 从列表中移除当前已学完的单词
-                wordDetailList.removeIf { it.word.word == currentWord.word.word }
+                // 直接通过索引移除而不是根据内容移除
+                if (removeIndex < wordDetailList.size) {
+                    wordDetailList.removeAt(removeIndex)
+                }
+
+                // 如果新索引在被移除索引之后，需要调整
+                if (removeIndex <= currentWordIndex) {
+                    currentWordIndex = (currentWordIndex - 1).coerceAtLeast(0)
+                }
                 Log.d(
                     "ReviewViewmodel",
                     "上传单词${currentWord.word.word}成功，添加新单词: ${response.new_word}"
                 )
 
-                if (_reviewedWordNum.value == 10) {
+                if (_reviewedWordNum.value == _targetLearnCount.value) {
                     uploadReviewedWords()
                     _navigateToFinish.value = true
                 }
             } else {
-                wordDetailList.removeIf { it.word.word == currentWord.word.word }
+                // 直接通过索引移除而不是根据内容移除
+                if (removeIndex < wordDetailList.size) {
+                    wordDetailList.removeAt(removeIndex)
+                }
+
+                // 如果新索引在被移除索引之后，需要调整
+                if (removeIndex <= currentWordIndex) {
+                    currentWordIndex = (currentWordIndex - 1).coerceAtLeast(0)
+                }
                 Log.d("ReviewViewmodel", "没有新单词")
                 if (wordDetailList.size == 0) {
                     // 如果列表为空，触发返回操作
@@ -218,7 +242,7 @@ class ReviewViewmodel @Inject constructor(
                     _snackBar.value = "今天没有可以复习的单词了！"
                     return
                 }
-                if (_reviewedWordNum.value == 10) {
+                if (_reviewedWordNum.value == _targetLearnCount.value) {
                     uploadReviewedWords()
                     _navigateToFinish.value = true
                 }
@@ -260,7 +284,7 @@ class ReviewViewmodel @Inject constructor(
 
             if (serverWords == localWords) {
                 // 如果单词列表一致，只需重试上传当前单词
-                uploadWord(retry + 1, currentWord)
+                uploadWord(retry + 1, currentWord,removeIndex)
             } else {
                 // 单词列表不一致，需要重建列表
                 // 清空当前列表，准备重建
@@ -311,6 +335,11 @@ class ReviewViewmodel @Inject constructor(
 
 
     fun passWord() {
+        // 添加边界检查
+        if (currentWordIndex < 0 || currentWordIndex >= wordDetailList.size) {
+            Log.e("ReviewViewmodel", "passWord: 索引越界 currentWordIndex=$currentWordIndex, listSize=${wordDetailList.size}")
+            return
+        }
         val currentWord = wordDetailList[currentWordIndex]
         val newStage = currentWord.stage + 1
         //shuffle相似词
@@ -322,6 +351,12 @@ class ReviewViewmodel @Inject constructor(
     }
 
     fun failWord() {
+        // 添加边界检查
+        if (currentWordIndex < 0 || currentWordIndex >= wordDetailList.size) {
+            Log.e("ReviewViewmodel", "failWord: 索引越界 currentWordIndex=$currentWordIndex, listSize=${wordDetailList.size}")
+            return
+        }
+
         val currentWord = wordDetailList[currentWordIndex]
 
         // 更新错题次数
@@ -335,10 +370,10 @@ class ReviewViewmodel @Inject constructor(
 
     }
 
-    //学到10个触发上传
+    //学到 个触发上传
     fun uploadReviewedWords() {
         viewModelScope.launch {
-            if (_reviewedWordNum.value >= 10) {
+            if (_reviewedWordNum.value >= _targetLearnCount.value) {
                 try {
                     wordSetRepository.updateWordSet(
                         type = "review", putWordSetRequest = wordDetailList.map {

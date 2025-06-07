@@ -66,6 +66,8 @@ fun DashBoardScreen(
     navigateToWordBookDetail: (Int) -> Unit = {},
     navigateToChangeWordBook: () -> Unit = {},
     navigateToLearnedWords:()->Unit = {},
+    navigateToNWordBook:()->Unit,
+    navigateToSetting:()->Unit = {},
     dashBoardViewmodel: DashBoardViewmodel = hiltViewModel()
 ) {
     val wordBookCover = dashBoardViewmodel.wordbookUrl.collectAsState().value
@@ -408,7 +410,7 @@ fun DashBoardScreen(
                 ) {
                     // 生词本标签
                     functionItem("生词本") {
-                        // TODO: 处理点击事件
+                        navigateToNWordBook()
                     }
                     Spacer(modifier = Modifier.height(18.dp))
                     // 听写标签
@@ -418,7 +420,7 @@ fun DashBoardScreen(
                     Spacer(modifier = Modifier.height(18.dp))
                     // 设置标签
                     functionItem("设置") {
-                        // TODO: 处理点击事件
+                        navigateToSetting()
                     }
                 }
             }

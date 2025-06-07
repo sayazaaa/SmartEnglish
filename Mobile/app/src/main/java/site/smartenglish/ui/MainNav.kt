@@ -17,75 +17,166 @@ import androidx.navigation.compose.rememberNavController
 import kotlinx.serialization.Serializable
 import site.smartenglish.manager.SessionManager
 import site.smartenglish.ui.viewmodel.AccountViewmodel
-import site.smartenglish.ui.viewmodel.WordBookDetailScreen
 
 
+/**
+ * 登录页面路由
+ */
 @Serializable
 object Login
 
+/**
+ * 注册页面路由
+ */
 @Serializable
 object Register
 
+/**
+ * 重置密码页面路由
+ */
 @Serializable
 object ResetPassword
 
+/**
+ * 首页路由
+ */
 @Serializable
 object Home
 
+/**
+ * 个人资料页面路由
+ */
 @Serializable
 object Profile
 
+/**
+ * 文章列表页面路由
+ */
 @Serializable
 object Article
 
+/**
+ * 文章详情页面路由
+ * @property articleId 文章ID
+ */
 @Serializable
 class ArticleDetail(
     val articleId: String
 )
 
+/**
+ * 收藏夹页面路由
+ */
 @Serializable
 object Favorite
 
+/**
+ * 收藏夹详情页面路由
+ * @property setId 收藏夹ID
+ * @property title 收藏夹标题
+ */
 @Serializable
 class FavoriteDetail(
     val setId: Int,
     val title: String
 )
 
+/**
+ * 生词本页面路由
+ */
+@Serializable
+object NWordBook
+
+/**
+ * 生词本详情页面路由
+ * @property nWordBookId 生词本ID
+ * @property nWordBookName 生词本名称
+ */
+@Serializable
+class NWordBookDetail(
+    val nWordBookId: Int,
+    val nWordBookName: String
+)
+
+/**
+ * 学习统计仪表盘页面路由
+ */
 @Serializable
 object DashBoard
 
+/**
+ * 切换词书页面路由
+ */
 @Serializable
 object ChangeWordBook
 
+/**
+ * 新词书选择页面路由
+ */
 @Serializable
 object NewWordBook
 
+/**
+ * 词书详情页面路由
+ * @property wordBookId 词书ID
+ */
 @Serializable
 class WordBookDetail(
     val wordBookId: Int
 )
 
+/**
+ * 已学习单词页面路由
+ */
 @Serializable
 object LearnedWord
 
-
+/**
+ * 单词学习页面路由
+ */
 @Serializable
 object LearnWord
 
+/**
+ * 单词学习完成页面路由
+ * @property wordList 已学习单词列表
+ */
 @Serializable
 class LearnWordFinished(
     val wordList: List<String>
 )
 
-
+/**
+ * 单词复习页面路由
+ */
 @Serializable
 object ReviewWord
 
+/**
+ * 单词复习完成页面路由
+ * @property wordList 已复习单词列表
+ */
 @Serializable
 class ReviewWordFinished(
     val wordList: List<String>
 )
+
+/**
+ * 单词详情页面路由
+ * 给搜索页面的详情用的
+ * @property word 显示的单词
+ */
+@Serializable
+class WordDetail(
+    val word: String
+)
+
+/**
+ * 设置路由
+ *
+ */
+@Serializable
+object Setting
 
 
 
@@ -157,7 +248,8 @@ fun MainNav(
             navigateToLearnWord = { navController.navigate(LearnWord) },
             navigateToReviewWord = {
                 navController.navigate(ReviewWord)
-            }
+            },
+            navigateToWordDetail = {navController.navigate(WordDetail(it))}
         ) }
         composable<Profile> { ProfileScreen(
             navigateBack = { navController.popBackStack()},
@@ -287,6 +379,30 @@ fun MainNav(
             )
         }
 
+        composable<NWordBook> {
+            NWordBookScreen(
+                navigateNWordBookDetail = { nWordBookId, nWordBookName ->
+                    navController.navigate(NWordBookDetail(nWordBookId, nWordBookName))
+                },
+                navigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable<NWordBookDetail> {
+            backStackEntry ->
+            val nWordBookDetail = backStackEntry.arguments?.let {
+                NWordBookDetail(
+                    it.getInt("nWordBookId"),
+                    it.getString("nWordBookName") ?: "生词本"
+                )
+            }
+            NWordBookDetailScreen(
+                setId = nWordBookDetail?.nWordBookId ?: 0,
+                title = nWordBookDetail?.nWordBookName ?: "",
+                navigateBack = { navController.popBackStack() }
+            )
+        }
+
         composable<DashBoard>(
             enterTransition = {
                 slideIntoContainer(
@@ -316,6 +432,12 @@ fun MainNav(
                 },
                 navigateToChangeWordBook = {navController.navigate(ChangeWordBook)},
                 navigateBack = { navController.popBackStack() },
+                navigateToNWordBook = {
+                    navController.navigate(NWordBook)
+                },
+                navigateToSetting = {
+                    navController.navigate(Setting)
+                }
             )
         }
         composable<ChangeWordBook> {
@@ -375,7 +497,9 @@ fun MainNav(
                 navigateToLearnWordFinished = { wordList ->
                     navController.navigate(LearnWordFinished(wordList))
                 },
-                navigateBack = { navController.popBackStack() }
+                navigateBack = { navController.navigate(Home){
+                    popUpTo(0) { inclusive = true }
+                } }
             )
         }
 
@@ -384,7 +508,9 @@ fun MainNav(
                 navigateToReviewWordFinished = { wordList ->
                     navController.navigate(ReviewWordFinished(wordList))
                 },
-                navigateBack = { navController.popBackStack() }
+                navigateBack = { navController.navigate(Home){
+                    popUpTo(0) { inclusive = true }
+                } }
             )
         }
         composable<NewWordBook> {
@@ -396,11 +522,20 @@ fun MainNav(
                 }
             )
         }
-
-
-
-
-
-
+        composable<WordDetail> {
+            backStackEntry ->
+            val wordDetail = backStackEntry.arguments?.let {
+                WordDetail(it.getString("word") ?: "")
+            }
+            WordDetailScreen(
+                word = wordDetail?.word ?: "",
+                navigateBack = { navController.popBackStack() }
+            )
+        }
+        composable<Setting> {
+            SettingScreen(
+                navigateBack = { navController.popBackStack() },
+            )
+        }
     }
 }
