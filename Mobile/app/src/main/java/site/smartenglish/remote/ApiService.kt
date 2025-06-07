@@ -376,7 +376,7 @@ interface ApiService {
      *     "string"
      * ]
      */
-    @GET("nwordbook")
+    @GET("nwordbook/detail")
     suspend fun getNWordBookWordList(
         @Query("id") nWordBookId: Int,
     ): Response<GetNWordBookWordListResponse>
@@ -393,7 +393,7 @@ interface ApiService {
      *     }
      * ]
      */
-    @GET("nwordbooklist")
+    @GET("nwordbook")
     suspend fun getNWordBookList(): Response<GetNWordBookListResponse>
 
     /**
