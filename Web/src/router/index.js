@@ -6,12 +6,13 @@ import WordSetManager from "@/views/WordSetManager.vue";
 import WordManager from "@/views/WordManager.vue";
 import ArticleManager from "@/views/ArticleManager.vue";
 import FeedBack from "@/views/FeedBack.vue";
+import Statistic from "@/views/Statistic.vue";
 
 
 const routes = [
    {
         path: '/',
-        redirect:'/login'
+        redirect:'/wordsetmanager'
     },
 
     {
@@ -42,6 +43,12 @@ const routes = [
         path: '/feedback',
         name:'Feedback',
         component: FeedBack
+    },
+
+    {
+        path:'/statistic',
+        name:'Statistic',
+        component: Statistic
     }
 ]
 
