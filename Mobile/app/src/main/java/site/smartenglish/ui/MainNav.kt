@@ -325,8 +325,19 @@ fun MainNav(
                 navigateBack = { navController.popBackStack() }
             )
         }
-        composable<LearnWordFinished> {
-            LearnWordFinishedScreen()
+        composable<LearnWordFinished> { backStackEntry ->
+            val wordFinished = backStackEntry.arguments?.let {
+                LearnWordFinished(it.getStringArray("wordList")?.toList() ?: emptyList())
+            }
+            LearnWordFinishedScreen(
+                words = wordFinished?.wordList ?: emptyList(),
+                navigationToHome = { navController.navigate(Home) {
+                    popUpTo(0) { inclusive = true }
+                }},
+                navigationToLearn = { navController.navigate(LearnWord){
+                    popUpTo(0) { inclusive = true }
+                } }
+            )
         }
         composable<LearnWord> {
             LearnWordScreen(

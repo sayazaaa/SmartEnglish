@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import site.smartenglish.remote.data.GetWordResponse
 import site.smartenglish.remote.data.GetWordSetResponse
-import site.smartenglish.remote.data.PutLearnedResponse
 import site.smartenglish.remote.data.PutWordSetRequestElement
 import site.smartenglish.repository.LearnedRepository
 import site.smartenglish.repository.WordRepository
@@ -82,6 +81,11 @@ class LearnViewmodel @Inject constructor(
             _isLoading.value = true
             try {
                 val list = wordSetRepository.getWordSet("learn")
+                if (list?.isEmpty() == true) {
+                    _snackBar.value = "词书中没有可学单词！"
+                    _navigateBackSelection.value = true
+                    return@launch
+                }
                 list?.forEachIndexed { index, it ->
                     getWordDetail(it?.word ?: "", it?.stage ?: 0)
                     if (index == 0) {
@@ -185,25 +189,38 @@ class LearnViewmodel @Inject constructor(
                 reviewDate = java.time.LocalDate.now().plusDays(1).toString(),
                 status = "learn"
             )
-            if (response.message.isNullOrBlank() && response.new_word != null) {
+            learnedList.add(currentWord.word.word ?: "")
+            _learnedWordNum.value += 1
+            Log.d("LearnViewmodel", "message: ${response.message}, new_word: ${response.new_word}")
+            if (!response.new_word.isNullOrBlank()) {
                 // 添加新单词到学习列表
                 getWordDetail(response.new_word, 0)
                 // 从列表中移除当前已学完的单词
                 wordDetailList.removeIf { it.word.word == currentWord.word.word }
-            }
-            if (!response.message.isNullOrBlank()) {
+                Log.d(
+                    "LearnViewmodel",
+                    "上传单词${currentWord.word.word}成功，添加新单词: ${response.new_word}"
+                )
+
+                if (_learnedWordNum.value == 10) {
+                    uploadLearnedWords()
+                    _navigateToFinish.value = true
+                }
+            } else {
                 wordDetailList.removeIf { it.word.word == currentWord.word.word }
+                Log.d("LearnViewmodel", "没有新单词")
                 if (wordDetailList.size == 0) {
                     // 如果列表为空，触发返回操作
-                    _navigateBackSelection.value = true
+                    _navigateToFinish.value = true
                     _snackBar.value = "恭喜你，已学完词书所有单词！"
                     return
                 }
+                if (_learnedWordNum.value == 10) {
+                    uploadLearnedWords()
+                    _navigateToFinish.value = true
+                }
             }
 
-
-            learnedList.add(currentWord.word.word ?: "")
-            _learnedWordNum.value += 1
 
         } catch (e: Exception) {
             Log.e("LearnViewmodel", "单词上传失败: ${e.message}")
