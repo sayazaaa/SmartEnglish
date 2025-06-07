@@ -20,7 +20,7 @@ class NWordBookViewmodel @Inject constructor(
     private val _isAnyNWordBook = MutableStateFlow(false)
     val isAnyNWordBook = _isAnyNWordBook.asStateFlow()
 
-    //收藏细则（？ Map<SetId, isFav>
+    //收藏细则（？ Map<word,Map<SetId, isFav>>
     private val _isNWordBook = MutableStateFlow<Map<Int, Boolean>>(emptyMap())
     val isNWordBook = _isNWordBook.asStateFlow()
 

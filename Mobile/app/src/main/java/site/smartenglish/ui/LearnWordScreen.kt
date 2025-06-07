@@ -2,6 +2,8 @@ package site.smartenglish.ui
 
 import android.util.Log
 import androidx.activity.compose.LocalActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.SizeTransform
@@ -31,12 +33,15 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -48,6 +53,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,14 +68,21 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModelStoreOwner
+import coil3.compose.AsyncImage
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import site.smartenglish.R
+import site.smartenglish.ui.compose.FavBottomSheets
+import site.smartenglish.ui.compose.FavBottomSheetsItemData
+import site.smartenglish.ui.theme.Grey
 import site.smartenglish.ui.theme.LightGrey
 import site.smartenglish.ui.theme.White
 import site.smartenglish.ui.viewmodel.BackgroundImageViewmodel
 import site.smartenglish.ui.viewmodel.LearnViewmodel
 import site.smartenglish.ui.viewmodel.LearnWordInfo
+import site.smartenglish.ui.viewmodel.NWordBookViewmodel
 import site.smartenglish.ui.viewmodel.SnackBarViewmodel
+import site.smartenglish.ui.viewmodel.UploadImageViewmodel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -80,6 +93,8 @@ fun LearnWordScreen(
     navigateBack: () -> Unit = {},
     learnViewmodel: LearnViewmodel = hiltViewModel(),
     bgViewmodel: BackgroundImageViewmodel = hiltViewModel(),
+    nWordBookViewmodel: NWordBookViewmodel = hiltViewModel(),
+    imageViewmodel: UploadImageViewmodel = hiltViewModel(),
     snackBarViewmodel: SnackBarViewmodel = hiltViewModel(LocalActivity.current as ViewModelStoreOwner)
 ) {
     val bitmap = bgViewmodel.backgroundBitmap.collectAsState().value
@@ -91,6 +106,124 @@ fun LearnWordScreen(
     val snackBar = learnViewmodel.snackBar.collectAsState().value
 
     var showDetailScreen by remember { mutableStateOf(false) }
+
+    val scope = rememberCoroutineScope()
+    // 创建收藏夹对话框状态
+    val isFav = nWordBookViewmodel.isNWordBook.collectAsState().value
+    val favList = nWordBookViewmodel.nWordBookList.collectAsState().value
+    var isFavShow by remember { mutableStateOf(false) }
+    var showDialog by remember { mutableStateOf(false) }
+    var favName by remember { mutableStateOf("") }
+    val url =
+        (imageViewmodel.uploadState.collectAsState().value as? UploadImageViewmodel.UploadState.Success)?.imageUrl
+            ?: ""
+
+    // 图片选择器
+    val imagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        uri?.let {
+            imageViewmodel.uploadImage(uri)
+        }
+    }
+
+    // 创建收藏夹对话框
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = {
+                Text(
+                    "新建生词本",
+                    color = White,
+                    fontWeight = FontWeight.W400
+                )
+            },
+            containerColor = Grey,
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = favName,
+                        onValueChange = { favName = it },
+                        label = { Text("收藏夹名称", color = LightGrey) },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = White,
+                            unfocusedTextColor = White
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Button(
+                        onClick = {
+                            // 调用系统图片选择器
+                            imagePicker.launch("image/*")
+                        },
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("选择封面图片")
+                    }
+                    Spacer(modifier = Modifier.height(16.dp))
+                    when (imageViewmodel.uploadState.collectAsState().value) {
+                        is UploadImageViewmodel.UploadState.Progress -> {
+                            Text("上传中...", color = LightGrey)
+                        }
+
+                        is UploadImageViewmodel.UploadState.Success -> {
+                            Text("上传成功", color = White)
+                            AsyncImage(
+                                model = (imageViewmodel.uploadState.collectAsState().value as UploadImageViewmodel.UploadState.Success).imageUrl,
+                                contentDescription = "封面图片",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(200.dp)
+                                    .clip(RoundedCornerShape(8.dp)),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+
+                        is UploadImageViewmodel.UploadState.Error -> {
+                            Text("上传失败", color = LightGrey)
+                        }
+
+                        else -> {
+                            // Idle 状态不显示任何内容
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        scope.launch {
+                            // 先创建收藏夹并等待完成
+                            nWordBookViewmodel.createNWordBookSet(favName, url).join()
+                            // 创建完成后刷新收藏夹列表
+                            nWordBookViewmodel.getNWordBookList()
+                            // 重置状态
+                            favName = ""
+                            imageViewmodel.resetUploadState()
+                            showDialog = false
+                        }
+                    },
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("创建")
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = { showDialog = false },
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("取消")
+                }
+            }
+        )
+    }
+    LaunchedEffect(wordDetail) {
+        nWordBookViewmodel.getIsNWordBook(wordDetail.word.word?:"")
+    }
 
     LaunchedEffect(Unit) {
         learnViewmodel.getWordSetDetail()
@@ -176,7 +309,7 @@ fun LearnWordScreen(
                 }, actions = {
                     IconButton(
                         onClick = {
-                            //TODO
+                            isFavShow = true
                         }) {
                         Icon(
                             painter = painterResource(R.drawable.kid_star),
@@ -191,6 +324,35 @@ fun LearnWordScreen(
             )
         })
     { padding ->
+        if (isFavShow) {
+            FavBottomSheets(
+                title = "将文章收藏至",
+                onDismiss = { isFavShow = false },
+                onCreateFav = {
+                    // 点击"新建收藏夹"时显示对话框
+                    showDialog = true
+                },
+                error = painterResource(R.drawable.news),
+                items = favList?.filterNotNull()?.mapNotNull { set ->
+                    // 过滤掉 null 项
+                    if (set.id == null || set.name == null) return@mapNotNull null
+                    FavBottomSheetsItemData(
+                        setId = set.id,
+                        title = set.name,
+                        cover = set.cover ?: "",
+                        onAddToFav = {
+                            // 添加到收藏夹
+                            nWordBookViewmodel.addToNWordBook(wordDetail.word.word?:"", set.id)
+                        },
+                        onRemoveFromFav = {
+                            // 从收藏夹中移除
+                            nWordBookViewmodel.removeFromNWordBook(wordDetail.word.word?:"", set.id)
+                        },
+                        isFav = isFav[set.id] ?: false
+                    )
+                } ?: emptyList()
+            )
+        }
         if (isLoading) {
             // 显示加载指示器
             Box(
