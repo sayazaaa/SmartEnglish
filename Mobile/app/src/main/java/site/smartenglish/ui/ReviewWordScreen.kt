@@ -340,7 +340,7 @@ fun ReviewWordScreen(
     { padding ->
         if (isFavShow) {
             FavBottomSheets(
-                title = "将文章收藏至",
+                title = "将单词收藏至",
                 onDismiss = { isFavShow = false },
                 onCreateFav = {
                     // 点击"新建收藏夹"时显示对话框
