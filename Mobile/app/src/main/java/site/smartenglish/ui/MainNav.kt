@@ -171,6 +171,13 @@ class WordDetail(
     val word: String
 )
 
+/**
+ * 设置路由
+ *
+ */
+@Serializable
+object Setting
+
 
 
 @Composable
@@ -427,6 +434,9 @@ fun MainNav(
                 navigateBack = { navController.popBackStack() },
                 navigateToNWordBook = {
                     navController.navigate(NWordBook)
+                },
+                navigateToSetting = {
+                    navController.navigate(Setting)
                 }
             )
         }
@@ -520,6 +530,11 @@ fun MainNav(
             WordDetailScreen(
                 word = wordDetail?.word ?: "",
                 navigateBack = { navController.popBackStack() }
+            )
+        }
+        composable<Setting> {
+            SettingScreen(
+                navigateBack = { navController.popBackStack() },
             )
         }
     }

@@ -6,7 +6,9 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import site.smartenglish.manager.DataStoreManager
 import site.smartenglish.remote.data.GetWordResponse
 import site.smartenglish.remote.data.GetWordSetResponse
 import site.smartenglish.remote.data.PutWordSetRequestElement
@@ -32,7 +34,7 @@ class ReviewViewmodel @Inject constructor(
     private val wordRepository: WordRepository,
     private val wordSetRepository: WordSetRepository,
     private val learnedRepository: LearnedRepository,
-
+    private val dataStoreManager: DataStoreManager
     ) : ViewModel() {
     private val wordDetailList = MutableList<ReviewWordInfo>(0) { ReviewWordInfo() }
     private val reviewedList = MutableList<String>(0) { "" }
@@ -55,6 +57,17 @@ class ReviewViewmodel @Inject constructor(
 
     private val _navigateToFinish = MutableStateFlow(false)
     val navigateToFinish = _navigateToFinish.asStateFlow()
+
+    // 当前学习目标数量
+    private val _targetLearnCount = MutableStateFlow(10)
+    val targetLearnCount = _targetLearnCount.asStateFlow()
+
+    init {
+        // 初始化时从DataStore读取设置
+        viewModelScope.launch {
+            _targetLearnCount.value = dataStoreManager.getLearnWordsCountSync()
+        }
+    }
 
     private suspend fun getWordDetail(word: String, stage: Int) {
         try {
@@ -208,7 +221,7 @@ class ReviewViewmodel @Inject constructor(
                     "上传单词${currentWord.word.word}成功，添加新单词: ${response.new_word}"
                 )
 
-                if (_reviewedWordNum.value == 10) {
+                if (_reviewedWordNum.value == _targetLearnCount.value) {
                     uploadReviewedWords()
                     _navigateToFinish.value = true
                 }
@@ -229,7 +242,7 @@ class ReviewViewmodel @Inject constructor(
                     _snackBar.value = "今天没有可以复习的单词了！"
                     return
                 }
-                if (_reviewedWordNum.value == 10) {
+                if (_reviewedWordNum.value == _targetLearnCount.value) {
                     uploadReviewedWords()
                     _navigateToFinish.value = true
                 }
@@ -357,10 +370,10 @@ class ReviewViewmodel @Inject constructor(
 
     }
 
-    //学到10个触发上传
+    //学到 个触发上传
     fun uploadReviewedWords() {
         viewModelScope.launch {
-            if (_reviewedWordNum.value >= 10) {
+            if (_reviewedWordNum.value >= _targetLearnCount.value) {
                 try {
                     wordSetRepository.updateWordSet(
                         type = "review", putWordSetRequest = wordDetailList.map {

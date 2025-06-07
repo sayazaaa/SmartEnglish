@@ -108,13 +108,13 @@ fun ReviewWordScreen(
     val navigateBackSelection = reviewViewmodel.navigateBackSelection.collectAsState().value
     val navigateToFinished = reviewViewmodel.navigateToFinish.collectAsState().value
     val snackBar = reviewViewmodel.snackBar.collectAsState().value
+    val targetWordNum = reviewViewmodel.targetLearnCount.collectAsState().value
+    val isAnyNWordBook = nWordBookViewmodel.isAnyNWordBook.collectAsState().value
 
     var showDetailScreen by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
 
-    // 获取播放状态
-    val isPlaying = audioPlayerViewModel.isPlaying.collectAsState().value
 
     // 创建收藏夹对话框状态
     val isFav = nWordBookViewmodel.isNWordBook.collectAsState().value
@@ -313,7 +313,7 @@ fun ReviewWordScreen(
                             )
                         }
                         Text(
-                            "${reviewedNum}/10",
+                            "${reviewedNum}/${targetWordNum}",
                             color = LightGrey,
                             fontSize = 14.sp,
                             modifier = Modifier
@@ -326,7 +326,12 @@ fun ReviewWordScreen(
                             isFavShow = true
                         }) {
                         Icon(
-                            painter = painterResource(R.drawable.kid_star),
+                            painter =
+                                if (isAnyNWordBook) {
+                                    painterResource(R.drawable.kid_star_fill)
+                                } else {
+                                    painterResource(R.drawable.kid_star)
+                                },
                             contentDescription = "收藏",
                             tint = LightGrey,
                             modifier = Modifier.size(24.dp)

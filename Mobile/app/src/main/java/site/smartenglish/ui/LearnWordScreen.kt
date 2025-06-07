@@ -107,13 +107,13 @@ fun LearnWordScreen(
     val navigateBackSelection = learnViewmodel.navigateBackSelection.collectAsState().value
     val navigateToFinished = learnViewmodel.navigateToFinish.collectAsState().value
     val snackBar = learnViewmodel.snackBar.collectAsState().value
+    val targetWordNum = learnViewmodel.targetLearnCount.collectAsState().value
+    val isAnyNWordBook = nWordBookViewmodel.isAnyNWordBook.collectAsState().value
 
     var showDetailScreen by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
 
-    // 获取播放状态
-    val isPlaying = audioPlayerViewModel.isPlaying.collectAsState().value
 
 
     // 创建收藏夹对话框状态
@@ -313,7 +313,7 @@ fun LearnWordScreen(
                             )
                         }
                         Text(
-                            "${learnedNum}/10",
+                            "${learnedNum}/${targetWordNum}",
                             color = LightGrey,
                             fontSize = 14.sp,
                             modifier = Modifier
@@ -326,7 +326,11 @@ fun LearnWordScreen(
                             isFavShow = true
                         }) {
                         Icon(
-                            painter = painterResource(R.drawable.kid_star),
+                            painter = if (isAnyNWordBook) {
+                                painterResource(R.drawable.kid_star_fill)
+                            } else {
+                                painterResource(R.drawable.kid_star)
+                            },
                             contentDescription = "收藏",
                             tint = LightGrey,
                             modifier = Modifier.size(24.dp)

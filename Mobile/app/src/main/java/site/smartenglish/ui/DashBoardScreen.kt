@@ -67,6 +67,7 @@ fun DashBoardScreen(
     navigateToChangeWordBook: () -> Unit = {},
     navigateToLearnedWords:()->Unit = {},
     navigateToNWordBook:()->Unit,
+    navigateToSetting:()->Unit = {},
     dashBoardViewmodel: DashBoardViewmodel = hiltViewModel()
 ) {
     val wordBookCover = dashBoardViewmodel.wordbookUrl.collectAsState().value
@@ -419,7 +420,7 @@ fun DashBoardScreen(
                     Spacer(modifier = Modifier.height(18.dp))
                     // 设置标签
                     functionItem("设置") {
-                        // TODO: 处理点击事件
+                        navigateToSetting()
                     }
                 }
             }
