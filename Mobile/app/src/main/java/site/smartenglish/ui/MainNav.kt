@@ -161,6 +161,16 @@ class ReviewWordFinished(
     val wordList: List<String>
 )
 
+/**
+ * 单词详情页面路由
+ * 给搜索页面的详情用的
+ * @property word 显示的单词
+ */
+@Serializable
+class WordDetail(
+    val word: String
+)
+
 
 
 @Composable
@@ -231,7 +241,8 @@ fun MainNav(
             navigateToLearnWord = { navController.navigate(LearnWord) },
             navigateToReviewWord = {
                 navController.navigate(ReviewWord)
-            }
+            },
+            navigateToWordDetail = {navController.navigate(WordDetail(it))}
         ) }
         composable<Profile> { ProfileScreen(
             navigateBack = { navController.popBackStack()},
@@ -501,11 +512,15 @@ fun MainNav(
                 }
             )
         }
-
-
-
-
-
-
+        composable<WordDetail> {
+            backStackEntry ->
+            val wordDetail = backStackEntry.arguments?.let {
+                WordDetail(it.getString("word") ?: "")
+            }
+            WordDetailScreen(
+                word = wordDetail?.word ?: "",
+                navigateBack = { navController.popBackStack() }
+            )
+        }
     }
 }

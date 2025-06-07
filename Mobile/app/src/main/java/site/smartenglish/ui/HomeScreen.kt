@@ -89,7 +89,7 @@ fun HomeScreen(
     navigateToLearnWord: () -> Unit,
     navigateToReviewWord: () -> Unit,
     //TODO 导航到听写
-    //TODO 导航到单词详情
+    navigateToWordDetail:(String) -> Unit = {},
     homeViewmodel: HomeViewmodel = hiltViewModel(),
     userViewmodel: UserViewmodel = hiltViewModel(),
     bgViewmodel: BackgroundImageViewmodel = hiltViewModel(),
@@ -415,8 +415,7 @@ fun HomeScreen(
                     WordSearchItem(
                         title, description,
                         onClick = {
-                            //TODO 点击单词跳转到单词详情
-
+                            navigateToWordDetail(title)
                         }
                     )
                 }

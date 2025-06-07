@@ -36,6 +36,7 @@ fun WordSearchItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            .clickable { onClick() }
             .padding(start = 11.dp, end = 21.dp)
             .height(50.dp)
             .background(Color.Transparent),
