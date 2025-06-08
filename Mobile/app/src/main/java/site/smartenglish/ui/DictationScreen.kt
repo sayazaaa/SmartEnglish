@@ -18,11 +18,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
 import androidx.hilt.navigation.compose.hiltViewModel
+import site.smartenglish.ui.viewmodel.AudioPlayerViewModel
 import site.smartenglish.ui.viewmodel.DictationViewModel
 
 @Composable
 fun DictationScreen(
-    dictationViewModel: DictationViewModel = hiltViewModel()
+    dictationViewModel: DictationViewModel = hiltViewModel(),
+    audioPlayerViewModel: AudioPlayerViewModel = hiltViewModel()
 ) {
     // 单词数据
     val words = dictationViewModel.currentWords.collectAsState().value
@@ -35,32 +37,19 @@ fun DictationScreen(
     val soundUrl = dictationViewModel.currentSoundUrl.collectAsState().value
     val wordPlayedTime = dictationViewModel.currentWordPlayedTime.collectAsState().value
     val currentWordIndex = dictationViewModel.currentWordIndex.collectAsState().value
+    val audioPlaying = audioPlayerViewModel.isPlaying.collectAsState().value
 
     var isWordVisible by remember { mutableStateOf(false) }
     var isPlaying by remember { mutableStateOf(false) }
 
     val textColor=Color.White
-    val mediaPlayer = remember { MediaPlayer() }
     val darkTextColor = Color.White.copy(alpha = 0.7f)
 
-    if(isPlaying && !mediaPlayer.isPlaying) {
+    if(isPlaying && !audioPlaying) {
         if(wordPlayedTime < 3) {
-            mediaPlayer.seekTo(0)
-            mediaPlayer.start()
+            audioPlayerViewModel.playAudio(soundUrl)
         } else {
             dictationViewModel.moveToNextWord()
-        }
-    }
-
-    DisposableEffect(Unit) {
-        mediaPlayer.apply {
-            setDataSource(soundUrl)
-            prepareAsync() // 异步准备防止阻塞UI
-            setOnPreparedListener { mp -> /* 准备完成 */ }
-        }
-
-        onDispose {
-            mediaPlayer.release()
         }
     }
 
@@ -137,8 +126,7 @@ fun DictationScreen(
                                 )
                                 IconButton(
                                     onClick = {
-                                        mediaPlayer.seekTo(0)
-                                        mediaPlayer.start()
+                                        audioPlayerViewModel.playAudio(soundUrl)
                                     },
                                     modifier = Modifier.padding(0.dp, 0.dp, 4.dp, 0.dp)
                                 ) {
@@ -241,10 +229,9 @@ fun DictationScreen(
             IconButton(onClick = {
                 isPlaying = !isPlaying
                 if (isPlaying) {
-                    mediaPlayer.seekTo(0)
-                    mediaPlayer.start()
+                    audioPlayerViewModel.playAudio(soundUrl)
                 } else {
-                    mediaPlayer.pause()
+                    audioPlayerViewModel.stopAudio()
                 }
             }) {
                 Icon(
