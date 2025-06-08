@@ -1,7 +1,5 @@
 package site.smartenglish.ui
 
-import android.graphics.Paint.Align
-import android.media.MediaPlayer
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,7 +10,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -39,60 +36,72 @@ fun DictationScreen(
     val currentWordIndex = dictationViewModel.currentWordIndex.collectAsState().value
     val audioPlaying = audioPlayerViewModel.isPlaying.collectAsState().value
 
-    var isWordVisible by remember { mutableStateOf(false) }
+    var uiState by remember { mutableStateOf("setting") }
     var isPlaying by remember { mutableStateOf(false) }
+    var wordPlayTime by remember { mutableStateOf(3) }
+    var wordSequence by remember { mutableStateOf("seq") }
+    var autoNext by remember { mutableStateOf(true) }
+
+    var wordSourceExpand by remember { mutableStateOf(false) }
+    var wordPlayTimeExpand by remember { mutableStateOf(false) }
+    var wordSequenceExpand by remember { mutableStateOf(false) }
 
     val textColor=Color.White
     val darkTextColor = Color.White.copy(alpha = 0.7f)
 
     if(isPlaying && !audioPlaying) {
-        if(wordPlayedTime < 3) {
+        if(wordPlayedTime < wordPlayTime) {
+            dictationViewModel.wordPlayed()
             audioPlayerViewModel.playAudio(soundUrl)
-        } else {
+        } else if (autoNext) {
             dictationViewModel.moveToNextWord()
         }
     }
 
-    Row(
-        modifier = Modifier.fillMaxWidth()
-            .background(Color(0xFF292F45)),
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        IconButton(onClick = { /* TODO 返回逻辑 */ }) {
-            Icon(
-                imageVector = Icons.Default.ChevronLeft,
-                contentDescription = "返回",
-                tint = textColor
-            )
-        }
-
-        Text(text = "听写", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = textColor)
-
-        Row {
-            IconButton(onClick = { dictationViewModel.switchWordInNWordBook(currentWord) }) {
-                Icon(
-                    imageVector = if (favourite) Icons.Filled.Star else Icons.Filled.StarOutline,
-                    contentDescription = "收藏",
-                    tint = textColor
-                )
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            IconButton(onClick = { /* TODO 设置逻辑 */ }) {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = "更多",
-                    tint = textColor
-                )
-            }
-        }
-    }
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .padding(top = 44.dp)
+            .background(Color(0xFF212532))
     ) {
+        // 顶部导航栏
+        Row(
+            modifier = Modifier.fillMaxWidth()
+                .height(44.dp)
+                .background(Color(0xFF292F45)),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            IconButton(onClick = { /* TODO 返回逻辑 */ }) {
+                Icon(
+                    imageVector = Icons.Default.ChevronLeft,
+                    contentDescription = "返回",
+                    tint = textColor
+                )
+            }
+
+            Text(text = "听写", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = textColor)
+
+            Row {
+                IconButton(onClick = { dictationViewModel.switchWordInNWordBook(currentWord) }) {
+                    Icon(
+                        imageVector = if (favourite) Icons.Filled.Star else Icons.Filled.StarOutline,
+                        contentDescription = "收藏",
+                        tint = textColor
+                    )
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                IconButton(onClick = { uiState = "setting" }) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "更多",
+                        tint = textColor
+                    )
+                }
+            }
+        }
         // 单词信息区域
-        if(isWordVisible){
+        if(uiState == "word"){
             Column(
                 horizontalAlignment = Alignment.Start,
                 modifier = Modifier.padding(top = 82.dp, start = 30.dp)
@@ -126,6 +135,7 @@ fun DictationScreen(
                                 )
                                 IconButton(
                                     onClick = {
+                                        dictationViewModel.wordPlayed()
                                         audioPlayerViewModel.playAudio(soundUrl)
                                     },
                                     modifier = Modifier.padding(0.dp, 0.dp, 4.dp, 0.dp)
@@ -166,7 +176,8 @@ fun DictationScreen(
                     }
                 }
             }
-        }else{
+        }
+        if(uiState == "hide"){
             Card(
                 modifier = Modifier.align(Alignment.Center)
                     .width(264.dp)
@@ -188,75 +199,446 @@ fun DictationScreen(
                 }
             }
         }
-    }
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.BottomCenter
-    ){
-        // 进度标识
-        Text(
-            text = "${currentWordIndex + 1}/${words.size}",
-            fontSize = 16.sp,
-            color = textColor,
-            modifier = Modifier.padding(bottom = 117.dp)
-        )
-        // 底部控制栏
-        Row(
-            modifier = Modifier.fillMaxWidth()
-                .background(Color(0xFF292F45))
-                .fillMaxWidth()
-                .height(95.dp)
-                .padding(horizontal = 16.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            IconButton(onClick = { /* TODO 打开菜单 */ }) {
-                Icon(
-                    imageVector = Icons.Default.Menu,
-                    tint=textColor,
-                    contentDescription = "菜单"
-                )
-            }
-            IconButton(onClick = {
-                dictationViewModel.moveToLastWord()
-            }) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                    tint=textColor,
-                    contentDescription = "上一词"
-                )
-            }
-            IconButton(onClick = {
-                isPlaying = !isPlaying
-                if (isPlaying) {
-                    audioPlayerViewModel.playAudio(soundUrl)
-                } else {
-                    audioPlayerViewModel.stopAudio()
+        if (uiState == "setting") {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.padding(top = 69.dp, start = 17.dp, end = 17.dp)
+            ) {
+                //WordSource
+                Card (
+                    modifier = Modifier.width(394.dp)
+                        .height(210.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if(wordSourceExpand) Color(0xFF24293D) else Color.Transparent
+                    ),
+                    onClick = { wordSourceExpand = !wordSourceExpand},
+                ){
+                    Row(
+                        modifier = Modifier.height(62.dp)
+                            .fillMaxWidth()
+                            .background( Color(0xFF292F45) )
+                            .padding(start = 22.dp, end = 22.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "单词来源",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textColor
+                        )
+                        Icon(
+                            imageVector = if (wordSourceExpand) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                            contentDescription = "展开/收起",
+                            tint = textColor
+                        )
+                    }
+                    if (wordSourceExpand) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(start = 36.dp, top=10.dp,end=36.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Card(
+                                onClick = {dictationViewModel.fetchLearnedWords()},
+                                modifier = Modifier.width(132.dp)
+                                    .height(93.dp)
+                                    .border(1.dp, Color.White, RoundedCornerShape(8.dp)),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0xFF24293D)
+                                ),
+                            ) {
+                                Box(
+                                    modifier = Modifier.width(132.dp).height(64.dp)
+                                        .padding(start = 32.dp)
+                                ) {
+                                    Text(
+                                        text = "已学单词\nTotal:1",//TODO fetch data
+                                        fontSize = 16.sp,
+                                        color = textColor,
+                                        modifier = Modifier.padding(top= 18.dp)
+                                    )
+                                }
+                            }
+                            Card(
+                                onClick = {
+                                    //TODO 打开生词本
+                                          },
+                                modifier = Modifier.width(132.dp)
+                                    .height(93.dp)
+                                    .border(1.dp, Color.White, RoundedCornerShape(8.dp)),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0xFF24293D)
+                                ),
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxSize()
+                                        .padding(start=32.dp,top= 32.dp)
+                                ) {
+                                    Text(
+                                        text = "生词本",
+                                        fontSize = 16.sp,
+                                        color = textColor,
+                                    )
+                                    Icon(
+                                        imageVector = Icons.Default.ChevronRight,
+                                        contentDescription = "Enter",
+                                        tint = textColor
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
-            }) {
-                Icon(
-                    imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
-                    contentDescription = "播放",
-                    tint=textColor
-                )
+                Spacer(modifier = Modifier.height(25.dp))
+                // WordPlayTime
+                Card (
+                    modifier = Modifier.width(394.dp)
+                        .height(161.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if(wordPlayTimeExpand) Color(0xFF24293D) else Color.Transparent
+                    ),
+                    onClick = { wordPlayTimeExpand = !wordPlayTimeExpand},
+                ){
+                    Row(
+                        modifier = Modifier.height(62.dp)
+                            .fillMaxWidth()
+                            .background( Color(0xFF292F45) )
+                            .padding(start = 22.dp, end = 22.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "单词播放次数",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textColor
+                        )
+                        Icon(
+                            imageVector = if (wordPlayTimeExpand) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                            contentDescription = "展开/收起",
+                            tint = textColor
+                        )
+                    }
+                    if (wordPlayTimeExpand) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(start = 21.dp, top=10.dp,end=21.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Card(
+                                onClick = {wordPlayTime = 1},
+                                modifier = Modifier.width(97.dp)
+                                    .height(39.dp)
+                                    .border(1.dp, if (wordPlayTime == 1) Color.Cyan else Color.White, RoundedCornerShape(8.dp)),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0xFF24293D)
+                                ),
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxSize(),
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        text = "1次",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = textColor
+                                    )
+                                }
+                            }
+                            Card(
+                                onClick = {wordPlayTime = 2},
+                                modifier = Modifier.width(97.dp)
+                                    .height(39.dp)
+                                    .border(1.dp,if (wordPlayTime == 2) Color.Cyan else Color.White, RoundedCornerShape(8.dp)),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0xFF24293D)
+                                ),
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxSize(),
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        text = "2次",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = textColor
+                                    )
+                                }
+                            }
+                            Card(
+                                onClick = {wordPlayTime = 3},
+                                modifier = Modifier.width(97.dp)
+                                    .height(39.dp)
+                                    .border(1.dp,if (wordPlayTime == 3) Color.Cyan else Color.White, RoundedCornerShape(8.dp)),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0xFF24293D)
+                                ),
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxSize(),
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        text = "3次",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = textColor
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(25.dp))
+                //WordSequence
+                Card (
+                    modifier = Modifier.width(394.dp)
+                        .height(161.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if(wordSequenceExpand) Color(0xFF24293D) else Color.Transparent
+                    ),
+                    onClick = { wordSequenceExpand = !wordSequenceExpand},
+                ){
+                    Row(
+                        modifier = Modifier.height(62.dp)
+                            .fillMaxWidth()
+                            .background( Color(0xFF292F45) )
+                            .padding(start = 22.dp, end = 22.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "听写顺序",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textColor
+                        )
+                        Icon(
+                            imageVector = if (wordSequenceExpand) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                            contentDescription = "展开/收起",
+                            tint = textColor
+                        )
+                    }
+                    if (wordSequenceExpand) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(start = 21.dp, top=10.dp,end=21.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Card(
+                                onClick = {wordSequence = "seq"},
+                                modifier = Modifier.width(97.dp)
+                                    .height(39.dp)
+                                    .border(1.dp, if(wordSequence=="seq") Color.Cyan else Color.White, RoundedCornerShape(8.dp)),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0xFF24293D)
+                                ),
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxSize(),
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        text = "顺序",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = textColor
+                                    )
+                                }
+                            }
+                            Card(
+                                onClick = {wordSequence = "qes"},
+                                modifier = Modifier.width(97.dp)
+                                    .height(39.dp)
+                                    .border(1.dp, if(wordSequence=="qes") Color.Cyan else Color.White, RoundedCornerShape(8.dp)),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0xFF24293D)
+                                ),
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxSize(),
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        text = "倒序",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = textColor
+                                    )
+                                }
+                            }
+                            Card(
+                                onClick = {wordSequence = "random"},
+                                modifier = Modifier.width(97.dp)
+                                    .height(39.dp)
+                                    .border(1.dp,if(wordSequence=="random") Color.Cyan else Color.White, RoundedCornerShape(8.dp)),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0xFF24293D)
+                                ),
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxSize(),
+                                    horizontalArrangement = Arrangement.Center,
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        text = "乱序",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = textColor
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+                Spacer(modifier = Modifier.height(25.dp))
+                Card (
+                    modifier = Modifier.width(394.dp)
+                        .height(62.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if(wordSequenceExpand) Color(0xFF24293D) else Color.Transparent
+                    ),
+                ){
+                    Row(
+                        modifier = Modifier.height(62.dp)
+                            .fillMaxWidth()
+                            .background( Color(0xFF292F45) )
+                            .padding(start = 22.dp, end = 22.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = "自动播放下一词",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = textColor
+                        )
+                        Switch(
+                            checked = autoNext,
+                            onCheckedChange = { autoNext = it },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = Color.White,
+                                uncheckedThumbColor = Color(0xFF9E9E9E)
+                            )
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.height(30.dp))
+                Card (
+                    modifier = Modifier.width(342.dp)
+                        .height(53.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFFF4A100)
+                    ),
+                    onClick = {
+                        uiState = "hide"
+                        isPlaying = true
+                    }
+                ){
+                    Text(
+                        text = "准备好纸笔，开始听写",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = textColor,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxSize()
+                            .padding(top=12.dp)
+                    )
+                }
             }
-            IconButton(onClick = {
-                dictationViewModel.moveToNextWord()
-            }) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                    tint=textColor,
-                    contentDescription = "下一词"
-                )
-            }
-            IconButton(onClick = {
-                isWordVisible = !isWordVisible
-            }) {
-                Icon(
-                    imageVector = if(!isWordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                    contentDescription = "显示/隐藏",
-                    tint=textColor
-                )
+        }
+    }
+    if (uiState=="hide" || uiState=="word") {
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.BottomCenter
+        ){
+            // 进度标识
+            Text(
+                text = "${currentWordIndex + 1}/${words.size}",
+                fontSize = 16.sp,
+                color = textColor,
+                modifier = Modifier.padding(bottom = 117.dp)
+            )
+            // 底部控制栏
+            Row(
+                modifier = Modifier.fillMaxWidth()
+                    .background(Color(0xFF292F45))
+                    .fillMaxWidth()
+                    .height(95.dp)
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = { /* TODO 打开菜单 */ }) {
+                    Icon(
+                        imageVector = Icons.Default.Menu,
+                        tint=textColor,
+                        contentDescription = "菜单"
+                    )
+                }
+                IconButton(onClick = {
+                    dictationViewModel.moveToLastWord()
+                }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        tint=textColor,
+                        contentDescription = "上一词"
+                    )
+                }
+                IconButton(onClick = {
+                    isPlaying = !isPlaying
+                    if (isPlaying) {
+                        dictationViewModel.wordPlayed()
+                        audioPlayerViewModel.playAudio(soundUrl)
+                    } else {
+                        audioPlayerViewModel.stopAudio()
+                    }
+                }) {
+                    Icon(
+                        imageVector = if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        contentDescription = "播放",
+                        tint=textColor
+                    )
+                }
+                IconButton(onClick = {
+                    dictationViewModel.moveToNextWord()
+                }) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                        tint=textColor,
+                        contentDescription = "下一词"
+                    )
+                }
+                IconButton(onClick = {
+                    uiState = if (uiState == "word") "hide" else "word"
+                }) {
+                    Icon(
+                        imageVector = if(uiState == "word") Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                        contentDescription = "显示/隐藏",
+                        tint=textColor
+                    )
+                }
             }
         }
     }
