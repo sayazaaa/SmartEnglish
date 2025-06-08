@@ -7,6 +7,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import site.smartenglish.repository.LearnedRepository
 import site.smartenglish.repository.NWordBookRepository
 import site.smartenglish.repository.WordBookRepository
 import site.smartenglish.repository.WordRepository
@@ -16,7 +17,8 @@ import javax.inject.Inject
 class DictationViewModel @Inject constructor(
     private val wordBookRepository: WordBookRepository,
     private val nWordBookRepository: NWordBookRepository,
-    private val wordRepository: WordRepository
+    private val wordRepository: WordRepository,
+    private val learnedRepository: LearnedRepository
 ) : ViewModel() {
     private val _currentWords = MutableStateFlow(listOf<String>())
     val currentWords = _currentWords.asStateFlow()
@@ -90,6 +92,19 @@ class DictationViewModel @Inject constructor(
                     }?: emptyList()
                 _currentWordIndex.value = 0
                 UpdateCurrent()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    // 获取20已经学习词
+    fun fetchLearnedWords() {
+        viewModelScope.launch {
+            try {
+                _currentWords.value = learnedRepository.getLearnedWordList()
+                    ?.shuffled()?.subList(0, 20)?.mapNotNull { x -> x.word } ?: emptyList()
+                UpdateCurrent( )
             } catch (e: Exception) {
                 e.printStackTrace()
             }
