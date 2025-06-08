@@ -512,19 +512,57 @@ fun WordDetailScreen(
                                 when (availableTabs[tabIndex]) {
                                     "例句" -> { // 例句
                                         Column {
+                                            // 为每个例句添加点击播放功能
                                             wordDetail.examples?.forEach { example ->
-                                                Text(
-                                                    text = example?.english ?: "",
-                                                    color = White,
-                                                    fontSize = 15.sp,
-                                                )
-                                                Text(
-                                                    text = example?.chinese ?: "",
-                                                    color = LightGrey,
-                                                    fontSize = 12.sp,
-                                                    modifier = Modifier.padding(bottom = 16.dp)
-                                                )
+                                                Column(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .clip(RoundedCornerShape(8.dp))
+                                                        .clickable {
+                                                            example?.audio.let { audioUrl ->
+                                                                audioPlayerViewModel.playAudio(audioUrl)
+                                                            }
+                                                        }
+                                                        .padding(8.dp)
+                                                ) {
+                                                    Row(
+                                                        verticalAlignment = Alignment.CenterVertically
+                                                    ) {
+                                                        Text(
+                                                            text = example?.english ?: "",
+                                                            color = White,
+                                                            fontSize = 15.sp,
+                                                            modifier = Modifier.weight(1f)
+                                                        )
+
+                                                        // 添加播放图标
+                                                        Icon(
+                                                            imageVector = Icons.AutoMirrored.Filled.VolumeUp,
+                                                            contentDescription = "播放例句",
+                                                            tint = LightGrey,
+                                                            modifier = Modifier.size(16.dp)
+                                                        )
+                                                    }
+
+                                                    Text(
+                                                        text = example?.chinese ?: "",
+                                                        color = LightGrey,
+                                                        fontSize = 12.sp,
+                                                        modifier = Modifier.padding(bottom = 16.dp)
+                                                    )
+                                                }
                                             }
+
+                                            // 底部添加提示信息
+                                            Text(
+                                                text = "点击例句可播放音频",
+                                                color = LightGrey,
+                                                fontSize = 12.sp,
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(top = 8.dp),
+                                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                            )
                                         }
                                     }
 
