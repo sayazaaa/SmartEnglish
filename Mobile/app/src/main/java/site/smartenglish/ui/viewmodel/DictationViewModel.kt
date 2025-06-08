@@ -7,6 +7,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import site.smartenglish.remote.data.GetNWordBookListResponseElement
 import site.smartenglish.repository.LearnedRepository
 import site.smartenglish.repository.NWordBookRepository
 import site.smartenglish.repository.WordBookRepository
@@ -46,6 +47,24 @@ class DictationViewModel @Inject constructor(
 
     private val _currentWordPlayedTime = MutableStateFlow(0)
     val currentWordPlayedTime = _currentWordPlayedTime.asStateFlow()
+
+    private val _learnedWordCount = MutableStateFlow(0)
+    val learnedWordCount = _learnedWordCount.asStateFlow()
+
+    private val _NWordBookList = MutableStateFlow(listOf<GetNWordBookListResponseElement>())
+    val NWordBookList = _NWordBookList.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            _learnedWordCount.value = learnedRepository.getTodayLearnedWordCount()
+            try {
+                _NWordBookList.value = (nWordBookRepository.getNWordBookList()?.filterNotNull()
+                    ?: emptyList())
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
 
     val currentWord: String
         get() = _currentWords.value.getOrNull(_currentWordIndex.value) ?: ""
@@ -104,6 +123,19 @@ class DictationViewModel @Inject constructor(
             try {
                 _currentWords.value = learnedRepository.getLearnedWordList()
                     ?.shuffled()?.subList(0, 20)?.mapNotNull { x -> x.word } ?: emptyList()
+                UpdateCurrent( )
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
+
+    // 获取20生词本词
+    fun fetchNWordBookWords(id:Int){
+        viewModelScope.launch {
+            try {
+                _currentWords.value = nWordBookRepository.getNWordBookWords(id)?.filterNotNull()
+                    ?.shuffled()?.subList(0,20)  ?: emptyList()
                 UpdateCurrent( )
             } catch (e: Exception) {
                 e.printStackTrace()

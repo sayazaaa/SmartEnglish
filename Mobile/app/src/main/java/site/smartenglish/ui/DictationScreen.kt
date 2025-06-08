@@ -12,9 +12,9 @@ import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
 import androidx.hilt.navigation.compose.hiltViewModel
+import site.smartenglish.remote.data.GetNWordBookListResponseElement
 import site.smartenglish.ui.viewmodel.AudioPlayerViewModel
 import site.smartenglish.ui.viewmodel.DictationViewModel
 
@@ -35,16 +35,24 @@ fun DictationScreen(
     val wordPlayedTime = dictationViewModel.currentWordPlayedTime.collectAsState().value
     val currentWordIndex = dictationViewModel.currentWordIndex.collectAsState().value
     val audioPlaying = audioPlayerViewModel.isPlaying.collectAsState().value
+    val nWordBooks = dictationViewModel.NWordBookList.collectAsState().value
+//    val nWordBooks = listOf(
+//        GetNWordBookListResponseElement(id = 1, name = "生词本1"),
+//        GetNWordBookListResponseElement(id = 2, name = "生词本2"),
+//        GetNWordBookListResponseElement(id = 3, name = "生词本3")
+//    )
 
     var uiState by remember { mutableStateOf("setting") }
     var isPlaying by remember { mutableStateOf(false) }
-    var wordPlayTime by remember { mutableStateOf(3) }
+    var wordPlayTime by remember { mutableIntStateOf(3) }
+    var selectedNWordBookId by remember { mutableIntStateOf(0) }
     var wordSequence by remember { mutableStateOf("seq") }
     var autoNext by remember { mutableStateOf(true) }
 
-    var wordSourceExpand by remember { mutableStateOf(false) }
-    var wordPlayTimeExpand by remember { mutableStateOf(false) }
-    var wordSequenceExpand by remember { mutableStateOf(false) }
+    var wordSourceExpand by remember { mutableStateOf(true) }
+    var wordPlayTimeExpand by remember { mutableStateOf(true) }
+    var wordSequenceExpand by remember { mutableStateOf(true) }
+    var selectNWordBook by remember { mutableStateOf(false) }
 
     val textColor=Color.White
     val darkTextColor = Color.White.copy(alpha = 0.7f)
@@ -256,7 +264,7 @@ fun DictationScreen(
                                         .padding(start = 32.dp)
                                 ) {
                                     Text(
-                                        text = "已学单词\nTotal:1",//TODO fetch data
+                                        text = "已学单词\nTotal:"+dictationViewModel.learnedWordCount ,
                                         fontSize = 16.sp,
                                         color = textColor,
                                         modifier = Modifier.padding(top= 18.dp)
@@ -265,8 +273,8 @@ fun DictationScreen(
                             }
                             Card(
                                 onClick = {
-                                    //TODO 打开生词本
-                                          },
+                                    selectNWordBook = true
+                                },
                                 modifier = Modifier.width(132.dp)
                                     .height(93.dp)
                                     .border(1.dp, Color.White, RoundedCornerShape(8.dp)),
@@ -638,6 +646,63 @@ fun DictationScreen(
                         contentDescription = "显示/隐藏",
                         tint=textColor
                     )
+                }
+            }
+        }
+    }
+    if (uiState=="setting" && selectNWordBook) {
+        Box(
+            modifier = Modifier.fillMaxSize()
+                .background(Color(0x80000000)),
+            contentAlignment = Alignment.BottomCenter
+        ){
+            Card(
+                modifier = Modifier.fillMaxWidth()
+                    .height(400.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFF24293D)
+                ),
+            ) {
+                Spacer(modifier = Modifier.height(37.dp))
+                Text(
+                    text = "选择生词本",
+                    fontSize = 18.sp,
+                    modifier = Modifier.fillMaxWidth(),
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    color = textColor
+                )
+                Column(
+                    modifier = Modifier.fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                )  {
+                    nWordBooks.forEach { nWordBook ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth()
+                                .padding(16.dp)
+                                .clickable {
+                                    selectedNWordBookId = nWordBook.id?:0
+                                    dictationViewModel.fetchNWordBookWords(nWordBook.id?:0)
+                                    selectNWordBook = false
+                                },
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = nWordBook.name?:"未命名生词本",
+                                fontSize = 16.sp,
+                                color = textColor
+                            )
+                            Icon(
+                                imageVector = if (selectedNWordBookId == nWordBook.id) Icons.Default.Check else Icons.Default.CheckBoxOutlineBlank,
+                                contentDescription = "已选择",
+                                tint = if (selectedNWordBookId == nWordBook.id) Color(0xFFF4A100) else Color(0xFF878278)
+                            )
+                        }
+                    }
                 }
             }
         }
