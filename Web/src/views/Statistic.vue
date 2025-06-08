@@ -1,174 +1,232 @@
 <template>
-  <div class="statistic-page">
-    <!-- 总用户数 -->
-    <el-card class="total-user-card">
-      <div class="total-label">总用户数</div>
-      <div class="total-value">{{ totalUser }}</div>
-    </el-card>
+  <el-container style="height:100vh">
+    <!-- 顶部总用户数 -->
+    <el-header class="header">
+      <h2>总用户数：<span class="total">{{ totalUser }}</span></h2>
+    </el-header>
 
-    <!-- 图表布局：左右等比 -->
-    <div class="charts-container">
-      <!-- 左侧：模块使用时长 -->
-      <el-card class="chart-card">
-        <div class="chart-header">模块使用时长（每日）</div>
-        <div ref="moduleUsageChart" class="chart"></div>
-      </el-card>
+    <el-main class="main">
+      <el-row :gutter="20">
+        <!-- 左侧：模块使用时长柱状图 -->
+        <el-col :span="12">
+          <div ref="usageChart" class="chart"></div>
+        </el-col>
 
-      <!-- 右侧：上用户数量，下留存率 -->
-      <div class="right-charts">
-        <el-card class="chart-card">
-          <div class="chart-header">用户数量（每日新增）</div>
-          <div ref="userCountChart" class="chart"></div>
-        </el-card>
-        <el-card class="chart-card">
-          <div class="chart-header">用户留存率 (%)</div>
-          <div ref="retentionChart" class="chart"></div>
-        </el-card>
-      </div>
-    </div>
-  </div>
+        <!-- 右侧：上用户数–日期图， 下留存热力图 -->
+        <el-col :span="12">
+          <el-row :gutter="20">
+            <el-col :span="24">
+              <div ref="userChart" class="chart"></div>
+            </el-col>
+            <el-col :span="24">
+              <div ref="heatmapChart" class="heatmap"></div>
+            </el-col>
+          </el-row>
+        </el-col>
+      </el-row>
+    </el-main>
+  </el-container>
 </template>
 
 <script setup>
-import { ref, onMounted, nextTick } from 'vue';
-import axios from 'axios';
-import * as echarts from 'echarts';
+import { ref, onMounted } from 'vue'
+import axios from 'axios'
+import * as echarts from 'echarts'
+import dayjs from 'dayjs'
+import { ElMessage } from 'element-plus'
 
-const totalUser          = ref(0);
-const moduleUsageChart  = ref(null);
-const userCountChart    = ref(null);
-const retentionChart    = ref(null);
+// --- DOM refs ---
+const usageChart    = ref(null)
+const userChart     = ref(null)
+const heatmapChart  = ref(null)
 
-// 工具：生成最近 N 天的日期标签
-function getLastNDates(n) {
-  return Array.from({ length: n }).map((_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (n - 1 - i));
-    return `${d.getMonth() + 1}.${d.getDate()}`;
-  });
+// --- ECharts 实例 ---
+let chartUsage, chartUser, chartHeatmap
+
+// --- 绑定数据 ---
+const totalUser = ref(0)
+
+// --- 公用常量 ---
+const DAYS    = 7
+const START   = dayjs().subtract(DAYS - 1, 'day').format('YYYY-MM-DD')
+const TYPE    = 'd'  // 按天；后端同样支持 'w' / 'm'
+
+// --- 生成日期标签 ---
+const makeDates = (start, count) =>
+    Array.from({ length: count })
+        .map((_, i) => dayjs(start).add(i, 'day').format('MM-DD'))
+
+const makeAfter = count =>
+    Array.from({ length: count })
+        .map((_, i) => `${i+1}天后`)
+
+// --- 1. 平均模块使用时长 ---
+async function loadUsage() {
+  try {
+    const res = await axios.get('/data')
+    totalUser.value = res.data.total_user
+
+    const arr = res.data.average_usetime
+    const names  = arr.map(i => i.function)
+    const values = arr.map(i => i.value)
+
+    chartUsage = echarts.init(usageChart.value)
+    chartUsage.setOption({
+      title: { text: '平均模块使用时长 ' },
+      tooltip: {},
+      xAxis: { type:'category', data:names },
+      yAxis: { type:'value' },
+      series: [{ type:'bar', data:values }]
+    })
+  } catch (e) {
+    console.error(e)
+    ElMessage.error('加载模块使用时长失败')
+  }
 }
-// 工具：计算 N 天前日期字符串（YYYY-MM-DD）
-function dateNDaysAgo(n) {
-  const d = new Date();
-  d.setDate(d.getDate() - n + 1);
-  return d.toISOString().slice(0, 10);
+
+// --- 2. 用户数–日期折线图 ---
+async function loadUserCount() {
+  const days = 7
+  // 从今天往前推 6 天，一共 7 天
+  const startDate = dayjs().subtract(days - 1, 'day').format('YYYY-MM-DD')
+  const res = await axios.post('/data', {
+    data: 'user_count',
+    type: 'd',
+    start: startDate
+  })
+  const raw = Array.isArray(res.data) ? res.data : []
+
+  // 构造固定长度为 7 的 labels 和 values
+  const labels = []
+  const values = []
+  for (let i = 0; i < days; i++) {
+    // 生成 “MM-DD” 格式标签
+    labels.push(
+        dayjs(startDate).add(i, 'day').format('MM-DD')
+    )
+    // 如果后台没返回这一天的数据，就补 0
+    const v = raw[i]
+    values.push(Number.isFinite(v) ? v : 0)
+  }
+
+  // 渲染折线图
+  chartUser = echarts.init(userChart.value)
+  chartUser.setOption({
+    title: { text: '用户增长量 ' },
+    tooltip: { trigger: 'axis' },
+    xAxis: { type: 'category', data: labels },
+    yAxis: { type: 'value' },
+    series: [{
+      type: 'line',
+      data: values,
+      smooth: true,
+      connectNulls: true
+    }]
+  })
+}
+
+// --- 3. 留存率热力图 ---
+async function loadHeatmap() {
+  try {
+    const xLabels = makeAfter(DAYS)
+    const yLabels = makeDates(START, DAYS)
+    const heatData = []
+
+    // 逐天请求留存接口，拼成 heatmap 数据
+    for (let i = 0; i < DAYS; i++) {
+      const cohort = dayjs(START).add(i, 'day').format('YYYY-MM-DD')
+      const res = await axios.post('/data', {
+        data:  'remain',
+        type:  "d",
+        start: cohort
+      })
+      res.data.forEach((v, j) => {
+        if(i+j <=6)heatData.push([ j, i, 100*v ])  // [xIndex, yIndex, value]
+      })
+    }
+
+    chartHeatmap = echarts.init(heatmapChart.value)
+    chartHeatmap.setOption({
+      title: {
+        text: '用户留存率热力图 (%)',
+        left: 'center'
+      },
+      tooltip: {
+        trigger: 'item',         // ← 一定要是 item
+        position: 'top',
+        formatter: '{c}%',       // ← 只显示当前格子的值，并加个百分号
+      },
+      grid: { top: '15%', height: '65%' },
+      xAxis: {
+        type: 'category',
+        data: xLabels,      // ['1天后','2天后',…]
+        splitArea: { show: true }
+      },
+      yAxis: {
+        type: 'category',
+        data: yLabels,      // ['06-02','06-03',…]
+        splitArea: { show: true }
+      },
+      visualMap: {
+        min: 0,
+        max: 100,
+        calculable: true,
+        orient: 'horizontal',
+        left: 'center',
+        bottom: 0,
+        formatter: val => val + '%'  // 右侧那条也显示百分号
+      },
+      series: [{
+        name: '留存率',
+        type: 'heatmap',
+        data: heatData,
+        encode: {
+          // 指明 heatData[i][0] 用来映射到 y 轴，
+          // heatData[i][1] 用来映射到 x 轴，
+          // heatData[i][2] 才是格子的“值”
+          x: 1,
+          y: 0,
+          value: 2
+        },
+        label: {
+          show: true,
+          //formatter: '{c}%'   // {c} 会自动读取 encode.value 那一维
+        },
+        emphasis: {
+          itemStyle: {
+            borderColor: '#333',
+            borderWidth: 1
+          }
+        }
+      }]
+    })
+
+
+
+  } catch (e) {
+    console.error(e)
+    ElMessage.error('加载留存热力图失败')
+  }
 }
 
 onMounted(() => {
-  nextTick(async () => {
-    const dates = getLastNDates(7);
-
-    // 1. 请求总览数据：total_user + average_usetime
-    try {
-      const { data: overview } = await axios.get('/data');
-      totalUser.value = overview.total_user;
-      const avgData = overview.average_usetime || [];
-      const mu = echarts.init(moduleUsageChart.value);
-      mu.setOption({
-        tooltip: { trigger: 'axis' },
-        xAxis: { type: 'category', data: avgData.map(i => i.function) },
-        yAxis: { type: 'value', name: '分钟' },
-        series: [{ name: '平均时长', type: 'bar', data: avgData.map(i => i.value) }]
-      });
-    } catch (e) {
-      console.error('GET /data failed', e);
-    }
-
-    // 2. 请求用户数量
-    try {
-      const start = dateNDaysAgo(7);
-      const resp1 = await axios.post('/data', { data: 'user_count', type: 'd', start });
-      const uc = echarts.init(userCountChart.value);
-      uc.setOption({
-        tooltip: { trigger: 'axis' },
-        xAxis: { type: 'category', data: dates },
-        yAxis: { type: 'value', name: '人数' },
-        series: [{ name: '新增用户', type: 'bar', data: resp1.data }]
-      });
-    } catch (e) {
-      console.error('POST /data user_count failed', e);
-    }
-
-    // 3. 请求留存率：用户增长率 / 次日留存 / 七日留存
-    try {
-      const start = dateNDaysAgo(7);
-      const [rInc, rDay, rWeek] = await Promise.all([
-        axios.post('/data', { data: 'increase', type: 'd', start }),
-        axios.post('/data', { data: 'remain',   type: 'd', start }),
-        axios.post('/data', { data: 'remain',   type: 'w', start })
-      ]);
-      const rc = echarts.init(retentionChart.value);
-      rc.setOption({
-        tooltip: {
-          trigger: 'axis',
-          formatter: params => params.map(p => `${p.marker} ${p.seriesName}: ${p.value}%`).join('<br/>')
-        },
-        legend: { data: ['用户增长率', '次日留存率', '七日留存率'] },
-        xAxis: { type: 'category', data: dates },
-        yAxis: { type: 'value', name: '%', axisLabel: { formatter: '{value}%' } },
-        series: [
-          { name: '用户增长率', type: 'bar', data: rInc.data },
-          { name: '次日留存率', type: 'bar', data: rDay.data },
-          { name: '七日留存率', type: 'bar', data: rWeek.data }
-        ]
-      });
-    } catch (e) {
-      console.error('POST /data retention failed', e);
-    }
-  });
-});
+  loadUsage()
+  loadUserCount()
+  loadHeatmap()
+})
 </script>
 
 <style scoped>
-.statistic-page {
-  padding: 20px;
+.header {
+  background: #2d3a4b; color: #fff;
+  padding: 0 20px; line-height: 40px;
+}
+.header .total { color:#ffd400; }
+.main {
   background: #faf6f2;
+  padding:20px;
+  overflow-y:auto;
 }
-
-.total-user-card {
-  width: 200px;
-  margin-bottom: 20px;
-  text-align: center;
-}
-
-.total-label {
-  font-size: 14px;
-  color: #606266;
-}
-
-.total-value {
-  font-size: 28px;
-  color: #f56c6c;
-  margin-top: 4px;
-}
-
-.charts-container {
-  display: flex;
-  gap: 20px;
-}
-
-.chart-card {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  height: 360px;
-}
-
-.right-charts {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.chart-header {
-  font-size: 16px;
-  font-weight: 500;
-  margin-bottom: 8px;
-}
-
-.chart {
-  width: 100%;
-  height: 260px;
-}
+.chart { width:100%; height:250px; }
+.heatmap { width:100%; height:350px; margin-top:20px; }
 </style>
