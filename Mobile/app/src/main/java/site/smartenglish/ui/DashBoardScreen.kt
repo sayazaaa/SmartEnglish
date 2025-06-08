@@ -168,7 +168,7 @@ fun DashBoardScreen(
                     ) {
                         AsyncImage(
                             model = wordBookCover,
-                            contentScale = ContentScale.Crop,
+                            contentScale = ContentScale.Fit,
                             contentDescription = "词书封面",
                             modifier = Modifier
                                 .width(95.dp)

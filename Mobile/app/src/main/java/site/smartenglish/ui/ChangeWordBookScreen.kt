@@ -280,7 +280,7 @@ fun WordbookItem(
         AsyncImage(
             model = cover,
             contentDescription = "词书封面",
-            contentScale = ContentScale.Crop,
+            contentScale = ContentScale.Fit,
             error = painterResource(R.drawable.dictionary),
             modifier = Modifier
                 .height(80.dp)
