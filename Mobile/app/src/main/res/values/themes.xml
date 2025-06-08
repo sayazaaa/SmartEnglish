@@ -2,7 +2,8 @@
 <resources>
 
     <style name="Theme.SmartEnglish" parent="android:Theme.Material.Light.NoActionBar">
-
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item> <!-- 处理刘海屏/挖孔屏 -->
+        <item name="android:windowTranslucentNavigation">true</item> <!-- 允许内容延伸到导航栏区域 (传统方式) -->
     </style>
 
     <!-- 添加启动画面主题 -->
