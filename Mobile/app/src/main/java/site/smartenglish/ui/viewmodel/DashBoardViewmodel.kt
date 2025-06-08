@@ -1,6 +1,5 @@
 package site.smartenglish.ui.viewmodel
 
-import androidx.compose.runtime.MutableState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -67,7 +66,30 @@ class DashBoardViewmodel @Inject constructor(
 
                val usingTimeDeferred = async {
                    try {
-                       usingRepository.getUsingTime("learn") ?: 0
+                       var time = 0
+                       time += usingRepository.getUsingTime("learn") ?: 0
+                       time += usingRepository.getUsingTime("review") ?: 0
+                       time += usingRepository.getUsingTime("listen") ?: 0
+                       time += usingRepository.getUsingTime("read") ?: 0
+                       time
+                   } catch (e: Exception) {
+                       e.printStackTrace()
+                       0
+                   }
+               }
+
+               val todayLearnedCountDeferred = async {
+                   try {
+                       learnedRepository.getTodayLearnedWordCount()
+                   } catch (e: Exception) {
+                       e.printStackTrace()
+                       0
+                   }
+               }
+
+               val todayLearnedTimeDeferred = async {
+                   try {
+                       usingRepository.getTodayLearnTime()
                    } catch (e: Exception) {
                        e.printStackTrace()
                        0
@@ -89,11 +111,9 @@ class DashBoardViewmodel @Inject constructor(
                // 更新学习数据
                _totalWord.value = learnedListDeferred.await()
                _totalTime.value = usingTimeDeferred.await()
+               _todayWord.value = todayLearnedCountDeferred.await()
+               _todayTime.value = todayLearnedTimeDeferred.await()
            }
        }
    }
-
-
-
-
 }

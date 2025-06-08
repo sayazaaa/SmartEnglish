@@ -25,6 +25,7 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -45,6 +46,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.launch
 import site.smartenglish.R
@@ -60,6 +64,7 @@ import site.smartenglish.ui.theme.White
 import site.smartenglish.ui.viewmodel.ArticleDetailViewmodel
 import site.smartenglish.ui.viewmodel.FavoriteViewmodel
 import site.smartenglish.ui.viewmodel.UploadImageViewmodel
+import site.smartenglish.ui.viewmodel.UsingViewModel
 
 @Composable
 fun ArticleDetailScreen(
@@ -67,7 +72,8 @@ fun ArticleDetailScreen(
     navigateBack: () -> Unit = { },
     viewmodel: ArticleDetailViewmodel = hiltViewModel(),
     favoriteViewmodel: FavoriteViewmodel = hiltViewModel(),
-    imageViewmodel: UploadImageViewmodel = hiltViewModel()
+    imageViewmodel: UploadImageViewmodel = hiltViewModel(),
+    usingViewModel: UsingViewModel = hiltViewModel()
 ) {
 
     val articleDetail = viewmodel.articleDetail.collectAsState().value
@@ -97,6 +103,38 @@ fun ArticleDetailScreen(
     // 确认删除收藏夹对话框状态
     var showDeleteDialog by remember { mutableStateOf(false) }
     var selectedSetIdToDelete by remember { mutableStateOf<Int?>(null) }
+
+    // 在组件进入时开始计时
+    LaunchedEffect(Unit) {
+        usingViewModel.startTracking()
+    }
+
+    // 在组件退出时发送使用时间
+    DisposableEffect(Unit) {
+        onDispose {
+            usingViewModel.sendUsageTime("read")
+        }
+    }
+
+    // 当应用进入后台时暂停计时，回到前台时继续计时
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_PAUSE -> {
+                    usingViewModel.pauseTracking()
+                }
+                Lifecycle.Event.ON_RESUME -> {
+                    usingViewModel.startTracking()
+                }
+                else -> {} // 其他生命周期事件不处理
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
 
 

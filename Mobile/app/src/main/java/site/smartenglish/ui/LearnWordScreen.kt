@@ -68,7 +68,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -85,6 +88,7 @@ import site.smartenglish.ui.viewmodel.LearnWordInfo
 import site.smartenglish.ui.viewmodel.NWordBookViewmodel
 import site.smartenglish.ui.viewmodel.SnackBarViewmodel
 import site.smartenglish.ui.viewmodel.UploadImageViewmodel
+import site.smartenglish.ui.viewmodel.UsingViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -98,6 +102,7 @@ fun LearnWordScreen(
     nWordBookViewmodel: NWordBookViewmodel = hiltViewModel(),
     imageViewmodel: UploadImageViewmodel = hiltViewModel(),
     audioPlayerViewModel: AudioPlayerViewModel = hiltViewModel(),
+    usingViewModel: UsingViewModel = hiltViewModel(),
     snackBarViewmodel: SnackBarViewmodel = hiltViewModel(LocalActivity.current as ViewModelStoreOwner)
 ) {
     val bitmap = bgViewmodel.backgroundBitmap.collectAsState().value
@@ -114,6 +119,37 @@ fun LearnWordScreen(
 
     val scope = rememberCoroutineScope()
 
+    // 在组件进入时开始计时
+    LaunchedEffect(Unit) {
+        usingViewModel.startTracking()
+    }
+
+    // 在组件退出时发送使用时间
+    DisposableEffect(Unit) {
+        onDispose {
+            usingViewModel.sendUsageTime("learn")
+        }
+    }
+
+    // 当应用进入后台时暂停计时，回到前台时继续计时
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_PAUSE -> {
+                    usingViewModel.pauseTracking()
+                }
+                Lifecycle.Event.ON_RESUME -> {
+                    usingViewModel.startTracking()
+                }
+                else -> {} // 其他生命周期事件不处理
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
 
     // 创建收藏夹对话框状态

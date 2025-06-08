@@ -17,16 +17,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class UserViewmodel @Inject constructor(
-    private val userRepository: UserRepository,
-    private val cloudService: TencentCloudService
+    private val userRepository: UserRepository
 ) : ViewModel() {
 
 
     // 用户资料状态
     private val _userProfile = MutableStateFlow<GetProfileResponse?>(null)
     val userProfile: StateFlow<GetProfileResponse?> = _userProfile.asStateFlow()
-
-
 
     init {
         getProfile()

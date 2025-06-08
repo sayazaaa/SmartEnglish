@@ -10,21 +10,24 @@ import javax.inject.Singleton
 @Singleton
 class UsingRepository @Inject constructor(
     private val api: ApiService,
-    private val dataStore:DataStoreManager
+    private val dataStoreManager: DataStoreManager
 ){
-    suspend fun getUsingTime(name: String): Int? =
-        api.getUsingTime(name).handleResponse("获取使用时间失败") as Int?
+    suspend fun getUsingTime(name: String): Int?{
+        val response = api.getUsingTime(name).handleResponse("获取使用时间失败") as Int?
+        return response
+    }
 
-    suspend fun updateUsingTime(name: String, duration: Int): Boolean =
-        api.updateUsingTime(PutUsingRequest(name, duration)).handleResponse("更新使用时间失败")
+
+    suspend fun updateUsingTime(name: String, duration: Int): Boolean{
+        val response = api.updateUsingTime(PutUsingRequest(name, duration)).handleResponse("更新使用时间失败")
             .let { it == null }
+        dataStoreManager.addTodayLearnTime(duration)
+        return response
+    }
 
-//    suspend fun getTodayUsingTime(name: String): Int? =
-//        api.getTodayUsingTime(name).handleResponse("获取今日使用时间失败") as Int?
-//
-//    suspend fun updateTodayUsingTime(name: String, duration: Int): Boolean =
-//        api.updateTodayUsingTime(PutUsingRequest(name, duration)).handleResponse("更新今日使用时间失败")
-//            .let { it == null }
+    suspend fun getTodayLearnTime(): Int {
+        return dataStoreManager.getTodayLearnTimeSync()
+    }
 
 
 }
