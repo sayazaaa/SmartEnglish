@@ -12,6 +12,8 @@ plugins {
     kotlin("plugin.serialization") version "2.0.21"
 }
 
+
+
 android {
     namespace = "site.smartenglish"
     compileSdk = 35
@@ -43,6 +45,14 @@ android {
             "\"${localProperties.getProperty("SecretKey")}\""
         )
 
+    }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            merges += "META-INF/LICENSE.md"
+            merges += "META-INF/LICENSE-notice.md"
+        }
     }
 
     buildTypes {
