@@ -4,13 +4,8 @@ import router from './router'
 //import store from './store'
 import axios from 'axios';
 
-// 1. baseURL 指向环境变量（带 /api 前缀 方便走代理）
-// —— 这里判断一下，如果是 dev，就走 Vite 代理；否则走真实地址 ——
-if (import.meta.env.DEV) {
-    axios.defaults.baseURL = '/api';
-} else {
-    axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL;
-}
+axios.defaults.baseURL = import.meta.env.VITE_API_BASE;   // 只这一行
+
 
 console.log('[Debug] axios.baseURL =', axios.defaults.baseURL);
 
