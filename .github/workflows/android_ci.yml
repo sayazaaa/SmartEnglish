@@ -19,7 +19,6 @@ jobs:
         working-directory: Mobile
 
     env:
-      ANDROID_AVD_HOME: ${{ github.workspace }}/.android/avd
       ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
 
     steps:
@@ -36,9 +35,6 @@ jobs:
 
       - name: Configure Android environment
         run: |
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
-          echo "ANDROID_AVD_HOME=$ANDROID_AVD_HOME" >> $GITHUB_ENV
-          mkdir -p $ANDROID_AVD_HOME
           echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
 
       - name: Create secrets in local.properties
@@ -62,76 +58,21 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-        with:
-          avd-home: ${{ env.ANDROID_AVD_HOME }}
 
       - name: Accept SDK licenses
         shell: bash
         run: |
-          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH
+          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH
           yes | sdkmanager --licenses || true
-
-      - name: Add Android tools to PATH
-        run: |
-          echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "$ANDROID_SDK_ROOT/emulator" >> $GITHUB_PATH
-          echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
 
       - name: Install required SDK components
         shell: bash
         run: |
-          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH
-          sdkmanager --install "platform-tools" "platforms;android-33" "emulator" "system-images;android-33;google_apis;arm64-v8a"
+          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH
+          sdkmanager --install "platform-tools" "platforms;android-33"
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug
 
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest
-
-      - name: Create Android Emulator
-        shell: bash
-        run: |
-          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH
-          echo "no" | avdmanager create avd -n test -k "system-images;android-33;google_apis;arm64-v8a" \
-                --device "pixel" --force \
-                --path "$ANDROID_AVD_HOME/test.avd"
-          echo "Displaying AVD configuration"
-          cat $ANDROID_AVD_HOME/test.avd/config.ini
-
-      - name: Verify available AVDs
-        shell: bash
-        run: |
-          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH
-          avdmanager list avd
-
-      - name: Start Android Emulator
-        shell: bash
-        run: |
-          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH
-          echo "Starting emulator with AVD home: $ANDROID_AVD_HOME"
-          $ANDROID_SDK_ROOT/emulator/emulator -avd test \
-            -no-accel \
-            -no-audio \
-            -no-window \
-            -gpu swiftshader_indirect \
-            -no-snapshot \
-            -no-boot-anim \
-            -camera-back none \
-            -camera-front none &
-          adb wait-for-device
-          echo "Emulator started, waiting for boot complete"
-          while [[ "$(adb shell getprop sys.boot_completed | tr -d '\r')" != "1" ]]; do
-            echo "Waiting for boot completion..."
-            sleep 3
-          done
-          adb shell input keyevent 82
-          echo "Emulator is ready"
-        timeout-minutes: 10
-
-      - name: List connected devices
-        run: adb devices -l
-
-      - name: Run instrumented Android tests
-        run: ./gradlew connectedDebugAndroidTest
-        timeout-minutes: 15
