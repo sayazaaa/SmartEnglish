@@ -83,7 +83,6 @@ import site.smartenglish.ui.theme.LightGrey
 import site.smartenglish.ui.theme.White
 import site.smartenglish.ui.viewmodel.AudioPlayerViewModel
 import site.smartenglish.ui.viewmodel.BackgroundImageViewmodel
-import site.smartenglish.ui.viewmodel.LearnWordInfo
 import site.smartenglish.ui.viewmodel.NWordBookViewmodel
 import site.smartenglish.ui.viewmodel.ReviewViewmodel
 import site.smartenglish.ui.viewmodel.ReviewWordInfo
@@ -113,7 +112,7 @@ fun ReviewWordScreen(
     val navigateBackSelection = reviewViewmodel.navigateBackSelection.collectAsState().value
     val navigateToFinished = reviewViewmodel.navigateToFinish.collectAsState().value
     val snackBar = reviewViewmodel.snackBar.collectAsState().value
-    val targetWordNum = reviewViewmodel.targetLearnCount.collectAsState().value
+    val targetWordNum = reviewViewmodel.targetReviewCount.collectAsState().value
     val isAnyNWordBook = nWordBookViewmodel.isAnyNWordBook.collectAsState().value
 
     var showDetailScreen by remember { mutableStateOf(false) }

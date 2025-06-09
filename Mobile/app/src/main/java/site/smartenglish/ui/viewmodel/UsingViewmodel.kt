@@ -1,5 +1,6 @@
 package site.smartenglish.ui.viewmodel
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -39,6 +40,7 @@ class UsingViewModel @Inject constructor(
             viewModelScope.launch {
                 try {
                     usingRepository.updateUsingTime(name,totalDuration/60)
+                    Log.d("UsingViewModel", "使用时长已累计: $totalDuration 秒")
                 } catch (e: Exception) {
                     e.printStackTrace()
                 } finally {

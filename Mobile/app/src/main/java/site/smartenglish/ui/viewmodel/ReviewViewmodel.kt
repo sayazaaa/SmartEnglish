@@ -6,7 +6,6 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import site.smartenglish.manager.DataStoreManager
 import site.smartenglish.remote.data.GetWordResponse
@@ -59,13 +58,13 @@ class ReviewViewmodel @Inject constructor(
     val navigateToFinish = _navigateToFinish.asStateFlow()
 
     // 当前学习目标数量
-    private val _targetLearnCount = MutableStateFlow(10)
-    val targetLearnCount = _targetLearnCount.asStateFlow()
+    private val _targetReviewCount = MutableStateFlow(10)
+    val targetReviewCount = _targetReviewCount.asStateFlow()
 
     init {
         // 初始化时从DataStore读取设置
         viewModelScope.launch {
-            _targetLearnCount.value = dataStoreManager.getLearnWordsCountSync()
+            _targetReviewCount.value = dataStoreManager.getLearnWordsCountSync()
         }
     }
 
@@ -221,7 +220,7 @@ class ReviewViewmodel @Inject constructor(
                     "上传单词${currentWord.word.word}成功，添加新单词: ${response.new_word}"
                 )
 
-                if (_reviewedWordNum.value == _targetLearnCount.value) {
+                if (_reviewedWordNum.value == _targetReviewCount.value) {
                     uploadReviewedWords()
                     _navigateToFinish.value = true
                 }
@@ -242,7 +241,7 @@ class ReviewViewmodel @Inject constructor(
                     _snackBar.value = "今天没有可以复习的单词了！"
                     return
                 }
-                if (_reviewedWordNum.value == _targetLearnCount.value) {
+                if (_reviewedWordNum.value == _targetReviewCount.value) {
                     uploadReviewedWords()
                     _navigateToFinish.value = true
                 }
@@ -373,7 +372,7 @@ class ReviewViewmodel @Inject constructor(
     //学到 个触发上传
     fun uploadReviewedWords() {
         viewModelScope.launch {
-            if (_reviewedWordNum.value >= _targetLearnCount.value) {
+            if (_reviewedWordNum.value >= _targetReviewCount.value) {
                 try {
                     wordSetRepository.updateWordSet(
                         type = "review", putWordSetRequest = wordDetailList.map {

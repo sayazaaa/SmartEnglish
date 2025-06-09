@@ -83,6 +83,7 @@ dependencies {
     implementation(libs.ui)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.ui.android.stubs)
+    implementation(libs.androidx.ui.test.android)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -118,7 +119,13 @@ dependencies {
     implementation(libs.jsoup)
     // 腾讯云对象存储 SDK
     implementation(libs.qcloud.cos.android)
-
+    // test
+    // Mockk 测试库
+    testImplementation (libs.mockk)
+    androidTestImplementation( libs.mockk.android)
+    // Compose 测试库
+    androidTestImplementation(libs.ui.test.junit4)
+    debugImplementation(libs.ui.test.manifest)
 
 
 
