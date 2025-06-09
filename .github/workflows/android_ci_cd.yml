@@ -1,18 +1,20 @@
-name: Android CI
+name: Android CI/CD
 
 on:
   push:
     branches: [ main, 'Android-*' ]
     paths:
-      - '.github/workflows/android_ci.yml'
+      - '.github/workflows/android_ci_cd.yml'
       - 'Mobile/**'
+    tags:
+      - 'v*'  # CD: 仅在打 tag（如 v1.0.0）时触发
   pull_request:
     branches: [ main ]
     paths:
       - 'Mobile/**'
 
 jobs:
-  android-build:
+  build:
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -34,10 +36,9 @@ jobs:
           distribution: 'temurin'
 
       - name: Configure Android environment
-        run: |
-          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+        run: echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
 
-      - name: Create secrets in local.properties
+      - name: Add secrets to local.properties
         run: |
           echo "IP=${{ secrets.IP }}" >> local.properties
           echo "SecretId=${{ secrets.SECRET_ID }}" >> local.properties
@@ -76,3 +77,9 @@ jobs:
 
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest
+
+      - name: Upload APK to GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: Mobile/app/build/outputs/apk/debug/app-debug.apk
