@@ -41,11 +41,30 @@ public class UseDataLogger {
         }
     }
     @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void LogLoginWithDate(Integer userId, LocalDate date){
+        List<AccountOperator> accountOperators = accountOperatorRepository.searchByAccountIdAndDateAndOp(userId,LocalDate.now(),1);
+        if(accountOperators.isEmpty()){
+            AccountOperator accountOperator = new AccountOperator();
+            accountOperator.setAccountId(userId);
+            accountOperator.setOp(1);
+            accountOperator.setLogDate(date);
+            accountOperatorRepository.save(accountOperator);
+        }
+    }
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void LogRegister(Integer userId){
         AccountOperator accountOperator = new AccountOperator();
         accountOperator.setAccountId(userId);
         accountOperator.setOp(0);
         accountOperator.setLogDate(LocalDate.now());
+        accountOperatorRepository.save(accountOperator);
+    }
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void LogRegisterWithDate(Integer userId, LocalDate date){
+        AccountOperator accountOperator = new AccountOperator();
+        accountOperator.setAccountId(userId);
+        accountOperator.setOp(0);
+        accountOperator.setLogDate(date);
         accountOperatorRepository.save(accountOperator);
     }
     @Transactional
@@ -64,7 +83,7 @@ public class UseDataLogger {
     public BasicLogData GetBasicLogData(){
         List<AccountOperator> accountOperators = accountOperatorRepository.findByOp(0);
         BasicLogData basicLogData = new BasicLogData();
-        basicLogData.setTotalUser(calcDataList.size());
+        basicLogData.setTotalUser(accountOperators.size());
         basicLogData.setTotalUseTime(MakePDTOModUseTimeStatistics(modUseTimeRepository.GetSumUseTime()));
         basicLogData.setAverageUseTime(MakePDTOModUseTimeStatistics(modUseTimeRepository.GetAvgUseTime()));
         return basicLogData;

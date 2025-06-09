@@ -24,4 +24,12 @@ public interface AccountOperatorRepository extends JpaRepository<AccountOperator
         and ao.op = ?3
     """,nativeQuery = true)
     List<AccountOperator> searchByDateAndOp(LocalDate start, LocalDate end, Integer op);
+    @Query(value = """
+        select count(DISTINCT ao.account_id) from accountoperator ao
+        where ao.account_id in ?1
+        and ao.logdate >= ?2
+        and ao.logdate < ?3
+        and ao.op = ?4 group by ao.account_id
+    """,nativeQuery = true)
+    Long searchByAccountIdAndDurationAndOp(List<Integer> accountId, LocalDate start, LocalDate end, Integer op);
 }

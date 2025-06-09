@@ -2,10 +2,7 @@ package com.smartenglishbackend.service;
 
 import com.smartenglishbackend.customexceptions.AccountException;
 import com.smartenglishbackend.customexceptions.MyResourceNotFoundException;
-import com.smartenglishbackend.jpaentity.Account;
-import com.smartenglishbackend.jpaentity.Learned;
-import com.smartenglishbackend.jpaentity.LearnedId;
-import com.smartenglishbackend.jpaentity.WordBook;
+import com.smartenglishbackend.jpaentity.*;
 import com.smartenglishbackend.jparepo.AccountRepository;
 import com.smartenglishbackend.jparepo.LearnedRepository;
 import com.smartenglishbackend.jparepo.WordBookRepository;
@@ -29,6 +26,8 @@ public class WordGenerator {
     private LearnedRepository learnedRepository;
     @Autowired
     private WordBookRepository wordBookRepository;
+    @Autowired
+    private WordSetRepository wordSetRepository;
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Pair<String,Integer> GetNewWord(int userId, int nowP) {
         Optional<Account> accountOptional = accountRepository.findById(userId);
@@ -70,9 +69,23 @@ public class WordGenerator {
             throw new AccountException("Account not found");
         }
         Account account = accountOptional.get();
+        WordSet wordset = wordSetRepository.findByAccountId(userId);
+        if(wordset == null){
+            throw new MyResourceNotFoundException("WordSet not found");
+        }
         List<Learned> learnedList = learnedRepository.findTodayReview(LocalDate.now(),userId);
         List<String> reviewWords = new ArrayList<>();
         for(Learned learned : learnedList){
+            boolean flag = false;
+            for(SWord sWord: wordset.getSetlearned()){
+                if(sWord.getWord().equals(learned.getWord())){
+                    flag = true;
+                    break;
+                }
+            }
+            if(flag){
+                continue;
+            }
             reviewWords.add(learned.getWord());
             if(reviewWords.size() >= maxCount){
                 break;

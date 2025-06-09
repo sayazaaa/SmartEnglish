@@ -42,10 +42,9 @@ public class UserService {
             throw new AccountException("Account not found");
         }
         Account account = accountOptional.get();
-        List<Learned> learnedList = learnedRepository.findByAccountId(account.getId());
-        List<Learned> filtered = learnedList.stream().filter(learned -> learned.getReview_date().isBefore(LocalDate.now())).toList();
+        List<Learned> learnedList = learnedRepository.findTodayReview(LocalDate.now(),userId);
         PDTOUser pdtoUser = new PDTOUser(account.getName(), account.getDescription(), account.getAvatar(), null,
-                account.getNewWordCount()==null?0:account.getNewWordCount(),filtered.size());
+                account.getNewWordCount()==null?0:account.getNewWordCount(),learnedList.size());
         if(account.getWordbookId() != null){
             Optional<WordBook> wordBookOptional = wordBookRepository.findById(account.getWordbookId());
             if(wordBookOptional.isPresent()){

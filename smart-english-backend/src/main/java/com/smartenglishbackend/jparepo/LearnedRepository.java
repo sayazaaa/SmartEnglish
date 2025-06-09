@@ -14,7 +14,7 @@ import java.util.List;
 
 @Repository
 public interface LearnedRepository extends JpaRepository<Learned, LearnedId> {
-    @Query(value="SELECT * from learned c WHERE c.review_date<?1 AND c.account_id=?2",nativeQuery = true)
+    @Query(value="SELECT * from learned c WHERE c.review_date <= ?1 AND c.account_id = ?2",nativeQuery = true)
     List<Learned> findTodayReview(LocalDate date, Integer id);
     List<Learned> findByAccountId(Integer id);
 }
