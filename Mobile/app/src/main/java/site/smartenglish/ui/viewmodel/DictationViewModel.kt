@@ -1,5 +1,6 @@
 package site.smartenglish.ui.viewmodel
 
+import android.util.Log
 import androidx.compose.runtime.Updater
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,6 +14,7 @@ import site.smartenglish.repository.NWordBookRepository
 import site.smartenglish.repository.WordBookRepository
 import site.smartenglish.repository.WordRepository
 import javax.inject.Inject
+import kotlin.math.max
 
 @HiltViewModel
 class DictationViewModel @Inject constructor(
@@ -54,7 +56,11 @@ class DictationViewModel @Inject constructor(
     private val _NWordBookList = MutableStateFlow(listOf<GetNWordBookListResponseElement>())
     val NWordBookList = _NWordBookList.asStateFlow()
 
+    private val _finished = MutableStateFlow(false)
+    val finished = _finished.asStateFlow()
+
     init {
+        fetchLearnedWords()
         viewModelScope.launch {
             _learnedWordCount.value = learnedRepository.getTodayLearnedWordCount()
             try {
@@ -80,11 +86,15 @@ class DictationViewModel @Inject constructor(
     }
 
     fun moveToNextWord() {
-        if (_currentWords.value.isNotEmpty() && _currentWordIndex.value < _currentWords.value.size - 1) {
-            _currentWordIndex.value ++
-            _currentWordPlayedTime.value = 0
-            viewModelScope.launch {
-                UpdateCurrent()
+        if (_currentWords.value.isNotEmpty() ) {
+            if(_currentWordIndex.value < _currentWords.value.size - 1){
+                _currentWordIndex.value ++
+                _currentWordPlayedTime.value = 0
+                viewModelScope.launch {
+                    UpdateCurrent()
+                }
+            }else{
+                _finished.value = true
             }
         }
     }
@@ -93,11 +103,17 @@ class DictationViewModel @Inject constructor(
         if (_currentWords.value.isNotEmpty()) {
             val wordInfo= wordRepository.getWordInfo(_currentWords.value[_currentWordIndex.value])
             _currentSymbol.value = wordInfo.phonetic?: ""
-            _isCurrentFavourite.value = nWordBookRepository.checkNWordBook(currentWord,0) // 假设0是默认的生词本ID
+            _isCurrentFavourite.value =
+                _NWordBookList.value[0].id?.let {
+                    nWordBookRepository.checkNWordBook(currentWord,
+                        it
+                    )
+                } == true // 假设0是默认的生词本ID
             _currentMeanings.value = wordInfo.explanations ?: emptyList()
             _currentWordTypes.value = emptyList<String>()//TODO 真有这个吗？
             _currentSoundType.value = "日"//TODO 真有这个吗？
-            _currentSoundUrl.value = wordInfo.pronunciation ?: ""
+            _currentSoundUrl.value = wordInfo.pronunciation.toString()
+            Log.e("DictationViewModel",currentSoundUrl.value)
         }
     }
 
@@ -121,8 +137,8 @@ class DictationViewModel @Inject constructor(
     fun fetchLearnedWords() {
         viewModelScope.launch {
             try {
-                _currentWords.value = learnedRepository.getLearnedWordList()
-                    ?.shuffled()?.subList(0, 20)?.mapNotNull { x -> x.word } ?: emptyList()
+                val list = learnedRepository.getLearnedWordList()?.mapNotNull { x -> x.word }?: emptyList()
+                _currentWords.value = list.subList(0, minOf(20,list.count())).shuffled()
                 UpdateCurrent( )
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -134,8 +150,8 @@ class DictationViewModel @Inject constructor(
     fun fetchNWordBookWords(id:Int){
         viewModelScope.launch {
             try {
-                _currentWords.value = nWordBookRepository.getNWordBookWords(id)?.filterNotNull()
-                    ?.shuffled()?.subList(0,20)  ?: emptyList()
+                val list = nWordBookRepository.getNWordBookWords(id)?.filterNotNull()?: emptyList()
+                _currentWords.value = list.shuffled().subList(0, minOf(20,list.count()))
                 UpdateCurrent( )
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -147,7 +163,7 @@ class DictationViewModel @Inject constructor(
     fun switchWordInNWordBook(word: String) {
         viewModelScope.launch {
             try {
-                nWordBookRepository.addNWord(word, 0) // 假设0是默认的生词本ID
+                _NWordBookList.value[0].id?.let { nWordBookRepository.addNWord(word, it) } // 假设0是默认的生词本ID
                 UpdateCurrent()
             } catch (e: Exception) {
                 e.printStackTrace()

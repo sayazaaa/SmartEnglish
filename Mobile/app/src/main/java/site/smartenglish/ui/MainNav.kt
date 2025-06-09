@@ -182,7 +182,10 @@ object Setting
 object Dictation
 
 @Serializable
-object DictationDetail
+class DictationDetail(
+    val words: List<String>,
+    val isFinished: Boolean,
+)
 
 
 
@@ -550,10 +553,30 @@ fun MainNav(
             )
         }
         composable<Dictation> {
-            DictationScreen()
+            DictationScreen(
+                navigationToList = {words,isFinished -> navController.navigate(DictationDetail(
+                    words = words,
+                    isFinished = isFinished
+                ))},
+                navigationBack = { navController.popBackStack() },
+            )
         }
         composable<DictationDetail> {
-            DictationListScreen()
+            backStackEntry ->
+            val dictationDetail = backStackEntry.arguments?.let {
+                DictationDetail(
+                    it.getStringArray("words")?.toList() ?: emptyList(),
+                    it.getBoolean("isFinished", false)
+                )
+            }
+            DictationListScreen(
+                words = dictationDetail?.words ?: emptyList(),
+                isFinished = dictationDetail?.isFinished ?: false,
+                navigationBack = {navController.popBackStack()},
+                navigationToHome = { navController.navigate(Home) {
+                    popUpTo(0) { inclusive = true }
+                } },
+            )
         }
     }
 }

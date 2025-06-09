@@ -14,12 +14,15 @@ import androidx.compose.ui.text.font.*
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.*
 import androidx.hilt.navigation.compose.hiltViewModel
-import site.smartenglish.remote.data.GetNWordBookListResponseElement
+import kotlinx.coroutines.delay
 import site.smartenglish.ui.viewmodel.AudioPlayerViewModel
 import site.smartenglish.ui.viewmodel.DictationViewModel
+import kotlin.time.Duration.Companion.seconds
 
 @Composable
 fun DictationScreen(
+    navigationToList: (List<String>,Boolean) -> Unit,
+    navigationBack: () -> Unit = {},
     dictationViewModel: DictationViewModel = hiltViewModel(),
     audioPlayerViewModel: AudioPlayerViewModel = hiltViewModel()
 ) {
@@ -33,9 +36,10 @@ fun DictationScreen(
     val soundType = dictationViewModel.currentSoundType.collectAsState().value
     val soundUrl = dictationViewModel.currentSoundUrl.collectAsState().value
     val wordPlayedTime = dictationViewModel.currentWordPlayedTime.collectAsState().value
-    val currentWordIndex = dictationViewModel.currentWordIndex.collectAsState().value
-    val audioPlaying = audioPlayerViewModel.isPlaying.collectAsState().value
+    val wordIndex = dictationViewModel.currentWordIndex.collectAsState().value
     val nWordBooks = dictationViewModel.NWordBookList.collectAsState().value
+    val learnedWordCount = dictationViewModel.learnedWordCount.collectAsState().value
+    val finished = dictationViewModel.finished.collectAsState().value
 //    val nWordBooks = listOf(
 //        GetNWordBookListResponseElement(id = 1, name = "生词本1"),
 //        GetNWordBookListResponseElement(id = 2, name = "生词本2"),
@@ -54,16 +58,32 @@ fun DictationScreen(
     var wordSequenceExpand by remember { mutableStateOf(true) }
     var selectNWordBook by remember { mutableStateOf(false) }
 
+    val currentSoundUrl by rememberUpdatedState(soundUrl)
+    val currentWordPlayedTime by rememberUpdatedState(wordPlayedTime)
+    val currentWordPlayTime by rememberUpdatedState(wordPlayTime)
+    val currentPlaying by rememberUpdatedState(isPlaying)
+    val currentAutoNext by rememberUpdatedState(autoNext)
+
     val textColor=Color.White
     val darkTextColor = Color.White.copy(alpha = 0.7f)
 
-    if(isPlaying && !audioPlaying) {
-        if(wordPlayedTime < wordPlayTime) {
-            dictationViewModel.wordPlayed()
-            audioPlayerViewModel.playAudio(soundUrl)
-        } else if (autoNext) {
-            dictationViewModel.moveToNextWord()
+    LaunchedEffect(Unit) {
+        while(true) {
+            delay(3.seconds)
+            if(currentPlaying) {
+                if(currentWordPlayedTime < currentWordPlayTime) {
+                    dictationViewModel.wordPlayed()
+                    //Log.e(null,currentSoundUrl)
+                    audioPlayerViewModel.playAudio(currentSoundUrl)
+                } else if (currentAutoNext) {
+                    dictationViewModel.moveToNextWord()
+                }
+            }
         }
+    }
+
+    if(finished){
+        navigationToList(words,true)
     }
 
     Box(
@@ -80,7 +100,7 @@ fun DictationScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(onClick = { /* TODO 返回逻辑 */ }) {
+            IconButton(onClick = { navigationBack()}) {
                 Icon(
                     imageVector = Icons.Default.ChevronLeft,
                     contentDescription = "返回",
@@ -115,7 +135,7 @@ fun DictationScreen(
                 modifier = Modifier.padding(top = 82.dp, start = 30.dp)
             ) {
                 Text(
-                    text = words[currentWordIndex],
+                    text = words[wordIndex],
                     fontSize = 48.sp,
                     fontWeight = FontWeight.Bold,
                     color = textColor
@@ -143,7 +163,6 @@ fun DictationScreen(
                                 )
                                 IconButton(
                                     onClick = {
-                                        dictationViewModel.wordPlayed()
                                         audioPlayerViewModel.playAudio(soundUrl)
                                     },
                                     modifier = Modifier.padding(0.dp, 0.dp, 4.dp, 0.dp)
@@ -172,7 +191,7 @@ fun DictationScreen(
                     Spacer(modifier = Modifier.height(12.dp))
                     Row {
                         Text(
-                            text = wordTypes[index],
+                            text = if(wordTypes.count()>index) wordTypes[index] else "",
                             color = darkTextColor,
                             fontSize = 17.sp
                         )
@@ -220,13 +239,13 @@ fun DictationScreen(
                     colors = CardDefaults.cardColors(
                         containerColor = if(wordSourceExpand) Color(0xFF24293D) else Color.Transparent
                     ),
-                    onClick = { wordSourceExpand = !wordSourceExpand},
                 ){
                     Row(
                         modifier = Modifier.height(62.dp)
                             .fillMaxWidth()
                             .background( Color(0xFF292F45) )
-                            .padding(start = 22.dp, end = 22.dp),
+                            .padding(start = 22.dp, end = 22.dp)
+                            .clickable { wordSourceExpand = !wordSourceExpand },
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
@@ -264,7 +283,7 @@ fun DictationScreen(
                                         .padding(start = 32.dp)
                                 ) {
                                     Text(
-                                        text = "已学单词\nTotal:"+dictationViewModel.learnedWordCount ,
+                                        text = "已学单词\nTotal:$learnedWordCount",
                                         fontSize = 16.sp,
                                         color = textColor,
                                         modifier = Modifier.padding(top= 18.dp)
@@ -310,13 +329,13 @@ fun DictationScreen(
                     colors = CardDefaults.cardColors(
                         containerColor = if(wordPlayTimeExpand) Color(0xFF24293D) else Color.Transparent
                     ),
-                    onClick = { wordPlayTimeExpand = !wordPlayTimeExpand},
                 ){
                     Row(
                         modifier = Modifier.height(62.dp)
                             .fillMaxWidth()
                             .background( Color(0xFF292F45) )
-                            .padding(start = 22.dp, end = 22.dp),
+                            .padding(start = 22.dp, end = 22.dp)
+                            .clickable{ wordPlayTimeExpand = !wordPlayTimeExpand},
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
@@ -418,13 +437,13 @@ fun DictationScreen(
                     colors = CardDefaults.cardColors(
                         containerColor = if(wordSequenceExpand) Color(0xFF24293D) else Color.Transparent
                     ),
-                    onClick = { wordSequenceExpand = !wordSequenceExpand},
                 ){
                     Row(
                         modifier = Modifier.height(62.dp)
                             .fillMaxWidth()
                             .background( Color(0xFF292F45) )
-                            .padding(start = 22.dp, end = 22.dp),
+                            .padding(start = 22.dp, end = 22.dp)
+                            .clickable{ wordSequenceExpand = !wordSequenceExpand},
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
@@ -583,7 +602,7 @@ fun DictationScreen(
         ){
             // 进度标识
             Text(
-                text = "${currentWordIndex + 1}/${words.size}",
+                text = "${wordIndex + 1}/${words.size}",
                 fontSize = 16.sp,
                 color = textColor,
                 modifier = Modifier.padding(bottom = 117.dp)
@@ -598,7 +617,7 @@ fun DictationScreen(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = { /* TODO 打开菜单 */ }) {
+                IconButton(onClick = { navigationToList(words,false) }) {
                     Icon(
                         imageVector = Icons.Default.Menu,
                         tint=textColor,
