@@ -38,6 +38,7 @@ fun DictationScreen(
     val currentWordIndex = dictationViewModel.currentWordIndex.collectAsState().value
     val audioPlaying = audioPlayerViewModel.isPlaying.collectAsState().value
     val nWordBooks = dictationViewModel.NWordBookList.collectAsState().value
+    val learnedWordCount = dictationViewModel.learnedWordCount.collectAsState().value
 //    val nWordBooks = listOf(
 //        GetNWordBookListResponseElement(id = 1, name = "生词本1"),
 //        GetNWordBookListResponseElement(id = 2, name = "生词本2"),
@@ -228,7 +229,7 @@ fun DictationScreen(
                             .fillMaxWidth()
                             .background( Color(0xFF292F45) )
                             .padding(start = 22.dp, end = 22.dp)
-                            .clickable() { wordSourceExpand = !wordSourceExpand },
+                            .clickable { wordSourceExpand = !wordSourceExpand },
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
@@ -266,7 +267,7 @@ fun DictationScreen(
                                         .padding(start = 32.dp)
                                 ) {
                                     Text(
-                                        text = "已学单词\nTotal:"+dictationViewModel.learnedWordCount.value ,
+                                        text = "已学单词\nTotal:"+learnedWordCount ,
                                         fontSize = 16.sp,
                                         color = textColor,
                                         modifier = Modifier.padding(top= 18.dp)
