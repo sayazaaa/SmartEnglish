@@ -88,7 +88,7 @@ fun HomeScreen(
     navigateToDashBoard: () -> Unit = {},
     navigateToLearnWord: () -> Unit,
     navigateToReviewWord: () -> Unit,
-    //TODO 导航到听写
+    navigateToDictation: () -> Unit = {},
     navigateToWordDetail:(String) -> Unit = {},
     homeViewmodel: HomeViewmodel = hiltViewModel(),
     userViewmodel: UserViewmodel = hiltViewModel(),
@@ -259,7 +259,7 @@ fun HomeScreen(
                 navigateToDashBoard()
             }
             barItem(painterResource(R.drawable.edit_note), "单词听写") {
-                //TODO
+                navigateToDictation()
             }
         }
         // 搜索时模糊背景

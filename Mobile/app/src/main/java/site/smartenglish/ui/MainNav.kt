@@ -178,6 +178,12 @@ class WordDetail(
 @Serializable
 object Setting
 
+@Serializable
+object Dictation
+
+@Serializable
+object DictationDetail
+
 
 
 @Composable
@@ -249,7 +255,10 @@ fun MainNav(
             navigateToReviewWord = {
                 navController.navigate(ReviewWord)
             },
-            navigateToWordDetail = {navController.navigate(WordDetail(it))}
+            navigateToWordDetail = {navController.navigate(WordDetail(it))},
+            navigateToDictation = {
+                navController.navigate(Dictation)
+            }
         ) }
         composable<Profile> { ProfileScreen(
             navigateBack = { navController.popBackStack()},
@@ -437,6 +446,9 @@ fun MainNav(
                 },
                 navigateToSetting = {
                     navController.navigate(Setting)
+                },
+                navigateToDictation = {
+                    navController.navigate(Dictation)
                 }
             )
         }
@@ -536,6 +548,12 @@ fun MainNav(
             SettingScreen(
                 navigateBack = { navController.popBackStack() },
             )
+        }
+        composable<Dictation> {
+            DictationScreen()
+        }
+        composable<DictationDetail> {
+            DictationListScreen()
         }
     }
 }
