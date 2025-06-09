@@ -81,7 +81,9 @@ public class UserService {
             if(wordSet == null){
                 throw new MyResourceNotFoundException("WordSet not found");
             }
-            wordSet.getSetpre().clear();
+            if(wordSet.getSetpre() != null){
+                wordSet.getSetpre().clear();
+            }
             account.setNewWordCount(result.size());
         }
         try{

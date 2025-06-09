@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @Controller
+@CrossOrigin(origins = "*")
 @RequestMapping(path = "/wordset")
 public class WordSetController {
     @Autowired
