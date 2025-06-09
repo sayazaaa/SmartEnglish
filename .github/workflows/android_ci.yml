@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
     paths:
-      -  '.github/workflows/android_ci.yml'
+      - '.github/workflows/android_ci.yml'
       - 'Mobile/**'
   pull_request:
     branches: [ main ]
@@ -38,10 +38,10 @@ jobs:
           echo "SecretId=${{ secrets.SECRET_ID }}" >> local.properties
           echo "SecretKey=${{ secrets.SECRET_KEY }}" >> local.properties
 
-      - name: Grant execute permission for gradlew
+      - name: Make gradlew executable
         run: chmod +x gradlew
 
-      - name: Cache Gradle
+      - name: Cache Gradle dependencies
         uses: actions/cache@v3
         with:
           path: |
@@ -69,7 +69,11 @@ jobs:
       - name: Install emulator system image (API 33)
         run: |
           sdkmanager "system-images;android-33;google_apis;x86_64"
-          echo "no" | avdmanager create avd -n test -k "system-images;android-33;google_apis;x86_64" --force
+          mkdir -p ~/.android/avd
+          echo "no" | avdmanager create avd -n test -k "system-images;android-33;google_apis;x86_64" --device "pixel" --force
+
+      - name: Verify available AVDs
+        run: avdmanager list avd
 
       - name: Start Android emulator
         run: |
@@ -78,5 +82,5 @@ jobs:
           adb shell input keyevent 82
         timeout-minutes: 5
 
-      - name: Run Android instrumented tests
+      - name: Run instrumented Android tests
         run: ./gradlew connectedDebugAndroidTest
