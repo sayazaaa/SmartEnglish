@@ -18,6 +18,10 @@ jobs:
       run:
         working-directory: Mobile
 
+    env:
+      ANDROID_AVD_HOME: ${{ github.workspace }}/.android/avd
+      ANDROID_SDK_ROOT: ${{ github.workspace }}/android-sdk
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -30,10 +34,16 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Create local.properties
+      # 统一配置Android环境变量
+      - name: Configure Android environment
         run: |
-          echo "Creating local.properties"
-          touch local.properties
+          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
+          echo "ANDROID_AVD_HOME=$ANDROID_AVD_HOME" >> $GITHUB_ENV
+          mkdir -p $ANDROID_AVD_HOME
+          echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
+
+      - name: Create secrets in local.properties
+        run: |
           echo "IP=${{ secrets.IP }}" >> local.properties
           echo "SecretId=${{ secrets.SECRET_ID }}" >> local.properties
           echo "SecretKey=${{ secrets.SECRET_KEY }}" >> local.properties
@@ -47,18 +57,30 @@ jobs:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('Mobile/gradle/wrapper/gradle-wrapper.properties') }}
+          key: ${{ runner.os }}-gradle-${{ hashFiles('gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Accept SDK licenses
-        run: yes | sudo $ANDROID_HOME/tools/bin/sdkmanager --licenses || true
-
-      - name: Install Android SDK
+      # 使用预配置的Android Actions
+      - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          avd-home: ${{ env.ANDROID_AVD_HOME }}
 
-      - name: Add emulator to PATH
-        run: echo "${ANDROID_HOME}/emulator" >> $GITHUB_PATH
+      - name: Accept SDK licenses
+        run: yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager --licenses || true
+
+      # 添加必要工具到PATH
+      - name: Add Android tools to PATH
+        run: |
+          echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          echo "$ANDROID_SDK_ROOT/emulator" >> $GITHUB_PATH
+          echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
+
+      - name: Install required SDK components
+        run: |
+          $ANDROID_SDK_ROOT/tools/bin/sdkmanager --install "platform-tools" "platforms;android-33" "emulator"
+          $ANDROID_SDK_ROOT/tools/bin/sdkmanager --install "system-images;android-33;google_apis;x86_64"
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug
@@ -66,21 +88,63 @@ jobs:
       - name: Run unit tests
         run: ./gradlew testDebugUnitTest
 
-      - name: Install emulator system image (API 33)
+      - name: Create Android Emulator
         run: |
-          sdkmanager "system-images;android-33;google_apis;x86_64"
-          mkdir -p ~/.android/avd
-          echo "no" | avdmanager create avd -n test -k "system-images;android-33;google_apis;x86_64" --device "pixel" --force
+          echo "Creating AVD in $ANDROID_AVD_HOME"
+          mkdir -p $ANDROID_AVD_HOME
+          echo "no" | avdmanager create avd -n test -k "system-images;android-33;google_apis;x86_64" \
+                --device "pixel" --force \
+                --path "$ANDROID_AVD_HOME/test.avd"
+          
+          echo "Displaying AVD configuration"
+          cat $ANDROID_AVD_HOME/test.avd/config.ini
 
       - name: Verify available AVDs
         run: avdmanager list avd
 
-      - name: Start Android emulator
+      # 使用更可靠的模拟器启动脚本
+      - name: Start Android Emulator
         run: |
-          nohup emulator -avd test -no-audio -no-window -gpu off &
+          echo "Starting emulator with AVD home: $ANDROID_AVD_HOME"
+          
+          # 后台启动模拟器
+          $ANDROID_SDK_ROOT/emulator/emulator -avd test \
+            -no-audio \
+            -no-window \
+            -gpu swiftshader_indirect \
+            -no-snapshot \
+            -no-boot-anim \
+            -camera-back none \
+            -camera-front none &
+          
+          # 等待模拟器启动
           adb wait-for-device
+          echo "Emulator started, waiting for boot complete"
+          
+          # 检测设备是否完全启动
+          while [[ "$(adb shell getprop sys.boot_completed | tr -d '\r')" != "1" ]]; do
+            echo "Waiting for boot completion..."
+            sleep 3
+          done
+          
+          # 解锁屏幕
           adb shell input keyevent 82
-        timeout-minutes: 5
+          echo "Emulator is ready"
+        timeout-minutes: 10
+
+      - name: List connected devices
+        run: adb devices -l
 
       - name: Run instrumented Android tests
         run: ./gradlew connectedDebugAndroidTest
+        timeout-minutes: 15
+
+      # 可选：上传测试结果报告
+      - name: Upload test reports
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-reports
+          path: |
+            Mobile/app/build/reports/tests/*
+            Mobile/app/build/outputs/androidTest-results/connected/*
