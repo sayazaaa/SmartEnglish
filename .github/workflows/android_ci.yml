@@ -34,7 +34,6 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # 统一配置Android环境变量
       - name: Configure Android environment
         run: |
           echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
@@ -61,16 +60,16 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      # 使用预配置的Android Actions
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
         with:
           avd-home: ${{ env.ANDROID_AVD_HOME }}
 
       - name: Accept SDK licenses
-        run: yes | $ANDROID_SDK_ROOT/tools/bin/sdkmanager --licenses || true
+        run: yes | sdkmanager --licenses || true
+        env:
+          PATH: ${{ env.ANDROID_SDK_ROOT }}/cmdline-tools/latest/bin:${{ env.PATH }}
 
-      # 添加必要工具到PATH
       - name: Add Android tools to PATH
         run: |
           echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
@@ -79,8 +78,9 @@ jobs:
 
       - name: Install required SDK components
         run: |
-          $ANDROID_SDK_ROOT/tools/bin/sdkmanager --install "platform-tools" "platforms;android-33" "emulator"
-          $ANDROID_SDK_ROOT/tools/bin/sdkmanager --install "system-images;android-33;google_apis;x86_64"
+          sdkmanager --install "platform-tools" "platforms;android-33" "emulator" "system-images;android-33;google_apis;x86_64"
+        env:
+          PATH: ${{ env.ANDROID_SDK_ROOT }}/cmdline-tools/latest/bin:${{ env.PATH }}
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug
@@ -95,19 +95,19 @@ jobs:
           echo "no" | avdmanager create avd -n test -k "system-images;android-33;google_apis;x86_64" \
                 --device "pixel" --force \
                 --path "$ANDROID_AVD_HOME/test.avd"
-          
           echo "Displaying AVD configuration"
           cat $ANDROID_AVD_HOME/test.avd/config.ini
+        env:
+          PATH: ${{ env.ANDROID_SDK_ROOT }}/cmdline-tools/latest/bin:${{ env.PATH }}
 
       - name: Verify available AVDs
         run: avdmanager list avd
+        env:
+          PATH: ${{ env.ANDROID_SDK_ROOT }}/cmdline-tools/latest/bin:${{ env.PATH }}
 
-      # 使用更可靠的模拟器启动脚本
       - name: Start Android Emulator
         run: |
           echo "Starting emulator with AVD home: $ANDROID_AVD_HOME"
-          
-          # 后台启动模拟器
           $ANDROID_SDK_ROOT/emulator/emulator -avd test \
             -no-audio \
             -no-window \
@@ -116,18 +116,12 @@ jobs:
             -no-boot-anim \
             -camera-back none \
             -camera-front none &
-          
-          # 等待模拟器启动
           adb wait-for-device
           echo "Emulator started, waiting for boot complete"
-          
-          # 检测设备是否完全启动
           while [[ "$(adb shell getprop sys.boot_completed | tr -d '\r')" != "1" ]]; do
             echo "Waiting for boot completion..."
             sleep 3
           done
-          
-          # 解锁屏幕
           adb shell input keyevent 82
           echo "Emulator is ready"
         timeout-minutes: 10
