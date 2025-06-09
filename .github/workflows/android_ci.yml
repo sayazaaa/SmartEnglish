@@ -81,7 +81,7 @@ jobs:
         shell: bash
         run: |
           export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH
-          sdkmanager --install "platform-tools" "platforms;android-33" "emulator" "system-images;android-33;google_apis;x86_64"
+          sdkmanager --install "platform-tools" "platforms;android-33" "emulator" "system-images;android-33;google_apis;arm64-v8a"
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug
@@ -93,9 +93,7 @@ jobs:
         shell: bash
         run: |
           export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH
-          echo "Creating AVD in $ANDROID_AVD_HOME"
-          mkdir -p $ANDROID_AVD_HOME
-          echo "no" | avdmanager create avd -n test -k "system-images;android-33;google_apis;x86_64" \
+          echo "no" | avdmanager create avd -n test -k "system-images;android-33;google_apis;arm64-v8a" \
                 --device "pixel" --force \
                 --path "$ANDROID_AVD_HOME/test.avd"
           echo "Displaying AVD configuration"
@@ -113,6 +111,7 @@ jobs:
           export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH
           echo "Starting emulator with AVD home: $ANDROID_AVD_HOME"
           $ANDROID_SDK_ROOT/emulator/emulator -avd test \
+            -no-accel \
             -no-audio \
             -no-window \
             -gpu swiftshader_indirect \
