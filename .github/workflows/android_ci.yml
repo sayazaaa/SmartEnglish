@@ -138,13 +138,3 @@ jobs:
       - name: Run instrumented Android tests
         run: ./gradlew connectedDebugAndroidTest
         timeout-minutes: 15
-
-      # 可选：上传测试结果报告
-      - name: Upload test reports
-        uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: test-reports
-          path: |
-            Mobile/app/build/reports/tests/*
-            Mobile/app/build/outputs/androidTest-results/connected/*
