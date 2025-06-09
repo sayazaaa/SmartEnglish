@@ -101,8 +101,8 @@ async function handleSubmit() {
       if (response.status === 200) {
         // 优先从响应头取 token
         let token = "";
-        if (response.headers && response.headers.authorization) {
-          token = response.headers.authorization;
+        if (response.headers && response.headers.getAuthorization()) {
+          token = response.headers.getAuthorization();
         } else if (response.data && response.data.token) {
           token = response.data.token;
         }
