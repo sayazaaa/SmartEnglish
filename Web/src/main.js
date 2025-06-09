@@ -4,10 +4,7 @@ import router from './router'
 //import store from './store'
 import axios from 'axios';
 
-axios.defaults.baseURL = import.meta.env.VITE_API_BASE;   // 只这一行
-
-
-console.log('[Debug] axios.baseURL =', axios.defaults.baseURL);
+axios.defaults.baseURL = "/api";   // 只这一行
 
 axios.interceptors.request.use((cfg) => {
     const token = localStorage.getItem('admin_token');
