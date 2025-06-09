@@ -3,12 +3,12 @@ name: Backend CI
 on:
   push:
     branches: [ main ]
-#    paths:
-#      - 'smart-english-backend/**'
+    paths:
+      - 'smart-english-backend/**'
   pull_request:
     branches: [ main ]
-#    paths:
-#      - 'smart-english-backend/**'
+    paths:
+      - 'smart-english-backend/**'
 
 jobs:
   backend-build:
