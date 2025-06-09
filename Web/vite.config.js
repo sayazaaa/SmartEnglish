@@ -9,7 +9,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://175.178.5.83:8080',
+        target: 'https://api.sayaz.site',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api/, '')
       }
