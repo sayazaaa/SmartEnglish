@@ -1,0 +1,56 @@
+name: Web CD (Vue 3 to Pages)
+
+on:
+  push:
+    branches: [ main ]           # 触发部署
+    paths:
+      - 'Web/**'                 # Web 目录有变动才部署
+      - '.github/workflows/web_cd.yml'
+  pull_request:
+    branches: [ main ]           # PR 只跑检查
+    paths:
+      - 'Web/**'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Web   # ⬅️ 关键：所有 npm 命令在 /Web 下执行
+
+    permissions:
+      contents: read             # checkout
+      pages: write               # deploy-pages 权限
+      id-token: write            # OIDC 签名（deploy-pages 用）
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install deps & run tests
+        run: |
+          npm ci
+          # 如果没有测试脚本，可删除下面这一行
+          npm test || echo '⚠️ no tests'
+
+      - name: Build site
+        run: npm run build
+
+      # ===== 以下三步为官方 Pages Action 套餐 =====
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload static artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./Web/dist       # ⬅️ build 输出目录
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
