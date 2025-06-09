@@ -77,10 +77,12 @@ jobs:
           echo "$ANDROID_SDK_ROOT/platform-tools" >> $GITHUB_PATH
 
       - name: Install required SDK components
+        shell: bash
         run: |
           sdkmanager --install "platform-tools" "platforms;android-33" "emulator" "system-images;android-33;google_apis;x86_64"
         env:
           PATH: ${{ env.ANDROID_SDK_ROOT }}/cmdline-tools/latest/bin:${{ env.PATH }}
+
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug
