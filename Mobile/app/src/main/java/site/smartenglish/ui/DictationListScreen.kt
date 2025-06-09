@@ -19,20 +19,16 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.*
 import androidx.hilt.navigation.compose.hiltViewModel
 import site.smartenglish.ui.viewmodel.BackgroundImageViewmodel
+import site.smartenglish.ui.viewmodel.DictationViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DictationListScreen(
+    navigationBack : () -> Unit = {},
+    navigationToHome : () -> Unit = {},
+    words : List<String> = listOf("test", "zzz", "genshin", "hsr"),
+    isFinished : Boolean = false,
 ) {
-    //input data
-    val words = listOf(
-        "test",
-        "zzz",
-        "genshin",
-        "hsr"
-    )
-    val isFinished = false
-
     //config
     val textColor = Color.White
     val darkTextColor = Color.White.copy(alpha = 0.7f)
@@ -104,6 +100,7 @@ fun DictationListScreen(
             Button(
                 onClick = {
                     //TODO 摆
+                    navigationToHome()
                 },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.White.copy(alpha = 0.3f),
@@ -125,6 +122,7 @@ fun DictationListScreen(
             Button(
                 onClick = {
                     //TODO 卷
+                    navigationBack()
                 },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color.White.copy(alpha = 0.3f),

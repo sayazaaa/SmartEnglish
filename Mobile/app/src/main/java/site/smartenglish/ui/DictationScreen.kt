@@ -20,6 +20,8 @@ import site.smartenglish.ui.viewmodel.DictationViewModel
 
 @Composable
 fun DictationScreen(
+    navigationToList: (List<String>,Boolean) -> Unit,
+    navigationBack: () -> Unit = {},
     dictationViewModel: DictationViewModel = hiltViewModel(),
     audioPlayerViewModel: AudioPlayerViewModel = hiltViewModel()
 ) {
@@ -80,7 +82,7 @@ fun DictationScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            IconButton(onClick = { /* TODO 返回逻辑 */ }) {
+            IconButton(onClick = { navigationBack()}) {
                 Icon(
                     imageVector = Icons.Default.ChevronLeft,
                     contentDescription = "返回",
@@ -220,13 +222,13 @@ fun DictationScreen(
                     colors = CardDefaults.cardColors(
                         containerColor = if(wordSourceExpand) Color(0xFF24293D) else Color.Transparent
                     ),
-                    onClick = { wordSourceExpand = !wordSourceExpand},
                 ){
                     Row(
                         modifier = Modifier.height(62.dp)
                             .fillMaxWidth()
                             .background( Color(0xFF292F45) )
-                            .padding(start = 22.dp, end = 22.dp),
+                            .padding(start = 22.dp, end = 22.dp)
+                            .clickable() { wordSourceExpand = !wordSourceExpand },
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
@@ -264,7 +266,7 @@ fun DictationScreen(
                                         .padding(start = 32.dp)
                                 ) {
                                     Text(
-                                        text = "已学单词\nTotal:"+dictationViewModel.learnedWordCount ,
+                                        text = "已学单词\nTotal:"+dictationViewModel.learnedWordCount.value ,
                                         fontSize = 16.sp,
                                         color = textColor,
                                         modifier = Modifier.padding(top= 18.dp)
@@ -310,13 +312,13 @@ fun DictationScreen(
                     colors = CardDefaults.cardColors(
                         containerColor = if(wordPlayTimeExpand) Color(0xFF24293D) else Color.Transparent
                     ),
-                    onClick = { wordPlayTimeExpand = !wordPlayTimeExpand},
                 ){
                     Row(
                         modifier = Modifier.height(62.dp)
                             .fillMaxWidth()
                             .background( Color(0xFF292F45) )
-                            .padding(start = 22.dp, end = 22.dp),
+                            .padding(start = 22.dp, end = 22.dp)
+                            .clickable{ wordPlayTimeExpand = !wordPlayTimeExpand},
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
@@ -418,13 +420,13 @@ fun DictationScreen(
                     colors = CardDefaults.cardColors(
                         containerColor = if(wordSequenceExpand) Color(0xFF24293D) else Color.Transparent
                     ),
-                    onClick = { wordSequenceExpand = !wordSequenceExpand},
                 ){
                     Row(
                         modifier = Modifier.height(62.dp)
                             .fillMaxWidth()
                             .background( Color(0xFF292F45) )
-                            .padding(start = 22.dp, end = 22.dp),
+                            .padding(start = 22.dp, end = 22.dp)
+                            .clickable{ wordSequenceExpand = !wordSequenceExpand},
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
@@ -598,7 +600,7 @@ fun DictationScreen(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = { /* TODO 打开菜单 */ }) {
+                IconButton(onClick = { navigationToList(words,false) }) {
                     Icon(
                         imageVector = Icons.Default.Menu,
                         tint=textColor,
