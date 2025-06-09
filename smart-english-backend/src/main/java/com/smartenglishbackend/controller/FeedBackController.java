@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @Controller
+@CrossOrigin(origins = "*")
 @RequestMapping("/feedback")
 public class FeedBackController {
     @Autowired

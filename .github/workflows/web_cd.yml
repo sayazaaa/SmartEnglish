@@ -13,6 +13,7 @@ on:
 
 jobs:
   build-and-deploy:
+    
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -43,7 +44,8 @@ jobs:
 
       - name: Build site
         run: npm run build
-
+        env: 
+          VITE_API_BASE: http://175.178.5.83:8080
       # ===== 以下三步为官方 Pages Action 套餐 =====
       - name: Configure Pages
         uses: actions/configure-pages@v5
