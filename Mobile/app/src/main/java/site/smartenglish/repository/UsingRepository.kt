@@ -1,5 +1,6 @@
 package site.smartenglish.repository
 
+import android.util.Log
 import site.smartenglish.manager.DataStoreManager
 import site.smartenglish.remote.ApiService
 import site.smartenglish.remote.data.PutUsingRequest
@@ -19,13 +20,16 @@ class UsingRepository @Inject constructor(
 
 
     suspend fun updateUsingTime(name: String, duration: Int): Boolean{
+
+        dataStoreManager.addTodayLearnTime(duration)
+
         val response = api.updateUsingTime(PutUsingRequest(name, duration)).handleResponse("更新使用时间失败")
             .let { it == null }
-        dataStoreManager.addTodayLearnTime(duration)
         return response
     }
 
     suspend fun getTodayLearnTime(): Int {
+        Log.d("UsingRepository", "getTodayLearnTime called")
         return dataStoreManager.getTodayLearnTimeSync()
     }
 

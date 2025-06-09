@@ -6,6 +6,9 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -14,6 +17,7 @@ import site.smartenglish.manager.DataStoreManager
 import site.smartenglish.remote.ApiService
 import site.smartenglish.remote.AuthInterceptor
 import site.smartenglish.remote.ErrorInterceptor
+import javax.inject.Qualifier
 import javax.inject.Singleton
 
 @Module
@@ -53,4 +57,17 @@ object AppModule {
         return retrofit.create(ApiService::class.java)
     }
 
+
+    @Provides
+    @ApplicationScope
+    fun provideAppScope(): CoroutineScope =
+        CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+
+
+
 }
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class ApplicationScope

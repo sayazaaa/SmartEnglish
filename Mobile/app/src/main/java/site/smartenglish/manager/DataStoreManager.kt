@@ -135,6 +135,8 @@ class DataStoreManager @Inject constructor(
             todayLearnNum = 0
             todayLearnTime = 0
             lastDate = today
+        }else{
+            Log.d("DataStoreManager", "日期未变化: $today")
         }
     }
 

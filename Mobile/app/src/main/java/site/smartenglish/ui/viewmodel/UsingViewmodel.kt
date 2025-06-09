@@ -4,13 +4,16 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import site.smartenglish.di.ApplicationScope
 import site.smartenglish.repository.UsingRepository
 import javax.inject.Inject
 
 @HiltViewModel
 class UsingViewModel @Inject constructor(
-    private val usingRepository: UsingRepository
+    private val usingRepository: UsingRepository,
+    @ApplicationScope private val appScope: CoroutineScope
 ) : ViewModel() {
 
     private var startTime: Long = 0
@@ -30,23 +33,24 @@ class UsingViewModel @Inject constructor(
         }
     }
 
+
+
     // 发送使用时长数据到服务器
     // "learn"/"review"/"listen"/"read"
-    fun sendUsageTime(name:String) {
-        // 如果还在计时中，先暂停累计
+    fun sendUsageTime(name: String) {
         pauseTracking()
 
-        if (totalDuration > 0) {
-            viewModelScope.launch {
-                try {
-                    usingRepository.updateUsingTime(name,totalDuration/60)
-                    Log.d("UsingViewModel", "使用时长已累计: $totalDuration 秒")
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                } finally {
-                    // 重置计时器
-                    totalDuration = 0
-                }
+        val duration = totalDuration
+        if (duration <= 0) return
+
+        appScope.launch {
+            try {
+                usingRepository.updateUsingTime(name, duration / 60)
+                Log.d("UsingVM", "使用时长已累计: $duration 秒")
+            } catch (e: Exception) {
+                Log.e("UsingVM", "上报失败", e)
+            } finally {
+                totalDuration = 0
             }
         }
     }

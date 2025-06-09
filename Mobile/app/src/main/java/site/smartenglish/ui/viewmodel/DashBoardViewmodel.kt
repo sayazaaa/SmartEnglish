@@ -96,6 +96,12 @@ class DashBoardViewmodel @Inject constructor(
                    }
                }
 
+                // 更新学习数据
+               _todayWord.value = todayLearnedCountDeferred.await()
+               _todayTime.value = todayLearnedTimeDeferred.await()
+               _totalWord.value = learnedListDeferred.await()
+               _totalTime.value = usingTimeDeferred.await()
+
                // 等待所有结果并一次性更新UI
                val profile = profileDeferred.await()
                profile?.let {
@@ -108,11 +114,9 @@ class DashBoardViewmodel @Inject constructor(
                    _currentWordBookId.value = it.wordbook?.id ?: 0
                }
 
-               // 更新学习数据
-               _totalWord.value = learnedListDeferred.await()
-               _totalTime.value = usingTimeDeferred.await()
-               _todayWord.value = todayLearnedCountDeferred.await()
-               _todayTime.value = todayLearnedTimeDeferred.await()
+
+
+
            }
        }
    }
