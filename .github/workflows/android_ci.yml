@@ -66,9 +66,10 @@ jobs:
           avd-home: ${{ env.ANDROID_AVD_HOME }}
 
       - name: Accept SDK licenses
-        run: yes | sdkmanager --licenses || true
-        env:
-          PATH: ${{ env.ANDROID_SDK_ROOT }}/cmdline-tools/latest/bin:${{ env.PATH }}
+        shell: bash
+        run: |
+          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH
+          yes | sdkmanager --licenses || true
 
       - name: Add Android tools to PATH
         run: |
@@ -79,10 +80,8 @@ jobs:
       - name: Install required SDK components
         shell: bash
         run: |
+          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH
           sdkmanager --install "platform-tools" "platforms;android-33" "emulator" "system-images;android-33;google_apis;x86_64"
-        env:
-          PATH: ${{ env.ANDROID_SDK_ROOT }}/cmdline-tools/latest/bin:${{ env.PATH }}
-
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug
@@ -91,7 +90,9 @@ jobs:
         run: ./gradlew testDebugUnitTest
 
       - name: Create Android Emulator
+        shell: bash
         run: |
+          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH
           echo "Creating AVD in $ANDROID_AVD_HOME"
           mkdir -p $ANDROID_AVD_HOME
           echo "no" | avdmanager create avd -n test -k "system-images;android-33;google_apis;x86_64" \
@@ -99,16 +100,17 @@ jobs:
                 --path "$ANDROID_AVD_HOME/test.avd"
           echo "Displaying AVD configuration"
           cat $ANDROID_AVD_HOME/test.avd/config.ini
-        env:
-          PATH: ${{ env.ANDROID_SDK_ROOT }}/cmdline-tools/latest/bin:${{ env.PATH }}
 
       - name: Verify available AVDs
-        run: avdmanager list avd
-        env:
-          PATH: ${{ env.ANDROID_SDK_ROOT }}/cmdline-tools/latest/bin:${{ env.PATH }}
+        shell: bash
+        run: |
+          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH
+          avdmanager list avd
 
       - name: Start Android Emulator
+        shell: bash
         run: |
+          export PATH=$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/emulator:$PATH
           echo "Starting emulator with AVD home: $ANDROID_AVD_HOME"
           $ANDROID_SDK_ROOT/emulator/emulator -avd test \
             -no-audio \
