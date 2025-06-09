@@ -52,11 +52,16 @@ public class CalcDataRemain implements ICalcData{
         List<Float> res = new ArrayList<>();
         for(int i = 0; i < resSize; i++){
             float loginTotal = 0f;
-            for(AccountOperator accountOperator : accountOperators){
-                List<AccountOperator> loginOperators = accountOperatorRepository.
-                        searchByDateAndOp(accountOperator.getLogDate(),
-                                accountOperator.getLogDate().plusDays((long)offset),1);
-                if(!loginOperators.isEmpty())loginTotal += 1f;
+            LocalDate temp = startTime;
+            while(temp.isBefore(endDate)){
+                LocalDate finTemp = temp;
+                Long loginOperators = accountOperatorRepository.
+                        searchByAccountIdAndDurationAndOp(accountOperators.stream().
+                                filter(accountOperator -> accountOperator.getLogDate().equals(finTemp)).
+                                        map(AccountOperator::getAccountId).toList(),temp.plusDays(offset),
+                                temp.plusDays(offset+add),1);
+                if(loginOperators != null)loginTotal += loginOperators;
+                temp = temp.plusDays(1);
             }
             res.add(loginTotal/total);
             offset += add;

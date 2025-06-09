@@ -63,7 +63,19 @@ public class LearnedService {
             return res.getFirst();
         }else if(dtoUpdateLearned.getStatus().equals("review")){
             List<String> words = wordGenerator.GetReviewWord(userId,1);
+            WordSet wordSet = wordSetRepository.findByAccountId(userId);
+            List<SWord> toRemove = wordSet.getSetlearned().stream().
+                    filter(sWord -> sWord.getWord().equals(dtoUpdateLearned.getWord())).toList();
+            for (SWord sWord : toRemove) {
+                wordSet.getSetlearned().remove(sWord);
+            }
             if(words.isEmpty())return "";
+            else{
+                for(String word : words){
+                    wordSet.getSetlearned().add(new SWord(word, 0));
+                }
+            }
+            wordSetRepository.save(wordSet);
             return words.getFirst();
         }else{
             throw new RequestFormatException("Invalid request");

@@ -1,210 +1,227 @@
 <template>
   <el-container style="height:100vh">
 
-    <el-main class="main-content">
-      <!-- 顶部工具栏 -->
-      <div class="toolbar">
-        <el-button type="primary" @click="openCreateDialog">新建词书</el-button>
-        <el-button
-            type="danger"
-            :disabled="!selectedIds.length"
-            @click="handleBatchDelete"
-        >删除</el-button>
-      </div>
+    <!-- 侧边栏省略… -->
 
-      <!-- 词书列表 -->
+    <el-main class="main-content">
+      <el-button type="primary" @click="onOpenCreateDialog">新建词书</el-button>
+      <el-button type="danger" :disabled="!multipleSelection.length" @click="onBatchDelete">删除</el-button>
+
       <el-table
-          :data="pagedWordbooks"
-          @selection-change="onSelectionChange"
-          border
-          stripe
-          style="width: 100%"
+          :data="wordbooks"
+          @selection-change="multipleSelection = $event"
+          style="width:100%; margin-top: 20px"
+          v-loading="loading"
       >
         <el-table-column type="selection" width="55"></el-table-column>
-        <el-table-column prop="id" label="ID" width="80"></el-table-column>
-        <el-table-column prop="name" label="词书名称"></el-table-column>
-        <el-table-column prop="wordcount" label="单词数量" width="120"></el-table-column>
+        <el-table-column prop="id" label="ID" width="80"/>
+        <el-table-column prop="name" label="词书名称"/>
+        <el-table-column prop="wordcount" label="单词数" width="100"/>
         <el-table-column label="操作" width="120">
           <template #default="{ row }">
-            <el-button
-                type="text"
-                @click="goManageWords(row)"
-            >管理单词</el-button>
+            <el-button type="text" @click="onOpenEditDialog(row)">编辑词书</el-button>
           </template>
         </el-table-column>
       </el-table>
 
-      <!-- 分页（去掉 page-sizes，下方只有总数/页码/跳转）-->
       <el-pagination
-          class="pagination"
           background
-          :total="total"
-          :page-size="pageSize"
           :current-page="page"
+          :page-size="pageSize"
+          :total="total"
+          layout="sizes, prev, pager, next, jumper"
+          @size-change="onSizeChange"
           @current-change="onPageChange"
-          layout="total, prev, pager, next, jumper"
+          style="margin-top: 20px; text-align: right"
       />
     </el-main>
 
-    <!-- 新建词书对话框 -->
+    <!-- 新建词书弹窗 -->
     <el-dialog
         title="新建词书"
         v-model="createDialogVisible"
         width="500px"
+        @close="resetCreateForm"
     >
-      <el-form :model="form" label-width="80px">
+      <el-form :model="createForm">
         <el-form-item label="名称">
-          <el-input v-model="form.name" placeholder="请输入词书名称" />
+          <el-input v-model="createForm.name" />
         </el-form-item>
-        <el-form-item label="封面 URL">
-          <el-input v-model="form.cover" placeholder="请输入封面图片 URL" />
+        <el-form-item label="封面(链接)">
+          <el-input v-model="createForm.cover" />
         </el-form-item>
-        <el-form-item label="内容">
+        <el-form-item label="内容(分号隔开)">
           <el-input
-              type="textarea"
-              v-model="contentString"
-              autosize
-              placeholder="请用分号分隔单词，例如：apple; banana; orange"
+              v-model="createForm.content"
+              placeholder="word1;word2;word3"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="createDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmCreate">创建</el-button>
+        <el-button type="primary" @click="onCreateSubmit">提交</el-button>
       </template>
     </el-dialog>
+
+    <!-- 编辑词书弹窗 -->
+    <el-dialog
+        title="编辑词书"
+        v-model="editDialogVisible"
+        width="500px"
+        @close="resetEditForm"
+    >
+      <el-form :model="editForm">
+        <el-form-item label="名称">
+          <el-input v-model="editForm.name" />
+        </el-form-item>
+        <el-form-item label="封面(链接)">
+          <el-input v-model="editForm.cover" />
+        </el-form-item>
+        <el-form-item label="内容(分号隔开)">
+          <el-input
+              v-model="editForm.content"
+              placeholder="word1;word2;word3"
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="editDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="onEditSubmit">保存</el-button>
+      </template>
+    </el-dialog>
+
   </el-container>
 </template>
 
-<script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+<script setup>
+import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 
-interface WordbookItem {
-  id: number
-  name: string
-  cover: string
-  wordcount: number
-}
-
-// 路由实例，用来跳转“管理单词”页面
-const router = useRouter()
-
-// 全量数据 & 选中 ID 列表
-const wordbooks = ref<WordbookItem[]>([])
-const selectedIds = ref<number[]>([])
-
-// 分页状态
+// 列表数据 & 分页
+const wordbooks = ref([])
+const loading = ref(false)
+const total = ref(0)
 const page = ref(1)
-const pageSize = 10
-const total = computed(() => wordbooks.value.length)
-const pagedWordbooks = computed(() => {
-  const start = (page.value - 1) * pageSize
-  return wordbooks.value.slice(start, start + pageSize)
-})
+const pageSize = ref(10)
+const multipleSelection = ref([])
 
-// 新建对话框 & 表单
+// 新建弹窗相关
 const createDialogVisible = ref(false)
-const form = ref({ name: '', cover: '' })
-const contentString = ref('')
-
-/** 初始拉数据 */
-async function fetchWordbooks() {
+const createForm = ref({
+  name: '',
+  cover: '',
+  content: ''
+})
+function resetCreateForm() {
+  createForm.value = { name: '', cover: '', content: '' }
+}
+function onOpenCreateDialog() {
+  resetCreateForm()
+  createDialogVisible.value = true
+}
+async function onCreateSubmit() {
   try {
-    const res = await axios.get<WordbookItem[]>('/wordbook')
-    wordbooks.value = res.data
-  } catch (err) {
-    console.error(err)
-    ElMessage.error('获取词书列表失败')
+    const arr = createForm.value.content
+        .split(';')
+        .map(s => s.trim())
+        .filter(Boolean)
+    await axios.post('/wordbook', {
+      name: createForm.value.name,
+      cover: createForm.value.cover,
+      content: arr
+    })
+    ElMessage.success('创建成功')
+    createDialogVisible.value = false
+    fetchList()
+  } catch {
+    ElMessage.error('创建失败')
   }
 }
 
-/** 翻页 */
-function onPageChange(p: number) {
-  page.value = p
+// 编辑弹窗相关
+const editDialogVisible = ref(false)
+const editForm = ref({
+  id: null,
+  name: '',
+  cover: '',
+  content: ''
+})
+function resetEditForm() {
+  editForm.value = { id: null, name: '', cover: '', content: '' }
 }
-
-/** 选中项变化 */
-function onSelectionChange(selection: WordbookItem[]) {
-  selectedIds.value = selection.map(i => i.id)
+function onOpenEditDialog(row) {
+  editForm.value.id = row.id
+  editForm.value.name = row.name
+  editForm.value.cover = row.cover
+  // 假设后端返回的是数组
+  editForm.value.content = (row.content || []).join(';')
+  editDialogVisible.value = true
 }
-
-/** 跳转到单词管理 */
-function goManageWords(row: WordbookItem) {
-  router.push({
-    path: '/wordmanager',
-    query: { wordbookId: String(row.id) }
-  })
-}
-
-/** 批量删除 */
-async function handleBatchDelete() {
-  if (!selectedIds.value.length) return
+async function onEditSubmit() {
   try {
-    await Promise.all(
-        selectedIds.value.map(id =>
-            axios.delete('/wordbook', { params: { id } })
-        )
-    )
+    const arr = editForm.value.content
+        .split(';')
+        .map(s => s.trim())
+        .filter(Boolean)
+    await axios.put('/wordbook', {
+      id: editForm.value.id,
+      name: editForm.value.name,
+      cover: editForm.value.cover,
+      content: arr
+    })
+    ElMessage.success('保存成功')
+    editDialogVisible.value = false
+    fetchList()
+  } catch {
+    ElMessage.error('保存失败')
+  }
+}
+
+// 删除
+async function onBatchDelete() {
+  try {
+    const ids = multipleSelection.value.map(i => i.id)
+    await Promise.all(ids.map(id => axios.delete('/wordbook', { params: { id } })))
     ElMessage.success('删除成功')
-    await fetchWordbooks()
-  } catch (err) {
-    console.error(err)
+    fetchList()
+  } catch {
     ElMessage.error('删除失败')
   }
 }
 
-/** 打开新建对话框 */
-function openCreateDialog() {
-  form.value = { name: '', cover: '' }
-  contentString.value = ''
-  createDialogVisible.value = true
-}
-
-/** 确认新建 */
-async function confirmCreate() {
-  // 简单校验
-  if (!form.value.name.trim() || !form.value.cover.trim()) {
-    return ElMessage.warning('名称和封面 URL 都是必填项')
-  }
-  // 将分号分隔的字符串拆成数组
-  const contentArr = contentString.value
-      .split(';')
-      .map(w => w.trim())
-      .filter(w => w)
-  const payload = {
-    name: form.value.name.trim(),
-    cover: form.value.cover.trim(),
-    content: contentArr
-  }
+// 拉列表
+async function fetchList() {
+  loading.value = true
   try {
-    await axios.post('/wordbook', payload)
-    ElMessage.success('创建成功')
-    createDialogVisible.value = false
-    await fetchWordbooks()
-  } catch (err) {
-    console.error(err)
-    ElMessage.error('创建失败，请稍后重试')
+    const res = await axios.get('/wordbook', {
+      params: { page: page.value, pageSize: pageSize.value }
+    })
+    wordbooks.value = res.data
+    total.value = parseInt(res.headers['x-total-count'] || res.data.length)
+  } catch {
+    ElMessage.error('获取失败')
+  } finally {
+    loading.value = false
   }
 }
 
-// 页面加载时先拉一次
-onMounted(fetchWordbooks)
+// 分页回调
+function onSizeChange(size) {
+  pageSize.value = size
+  fetchList()
+}
+function onPageChange(p) {
+  page.value = p
+  fetchList()
+}
+
+onMounted(fetchList)
 </script>
 
 <style scoped>
 .main-content {
-  background-color: #faf6f2;
   padding: 20px;
-  height: 100%;
-}
-.toolbar {
-  margin-bottom: 16px;
-}
-.pagination {
-  margin-top: 16px;
-  text-align: right;
+  background: #faf6f2;
 }
 </style>
