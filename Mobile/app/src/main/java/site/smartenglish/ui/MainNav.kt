@@ -562,7 +562,16 @@ fun MainNav(
             )
         }
         composable<DictationDetail> {
+            backStackEntry ->
+            val dictationDetail = backStackEntry.arguments?.let {
+                DictationDetail(
+                    it.getStringArray("words")?.toList() ?: emptyList(),
+                    it.getBoolean("isFinished", false)
+                )
+            }
             DictationListScreen(
+                words = dictationDetail?.words ?: emptyList(),
+                isFinished = dictationDetail?.isFinished ?: false,
                 navigationBack = {navController.popBackStack()},
                 navigationToHome = { navController.navigate(Home) {
                     popUpTo(0) { inclusive = true }

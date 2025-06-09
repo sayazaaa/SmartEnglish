@@ -24,10 +24,10 @@ import site.smartenglish.ui.viewmodel.DictationViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DictationListScreen(
+    words : List<String>,
+    isFinished : Boolean,
     navigationBack : () -> Unit = {},
     navigationToHome : () -> Unit = {},
-    words : List<String> = listOf("test", "zzz", "genshin", "hsr"),
-    isFinished : Boolean = false,
 ) {
     //config
     val textColor = Color.White
@@ -144,8 +144,8 @@ fun DictationListScreen(
     }
 }
 
-@Preview
-@Composable
-fun LearnWordFinishScreenPreview() {
-    DictationListScreen()
-}
+//@Preview
+//@Composable
+//fun LearnWordFinishScreenPreview() {
+//    DictationListScreen()
+//}
