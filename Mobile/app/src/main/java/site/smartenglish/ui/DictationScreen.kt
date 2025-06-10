@@ -10,13 +10,17 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.*
 import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.delay
+import site.smartenglish.R
 import site.smartenglish.ui.theme.DarkGrey
 import site.smartenglish.ui.theme.Grey
+import site.smartenglish.ui.theme.Orange
+import site.smartenglish.ui.theme.White
 import site.smartenglish.ui.viewmodel.AudioPlayerViewModel
 import site.smartenglish.ui.viewmodel.DictationViewModel
 import site.smartenglish.ui.viewmodel.UsingViewModel
@@ -221,16 +225,16 @@ fun DictationScreen(
                     .height(264.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFF24293D)
+                    containerColor = Color(0xFF24293D),
+                    contentColor = White
                 ),
             ) {
                 Box(modifier=Modifier.fillMaxSize().align(Alignment.CenterHorizontally)){
                     Icon(
-                        imageVector = Icons.Filled.ImageNotSupported,
+                        painterResource(R.drawable.white_logo),
                         contentDescription = "播放读音",
-                        tint = textColor,
                         modifier = Modifier
-                            .size(64.dp)
+                            .size(128.dp)
                             .align(Alignment.Center)
                     )
                 }
