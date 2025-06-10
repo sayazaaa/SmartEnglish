@@ -141,7 +141,7 @@ async function loadHeatmap() {
         start: cohort
       })
       res.data.forEach((v, j) => {
-        if(i+j <=6)heatData.push([ j, i, 100*v ])  // [xIndex, yIndex, value]
+        if(i+j <=6)heatData.push([ j, i,  parseInt(100*v) ])  // [xIndex, yIndex, value]
       })
     }
 
