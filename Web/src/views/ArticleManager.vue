@@ -39,7 +39,13 @@
         <el-descriptions-item label="封面">
           <img :src="viewForm.cover" alt="封面" style="max-width:100%;"/>
         </el-descriptions-item>
-        <el-descriptions-item label="内容">{{ viewForm.content }}</el-descriptions-item>
+        <el-descriptions-item label="内容">
+          <div
+              v-html="sanitizedContent"
+              style="max-height:200px;overflow:auto;white-space:normal;"
+          ></div>
+        </el-descriptions-item>
+
         <el-descriptions-item label="日期">{{ viewForm.date }}</el-descriptions-item>
         <el-descriptions-item label="标签">
           <el-tag
@@ -132,6 +138,11 @@ import {
   ElLink
 } from 'element-plus';
 
+import { computed } from 'vue'
+import DOMPurify from 'dompurify'
+
+
+
 // 列表数据
 const articles = ref([]);
 const loading = ref(false);
@@ -140,8 +151,10 @@ const total = ref(0);
 const multipleSelection = ref([]);
 const hasSelection = ref(false);
 
-// 查看弹窗
-const viewVisible = ref(false);
+// 控制弹窗
+const viewVisible = ref(false)
+
+// 本地表单数据，先初始化所有字段
 const viewForm = reactive({
   id: '',
   title: '',
@@ -149,8 +162,22 @@ const viewForm = reactive({
   content: '',
   date: '',
   tags: []
-});
+})
 
+// 只过滤 h1~h6, p, img
+const sanitizedContent = computed(() => {
+  return DOMPurify.sanitize(viewForm.content || '', {
+    ALLOWED_TAGS: ['h1','h2','h3','h4','h5','h6','p','img'],
+    ALLOWED_ATTR: ['src','alt','title','width','height']
+  })
+})
+
+// 假设你调用完接口后会填充 viewForm，然后打开弹窗
+async function onView(id) {
+  const res = await api.fetchArticle(id)
+  Object.assign(viewForm, res.data)
+  viewVisible.value = true
+}
 // 新建弹窗 & 表单
 const createVisible = ref(false);
 const createFormRef = ref(null);
@@ -265,6 +292,8 @@ async function handleBatchDelete() {
   }
 }
 
+
+
 onMounted(fetchArticles);
 </script>
 
@@ -272,5 +301,7 @@ onMounted(fetchArticles);
 .main-content {
   padding: 16px;
   background: #f8f8f8;
+  word-break: break-all;
 }
+
 </style>
