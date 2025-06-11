@@ -10,13 +10,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.*
 import androidx.compose.ui.graphics.*
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.*
 import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.delay
+import site.smartenglish.R
+import site.smartenglish.ui.theme.DarkGrey
+import site.smartenglish.ui.theme.Grey
+import site.smartenglish.ui.theme.Orange
+import site.smartenglish.ui.theme.White
 import site.smartenglish.ui.viewmodel.AudioPlayerViewModel
 import site.smartenglish.ui.viewmodel.DictationViewModel
+import site.smartenglish.ui.viewmodel.UsingViewModel
 import kotlin.time.Duration.Companion.seconds
 
 @Composable
@@ -24,7 +31,8 @@ fun DictationScreen(
     navigationToList: (List<String>,Boolean) -> Unit,
     navigationBack: () -> Unit = {},
     dictationViewModel: DictationViewModel = hiltViewModel(),
-    audioPlayerViewModel: AudioPlayerViewModel = hiltViewModel()
+    audioPlayerViewModel: AudioPlayerViewModel = hiltViewModel(),
+    usingViewModel: UsingViewModel = hiltViewModel()
 ) {
     // 单词数据
     val words = dictationViewModel.currentWords.collectAsState().value
@@ -40,11 +48,6 @@ fun DictationScreen(
     val nWordBooks = dictationViewModel.NWordBookList.collectAsState().value
     val learnedWordCount = dictationViewModel.learnedWordCount.collectAsState().value
     val finished = dictationViewModel.finished.collectAsState().value
-//    val nWordBooks = listOf(
-//        GetNWordBookListResponseElement(id = 1, name = "生词本1"),
-//        GetNWordBookListResponseElement(id = 2, name = "生词本2"),
-//        GetNWordBookListResponseElement(id = 3, name = "生词本3")
-//    )
 
     var uiState by remember { mutableStateOf("setting") }
     var isPlaying by remember { mutableStateOf(false) }
@@ -73,7 +76,6 @@ fun DictationScreen(
             if(currentPlaying) {
                 if(currentWordPlayedTime < currentWordPlayTime) {
                     dictationViewModel.wordPlayed()
-                    //Log.e(null,currentSoundUrl)
                     audioPlayerViewModel.playAudio(currentSoundUrl)
                 } else if (currentAutoNext) {
                     dictationViewModel.moveToNextWord()
@@ -86,17 +88,29 @@ fun DictationScreen(
         navigationToList(words,true)
     }
 
+    DisposableEffect(Unit) {
+        onDispose {
+            audioPlayerViewModel.stopAudio()
+        }
+    }
+
+    DisposableEffect(Unit) {
+        onDispose {
+            usingViewModel.sendUsageTime("learn")
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .padding(top = 44.dp)
-            .background(Color(0xFF212532))
+            .background(DarkGrey)
     ) {
         // 顶部导航栏
         Row(
             modifier = Modifier.fillMaxWidth()
                 .height(44.dp)
-                .background(Color(0xFF292F45)),
+                .background(Grey),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -211,16 +225,16 @@ fun DictationScreen(
                     .height(264.dp),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color(0xFF24293D)
+                    containerColor = Color(0xFF24293D),
+                    contentColor = White
                 ),
             ) {
                 Box(modifier=Modifier.fillMaxSize().align(Alignment.CenterHorizontally)){
                     Icon(
-                        imageVector = Icons.Filled.ImageNotSupported,//TODO 替换图标
+                        painterResource(R.drawable.white_logo),
                         contentDescription = "播放读音",
-                        tint = textColor,
                         modifier = Modifier
-                            .size(64.dp)
+                            .size(128.dp)
                             .align(Alignment.Center)
                     )
                 }
@@ -283,7 +297,7 @@ fun DictationScreen(
                                         .padding(start = 32.dp)
                                 ) {
                                     Text(
-                                        text = "已学单词\nTotal:$learnedWordCount",
+                                        text = "已学单词",
                                         fontSize = 16.sp,
                                         color = textColor,
                                         modifier = Modifier.padding(top= 18.dp)

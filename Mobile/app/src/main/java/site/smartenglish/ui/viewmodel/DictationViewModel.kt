@@ -111,7 +111,7 @@ class DictationViewModel @Inject constructor(
                 } == true // 假设0是默认的生词本ID
             _currentMeanings.value = wordInfo.explanations ?: emptyList()
             _currentWordTypes.value = emptyList<String>()//TODO 真有这个吗？
-            _currentSoundType.value = "日"//TODO 真有这个吗？
+            _currentSoundType.value = "美"//TODO 真有这个吗？
             _currentSoundUrl.value = wordInfo.pronunciation.toString()
             Log.e("DictationViewModel",currentSoundUrl.value)
         }

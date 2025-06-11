@@ -16,6 +16,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write  # ✅ 关键：允许创建 Release
+
     defaults:
       run:
         working-directory: Mobile
