@@ -106,7 +106,6 @@ async function handleSubmit() {
         } else if (response.data && response.data.token) {
           token = response.data.token;
         }
-
         if (!token) {
           ElMessage.error("登录失败：未收到 token");
           loading.value = false;
